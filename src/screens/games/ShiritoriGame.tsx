@@ -7,12 +7,12 @@ import { sfx } from '../../lib/sound';
 import { burstAt, celebrate } from '../../lib/confetti';
 import { useAlive, useIdle } from '../../lib/hooks';
 import { shuffle } from '../../lib/random';
-import { sayKana } from '../../lib/kana';
 import { back } from '../../state/router';
 import { completeActivity, recordAnswer, type RewardResult } from '../../state/actions';
-import { lastSound, sayWord, type Word } from '../../data/words';
+import { lastSound, type Word } from '../../data/words';
 import { makeChain, shiritoriDistractors } from '../../data/shiritori';
 import { starsFromMistakes } from './pools';
+import { L } from '../../voice/lines';
 import './games.css';
 
 const LINKS = 5;
@@ -52,7 +52,7 @@ export default function ShiritoriGame() {
   }, [answer, chain, sound]);
 
   const prompt = () =>
-    speak(`${sayWord(current)}の さいごの おとは「${sayKana(sound)}」。「${sayKana(sound)}」から はじまる ものは どれかな?`, {
+    speak(L.shiriAsk(current, sound), {
       caption: `「${sound}」から はじまる ものは?`,
     });
 
@@ -60,7 +60,7 @@ export default function ShiritoriGame() {
     setLocked(false);
     setMood('normal');
     if (step === 0) {
-      void speak(`しりとり しよう! はじめは ${sayWord(current)}。`, { caption: `しりとり! はじめは「${current.w}」` }).then(
+      void speak(L.shiriStart(current), { caption: `しりとり! はじめは「${current.w}」` }).then(
         (ok) => ok && alive.current && prompt(),
       );
     } else if (step < LINKS) {
@@ -79,7 +79,7 @@ export default function ShiritoriGame() {
       burstAt(el, 30);
       recordAnswer(sound, true);
       setMood('happy');
-      await speak(`${sayWord(w)}! つながったね!`, { caption: `${w.w}! つながったね!` });
+      await speak(L.shiriHit(w), { caption: `${w.w}! つながったね!` });
       await wait(250);
       if (!alive.current) return;
       if (step + 1 >= LINKS) {
@@ -96,7 +96,7 @@ export default function ShiritoriGame() {
       setTimeout(() => setWrong(null), 600);
       setMistakes((m) => m + 1);
       setMood('think');
-      await speak(`${sayWord(w)}は「${sayKana(w.w[0])}」から はじまるね。「${sayKana(sound)}」から はじまる ものを さがそう。`, {
+      await speak(L.shiriMiss(w, sound), {
         caption: `${w.w} は「${w.w[0]}」から`,
       });
     }

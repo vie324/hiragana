@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Btn, Emoji, TopBar } from '../components/ui';
 import { useApp, todayKey } from '../state/store';
 import { speak } from '../lib/speech';
+import { L } from '../voice/lines';
 import './stamps.css';
 
 const WEEK = ['にち', 'げつ', 'か', 'すい', 'もく', 'きん', 'ど'];
@@ -21,7 +22,7 @@ export default function StampScreen() {
   const total = Object.values(days).filter((d) => d.stamp).length;
 
   useEffect(() => {
-    void speak(total ? `スタンプが ${total}こ たまったよ!` : 'あそぶと スタンプが もらえるよ。');
+    void speak(total ? L.stamps(total) : 'あそぶと スタンプが もらえるよ。');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

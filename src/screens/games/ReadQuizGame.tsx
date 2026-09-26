@@ -10,8 +10,9 @@ import { useAlive, useIdle } from '../../lib/hooks';
 import { shuffle, sample } from '../../lib/random';
 import { back } from '../../state/router';
 import { completeActivity, recordAnswer, recordWord, type RewardResult } from '../../state/actions';
-import { WORDS, sayWord, type Word } from '../../data/words';
+import { WORDS, type Word } from '../../data/words';
 import { pickWords, starsFromMistakes } from './pools';
+import { L } from '../../voice/lines';
 import './games.css';
 
 const ROUNDS = 5;
@@ -62,7 +63,7 @@ export default function ReadQuizGame({ nodeId }: { nodeId?: string }) {
     if (!alive.current) return;
     setLit(-1);
     celebrate();
-    await speak(`${sayWord(word)}! よめたね!`, { caption: `${word.w}! よめたね!` });
+    await speak(L.readHit(word), { caption: `${word.w}! よめたね!` });
     await wait(300);
     if (!alive.current) return;
     if (round + 1 >= words.length) setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, words.length) }));
@@ -73,7 +74,7 @@ export default function ReadQuizGame({ nodeId }: { nodeId?: string }) {
     setMistakes((m) => m + 1);
     setRoundMiss((m) => m + 1);
     setMood('think');
-    void speak(`これは ${sayWord(w)}。 もういちど、よんで みよう。`, { caption: `これは「${w.w}」` });
+    void speak(L.readMiss(w), { caption: `これは「${w.w}」` });
   };
 
   return (

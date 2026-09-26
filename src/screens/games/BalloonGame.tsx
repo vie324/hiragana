@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Buddy from '../../components/Buddy';
 import { ProgressDots, SpeakerButton, TopBar } from '../../components/ui';
 import RewardModal from '../../components/RewardModal';
-import { sayKana } from '../../lib/kana';
 import { speak, wait } from '../../lib/speech';
 import { sfx } from '../../lib/sound';
 import { burstAt } from '../../lib/confetti';
@@ -11,6 +10,7 @@ import { shuffle } from '../../lib/random';
 import { back } from '../../state/router';
 import { completeActivity, recordAnswer, type RewardResult } from '../../state/actions';
 import { distractors, starsFromMistakes, targetKana } from './pools';
+import { L } from '../../voice/lines';
 import './games.css';
 
 const ROUNDS = 6;
@@ -52,7 +52,7 @@ export default function BalloonGame({ kana, nodeId }: { kana?: string[]; nodeId?
   }, [target, nChoices, kana]);
 
   // きく れんしゅう なので ふきだしには こたえの もじを ださない
-  const prompt = () => speak(`「${sayKana(target)}」の ふうせんを わってね。`, { caption: 'きこえた もじの ふうせんを わってね' });
+  const prompt = () => speak(L.balloonAsk(target), { caption: 'きこえた もじの ふうせんを わってね' });
 
   useEffect(() => {
     if (!target) return;
@@ -74,7 +74,7 @@ export default function BalloonGame({ kana, nodeId }: { kana?: string[]; nodeId?
       // まちがえた ラウンドは さいしょの ミスで きろく ずみ
       if (roundMistakes === 0) recordAnswer(target, true);
       setMood('happy');
-      await speak(`「${sayKana(target)}」! あたり!`);
+      await speak(L.balloonHit(target));
       await wait(200);
       if (!alive.current) return;
       if (round + 1 >= ROUNDS) {
@@ -90,7 +90,7 @@ export default function BalloonGame({ kana, nodeId }: { kana?: string[]; nodeId?
       setRoundMistakes((m) => m + 1);
       if (roundMistakes === 0) recordAnswer(target, false);
       setMood('think');
-      await speak(`これは「${sayKana(b.kana)}」。「${sayKana(target)}」は どれかな?`, { caption: `これは「${b.kana}」。もういちど きいてね` });
+      await speak(L.balloonMiss(b.kana, target), { caption: `これは「${b.kana}」。もういちど きいてね` });
     }
   };
 

@@ -6,6 +6,7 @@ import { speak } from '../lib/speech';
 import { resetTo } from '../state/router';
 import { grantExtraMinutes, remainingSeconds } from '../state/actions';
 import { A } from '../data/scene';
+import { L } from '../voice/lines';
 import './sleep.css';
 
 export default function SleepScreen() {
@@ -13,7 +14,7 @@ export default function SleepScreen() {
   const [gate, setGate] = useState(false);
 
   useEffect(() => {
-    void speak(`${callName(profile)}、きょうは たくさん がんばったね。また あした あそぼうね。おやすみなさい。`);
+    void speak(L.sleep(callName(profile)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

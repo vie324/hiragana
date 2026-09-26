@@ -1,11 +1,12 @@
 /**
- * 効果音と BGM (Web Audio API で その場で つくるので 音声ファイルは いらない)
+ * 効果音と BGM (Web Audio API で その場で つくるので 音声ファイルは いらない)。
+ * まえもって つくった 声 (src/voice/bank.ts) も ここの AudioContext で ならす。
  */
-import { onSpeakingChange } from './speech';
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let musicBus: GainNode | null = null;
+let voiceBus: GainNode | null = null;
 let sfxEnabled = true;
 let bgmEnabled = true;
 let volume = 0.8;
@@ -29,6 +30,10 @@ function ensure(): AudioContext | null {
   musicBus = ctx.createGain();
   musicBus.gain.value = 0.55;
   musicBus.connect(master);
+  // 声は 効果音の 音量に かかわらず はっきり きこえるように する
+  voiceBus = ctx.createGain();
+  voiceBus.gain.value = 1;
+  voiceBus.connect(ctx.destination);
   ctx.addEventListener('statechange', () => {
     if (ctx?.state === 'running' && bgmWanted && bgmEnabled && !bgmTimer) startBgm();
   });
@@ -80,6 +85,12 @@ export async function playAudioData(data: ArrayBuffer): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** 声を ならす ための AudioContext と 出口 */
+export function getAudioOut(): { ctx: AudioContext; voice: GainNode } | null {
+  const c = ensure();
+  return c && voiceBus ? { ctx: c, voice: voiceBus } : null;
 }
 
 /** iPad で バックグラウンドから もどったとき など、とまった 音を うごかす */
@@ -294,8 +305,8 @@ export function wantBgm(on: boolean): void {
   else stopBgm();
 }
 
-// よみあげ中は BGM を ちいさく する
-onSpeakingChange((s) => {
+/** よみあげ中は BGM を ちいさく する (main.tsx で よみあげと つなぐ) */
+export function duckBgm(speaking: boolean): void {
   if (!ctx || !musicBus) return;
-  musicBus.gain.setTargetAtTime(s ? 0.15 : 0.55, ctx.currentTime, 0.12);
-});
+  musicBus.gain.setTargetAtTime(speaking ? 0.15 : 0.55, ctx.currentTime, 0.12);
+}

@@ -643,3 +643,125 @@
 .about a {
   color: #2a78d6;
 }
+
+/* ---------- かおしゃしん ---------- */
+
+.face-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  margin: 10px 0 6px;
+}
+
+.face-item {
+  position: relative;
+}
+
+.face-del {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #c0392b;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.face-add {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 3px dashed #e4dbd1;
+  background: #fffaf3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-family: var(--ui);
+  font-size: 11px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.face-add .emoji {
+  font-size: 26px;
+}
+
+.emoji-seg .face-badge {
+  vertical-align: middle;
+  border-width: 2px;
+}
+
+/* ---------- データ ---------- */
+
+.save-status {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.save-status li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fffaf3;
+  font-size: 15px;
+}
+
+.save-status li span {
+  color: var(--ink-soft);
+}
+
+.parent-card .warn {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff4d6;
+  border: 1px solid #f3d27a;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.restore-confirm {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff4d6;
+  border: 1px solid #f3d27a;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.restore-confirm p {
+  margin: 0 0 10px;
+}
+
+.parent-card.remind {
+  background: #fff4d6;
+  border: 2px solid #f3d27a;
+}
+
+.parent-card.remind p {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.parent-card .row button.primary {
+  width: auto;
+  padding: 11px 20px;
+  font-size: 16px;
+}

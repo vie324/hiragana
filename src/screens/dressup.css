@@ -56,6 +56,21 @@
   opacity: 0.7;
 }
 
+.closet-faces {
+  grid-column: span 4;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.6vh 1.2vw;
+  padding-bottom: 1.6vh;
+  border-bottom: 3px dashed #f6c9da;
+}
+
+.closet-item.face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .change-buddy {
   grid-column: span 4;
   font-size: calc(var(--u) * 2.8);

@@ -7,6 +7,8 @@ interface Window {
   __HIRAGANA_FAST_SPEECH__?: boolean;
   /** e2e テスト用: よみあげた テキストの きろく */
   __HIRAGANA_SPOKEN__?: string[];
+  /** e2e テスト用: まえもって つくった 声が なかった テキスト */
+  __HIRAGANA_VOICE_MISSES__?: string[];
   /** e2e テスト用 (テストのときだけ セットされる) */
   __HIRAGANA_TEST__?: boolean;
   __hiragana?: {
@@ -14,5 +16,6 @@ interface Window {
     resetTo: typeof import('./state/router').resetTo;
     getData: typeof import('./state/store').getData;
     update: typeof import('./state/store').update;
+    voice: typeof import('./voice/bank').currentVoice;
   };
 }

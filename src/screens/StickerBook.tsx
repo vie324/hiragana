@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Emoji, TopBar } from '../components/ui';
+import FaceBadge from '../components/FaceBadge';
 import { STICKER_PAGES, RARE, type StickerPage } from '../data/stickers';
-import { update, useApp, type PlacedSticker } from '../state/store';
+import { update, useApp, type Face, type PlacedSticker } from '../state/store';
 import { speak } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import './stickers.css';
@@ -31,9 +32,19 @@ function PageBackground({ page }: { page: StickerPage }) {
   );
 }
 
+/** シール 1まい (えもじ か かおしゃしん 'face:<id>') */
+function StickerView({ s, faces }: { s: string; faces: Face[] }) {
+  if (s.startsWith('face:')) {
+    const f = faces.find((x) => x.id === s.slice(5));
+    return f ? <FaceBadge img={f.img} size="1.1em" className="sb-face" /> : null;
+  }
+  return <span className="emoji">{s}</span>;
+}
+
 export default function StickerBook() {
   const stickers = useApp((s) => s.stickers);
   const placed = useApp((s) => s.placed);
+  const faces = useApp((s) => s.faces);
   const [pageId, setPageId] = useState(STICKER_PAGES[0].id);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [bounce, setBounce] = useState<string | null>(null);
@@ -42,10 +53,14 @@ export default function StickerBook() {
   const onPage = placed[pageId] ?? [];
 
   const usedCount = (s: string) => Object.values(placed).reduce((a, list) => a + list.filter((p) => p.s === s).length, 0);
-  const owned = Object.entries(stickers)
-    .filter(([, n]) => n > 0)
-    .map(([s, n]) => ({ s, left: n - usedCount(s) }))
-    .sort((a, b) => Number(RARE.has(b.s)) - Number(RARE.has(a.s)));
+  const owned = [
+    // かおしゃしんの シールは なんまいでも はれる
+    ...faces.map((f) => ({ s: `face:${f.id}`, left: Infinity })),
+    ...Object.entries(stickers)
+      .filter(([, n]) => n > 0)
+      .map(([s, n]) => ({ s, left: n - usedCount(s) }))
+      .sort((a, b) => Number(RARE.has(b.s)) - Number(RARE.has(a.s))),
+  ];
   const total = Object.values(stickers).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
@@ -188,7 +203,7 @@ export default function StickerBook() {
               setTimeout(() => setBounce(null), 500);
             }}
           >
-            <span className="emoji">{p.s}</span>
+            <StickerView s={p.s} faces={faces} />
           </div>
         ))}
         {!onPage.length && <div className="sb-hint">{owned.length ? 'したの シールを ここへ はってね' : 'ゲームで シールを あつめよう!'}</div>}
@@ -202,14 +217,14 @@ export default function StickerBook() {
             onPointerDown={(e) => left > 0 && pressTray(e, s)}
             data-testid={`tray-${s}`}
           >
-            <span className="emoji">{s}</span>
-            {left > 1 && <b>{left}</b>}
+            <StickerView s={s} faces={faces} />
+            {left > 1 && left !== Infinity && <b>{left}</b>}
           </div>
         ))}
       </div>
       {drag && (
         <div className="sb-drag" style={{ left: drag.x, top: drag.y }}>
-          <span className="emoji">{drag.s}</span>
+          <StickerView s={drag.s} faces={faces} />
         </div>
       )}
     </div>

@@ -8,6 +8,7 @@ import { speakAfterCurrent } from '../lib/session';
 import { sfx } from '../lib/sound';
 import { ALL_NODES, nextNodeIndex, type MapNode } from '../data/curriculum';
 import { findSpecialLesson } from '../data/specialLessons';
+import { L } from '../voice/lines';
 import './home.css';
 
 interface MenuItem {
@@ -69,7 +70,7 @@ export default function HomeScreen() {
   useEffect(() => {
     let here = true;
     const first = !days[todayKey()]?.acts;
-    void speakAfterCurrent(first ? `きょうは なにして あそぶ?` : `${callName(profile)}、つぎは なにに する?`, undefined, 6000, () => here);
+    void speakAfterCurrent(first ? `きょうは なにして あそぶ?` : L.homeNext(callName(profile)), undefined, 6000, () => here);
     return () => {
       here = false;
     };

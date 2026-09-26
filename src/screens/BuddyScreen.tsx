@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react';
 import Mascot from '../components/Mascot';
 import { Btn, Emoji } from '../components/ui';
-import { BUDDY_DEFAULT_NAMES, update, useApp, type BuddyKind, callName } from '../state/store';
+import { BUDDY_DEFAULT_NAMES, BUDDY_KIND_SAY, update, useApp, type BuddyKind, callName } from '../state/store';
 import { resetTo } from '../state/router';
 import { speak } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { burst } from '../lib/confetti';
 import { useCaption } from '../components/Buddy';
+import { L } from '../voice/lines';
 import './buddy.css';
 
-const KINDS: { kind: BuddyKind; say: string }[] = [
-  { kind: 'usagi', say: 'うさぎの' },
-  { kind: 'kuma', say: 'くまの' },
-  { kind: 'neko', say: 'ねこの' },
-  { kind: 'hiyoko', say: 'ひよこの' },
-];
+const KINDS = Object.keys(BUDDY_KIND_SAY) as BuddyKind[];
 
 export default function BuddyScreen() {
   const profile = useApp((s) => s.profile);
@@ -22,7 +18,7 @@ export default function BuddyScreen() {
   const caption = useCaption();
 
   useEffect(() => {
-    void speak(`${callName(profile)}、いっしょに あそぶ おともだちを えらんでね。`);
+    void speak(L.chooseBuddy(callName(profile)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -31,8 +27,7 @@ export default function BuddyScreen() {
     sfx.hop();
     const r = el.getBoundingClientRect();
     burst({ x: r.left + r.width / 2, y: r.top + r.height / 3, count: 24, power: 450 });
-    const info = KINDS.find((x) => x.kind === k)!;
-    void speak(`${info.say} ${BUDDY_DEFAULT_NAMES[k]} だよ。よろしくね!`);
+    void speak(L.buddyIntro(BUDDY_KIND_SAY[k], BUDDY_DEFAULT_NAMES[k]));
   };
 
   const decide = () => {
@@ -44,7 +39,7 @@ export default function BuddyScreen() {
       d.profile.setup = true;
     });
     sfx.fanfare();
-    void speak(`${BUDDY_DEFAULT_NAMES[chosen]}と いっしょに、ひらがなの ぼうけんに しゅっぱつ!`);
+    void speak(L.buddyStart(BUDDY_DEFAULT_NAMES[chosen]));
     resetTo({ name: 'home' });
   };
 
@@ -52,7 +47,7 @@ export default function BuddyScreen() {
     <div className="screen buddy-screen">
       <div className="buddy-caption">{caption && <div className="bubble tail-bottom">{caption}</div>}</div>
       <div className="buddy-choices">
-        {KINDS.map(({ kind }) => (
+        {KINDS.map((kind) => (
           <button
             key={kind}
             className={`buddy-choice ${chosen === kind ? 'on' : ''}`}

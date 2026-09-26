@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useRoute, resetTo, type Route } from './state/router';
-import { useApp, getData } from './state/store';
-import { setVoicePrefs } from './lib/speech';
+import { useApp, getData, callName } from './state/store';
+import { setSpeechNames, setVoicePrefs } from './lib/speech';
+import { loadVoice } from './voice/bank';
 import { setSoundPrefs, wantBgm } from './lib/sound';
 import { attachConfetti } from './lib/confetti';
 import { addPlaySeconds, remainingSeconds } from './state/actions';
@@ -129,11 +130,22 @@ function usePlayTimer(name: Route['name']) {
 export default function App() {
   const { route, version } = useRoute();
   const settings = useApp((s) => s.settings);
+  const childName = useApp((s) => callName(s.profile));
+  const buddyName = useApp((s) => s.profile.buddyName);
 
   useEffect(() => {
     setVoicePrefs({ voiceURI: settings.voiceURI, rate: settings.rate, pitch: settings.pitch });
     setSoundPrefs({ sfx: settings.sfx, bgm: settings.bgm, volume: settings.volume });
   }, [settings]);
+
+  useEffect(() => {
+    // テストでは パックを よみこまない (声の ファイルが あるかだけ しらべる)
+    void loadVoice(settings.voice === 'tts' ? null : settings.voice, { packs: !window.__HIRAGANA_FAST_SPEECH__ });
+  }, [settings.voice]);
+
+  useEffect(() => {
+    setSpeechNames([childName, buddyName]);
+  }, [childName, buddyName]);
 
   useEffect(() => {
     wantBgm(BGM_SCREENS.has(route.name));

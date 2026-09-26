@@ -12,6 +12,8 @@ interface Props {
   /** 口を うごかす (しゃべっている)。undefined なら よみあげに あわせる */
   talking?: boolean;
   outfit?: string | null;
+  /** かおに する しゃしん (data URL)。あれば どうぶつの かおの かわりに だす */
+  face?: string | null;
   wave?: boolean;
   size?: number | string;
   className?: string;
@@ -34,7 +36,7 @@ export function useTalking(): boolean {
   return t;
 }
 
-export default function Mascot({ kind, mood = 'normal', talking, outfit, wave, size = 200, className = '', style, onTap, bump }: Props) {
+export default function Mascot({ kind, mood = 'normal', talking, outfit, face, wave, size = 200, className = '', style, onTap, bump }: Props) {
   const speakingNow = useTalking();
   const isTalking = talking ?? speakingNow;
   const c = COLORS[kind];
@@ -42,7 +44,7 @@ export default function Mascot({ kind, mood = 'normal', talking, outfit, wave, s
   const o = findOutfit(outfit);
   const [poke, setPoke] = useState(0);
 
-  const cls = ['mascot', `mood-${mood}`, `kind-${kind}`, isTalking && mood !== 'sleep' ? 'talking' : '', wave ? 'waving' : '', className]
+  const cls = ['mascot', `mood-${mood}`, `kind-${kind}`, face ? 'has-face' : '', isTalking && mood !== 'sleep' ? 'talking' : '', wave ? 'waving' : '', className]
     .filter(Boolean)
     .join(' ');
 
@@ -60,7 +62,7 @@ export default function Mascot({ kind, mood = 'normal', talking, outfit, wave, s
               ? { x: 142, y: 52, s: 34 }
               : { x: 136, y: 66, s: 32 };
       case 'eyes':
-        return { x: 100, y: 124, s: 74 };
+        return face ? { x: 100, y: 110, s: 80 } : { x: 100, y: 124, s: 74 };
       case 'neck':
         return { x: 100, y: 180, s: 40 };
       case 'hand':
@@ -154,93 +156,110 @@ export default function Mascot({ kind, mood = 'normal', talking, outfit, wave, s
           {/* からだ */}
           <ellipse cx="100" cy="124" rx="76" ry="68" fill={c.body} stroke={c.line} strokeWidth="3" />
           <ellipse cx="100" cy="124" rx="76" ry="68" fill={`url(#g${gid})`} />
-          {kind === 'neko' && (
-            <g stroke={c.shade} strokeWidth="5" strokeLinecap="round">
-              <line x1="100" y1="62" x2="100" y2="76" />
-              <line x1="86" y1="64" x2="88" y2="76" />
-              <line x1="114" y1="64" x2="112" y2="76" />
-            </g>
-          )}
-          {kind === 'kuma' && <ellipse cx="100" cy="140" rx="30" ry="22" fill={c.inner} />}
-          {kind === 'hiyoko' && (
-            <ellipse cx="100" cy="150" rx="40" ry="26" fill="#fff3a8" opacity="0.8" />
-          )}
-
-          {/* ほっぺ */}
-          <ellipse cx="54" cy="136" rx="13" ry="8" fill={c.cheek} opacity="0.55" className="m-cheek" />
-          <ellipse cx="146" cy="136" rx="13" ry="8" fill={c.cheek} opacity="0.55" className="m-cheek" />
-
-          {/* め */}
-          <g className="m-eyes">
-            {mood === 'happy' || mood === 'cheer' ? (
-              <g fill="none" stroke="#3b2a22" strokeWidth="6" strokeLinecap="round">
-                <path d="M62 118 Q72 104 82 118" />
-                <path d="M118 118 Q128 104 138 118" />
-              </g>
-            ) : mood === 'sleep' ? (
-              <g fill="none" stroke="#3b2a22" strokeWidth="5" strokeLinecap="round">
-                <path d="M62 114 Q72 122 82 114" />
-                <path d="M118 114 Q128 122 138 114" />
-              </g>
-            ) : (
-              <g className={mood === 'wow' ? 'm-eyes-wow' : 'm-eyes-open'}>
-                <ellipse cx="72" cy="114" rx="8.5" ry="11" fill="#3b2a22" />
-                <ellipse cx="128" cy="114" rx="8.5" ry="11" fill="#3b2a22" />
-                <circle cx="69" cy="109" r="3.4" fill="#fff" />
-                <circle cx="125" cy="109" r="3.4" fill="#fff" />
-                <circle cx="75" cy="119" r="1.6" fill="#fff" opacity="0.8" />
-                <circle cx="131" cy="119" r="1.6" fill="#fff" opacity="0.8" />
-              </g>
-            )}
-            {mood === 'sad' && (
-              <g stroke="#3b2a22" strokeWidth="4" strokeLinecap="round">
-                <line x1="60" y1="96" x2="80" y2="100" />
-                <line x1="140" y1="96" x2="120" y2="100" />
-              </g>
-            )}
-          </g>
-
-          {/* はな・くち */}
-          {kind === 'hiyoko' ? (
-            <g className="m-mouth">
-              <g className="m-closed">
-                <path d="M88 130 L100 124 L112 130 L100 138 Z" fill="#ff9f43" stroke="#e67e22" strokeWidth="2" strokeLinejoin="round" />
-              </g>
-              <g className="m-open">
-                <path d="M88 128 L100 120 L112 128 Z" fill="#ff9f43" stroke="#e67e22" strokeWidth="2" strokeLinejoin="round" />
-                <path d="M90 134 L100 146 L110 134 Z" fill="#ff9f43" stroke="#e67e22" strokeWidth="2" strokeLinejoin="round" />
-              </g>
+          {face ? (
+            <g className="m-face">
+              <defs>
+                <clipPath id={`f${gid}`}>
+                  <circle cx="100" cy="118" r="58" />
+                </clipPath>
+              </defs>
+              <circle cx="100" cy="118" r="63" fill="#fff" stroke={c.line} strokeWidth="3" />
+              <image href={face} x="42" y="60" width="116" height="116" clipPath={`url(#f${gid})`} preserveAspectRatio="xMidYMid slice" className="m-photo" />
+              <ellipse cx="62" cy="150" rx="11" ry="6.5" fill={c.cheek} opacity="0.5" />
+              <ellipse cx="138" cy="150" rx="11" ry="6.5" fill={c.cheek} opacity="0.5" />
+              {mood === 'sleep' && <circle cx="100" cy="118" r="58" fill="#1d2b5a" opacity="0.35" />}
             </g>
           ) : (
             <>
-              {kind === 'kuma' ? (
-                <ellipse cx="100" cy="128" rx="8" ry="6" fill="#5a3a2a" />
+            {kind === 'neko' && (
+              <g stroke={c.shade} strokeWidth="5" strokeLinecap="round">
+                <line x1="100" y1="62" x2="100" y2="76" />
+                <line x1="86" y1="64" x2="88" y2="76" />
+                <line x1="114" y1="64" x2="112" y2="76" />
+              </g>
+            )}
+            {kind === 'kuma' && <ellipse cx="100" cy="140" rx="30" ry="22" fill={c.inner} />}
+            {kind === 'hiyoko' && (
+              <ellipse cx="100" cy="150" rx="40" ry="26" fill="#fff3a8" opacity="0.8" />
+            )}
+
+            {/* ほっぺ */}
+            <ellipse cx="54" cy="136" rx="13" ry="8" fill={c.cheek} opacity="0.55" className="m-cheek" />
+            <ellipse cx="146" cy="136" rx="13" ry="8" fill={c.cheek} opacity="0.55" className="m-cheek" />
+
+            {/* め */}
+            <g className="m-eyes">
+              {mood === 'happy' || mood === 'cheer' ? (
+                <g fill="none" stroke="#3b2a22" strokeWidth="6" strokeLinecap="round">
+                  <path d="M62 118 Q72 104 82 118" />
+                  <path d="M118 118 Q128 104 138 118" />
+                </g>
+              ) : mood === 'sleep' ? (
+                <g fill="none" stroke="#3b2a22" strokeWidth="5" strokeLinecap="round">
+                  <path d="M62 114 Q72 122 82 114" />
+                  <path d="M118 114 Q128 122 138 114" />
+                </g>
               ) : (
-                <ellipse cx="100" cy="128" rx="5" ry="3.6" fill={kind === 'usagi' ? '#ff8fb1' : '#ff8fa8'} />
-              )}
-              {kind === 'neko' && (
-                <g stroke="#b8804a" strokeWidth="2.5" strokeLinecap="round" opacity="0.7">
-                  <line x1="30" y1="126" x2="52" y2="130" />
-                  <line x1="30" y1="138" x2="52" y2="137" />
-                  <line x1="170" y1="126" x2="148" y2="130" />
-                  <line x1="170" y1="138" x2="148" y2="137" />
+                <g className={mood === 'wow' ? 'm-eyes-wow' : 'm-eyes-open'}>
+                  <ellipse cx="72" cy="114" rx="8.5" ry="11" fill="#3b2a22" />
+                  <ellipse cx="128" cy="114" rx="8.5" ry="11" fill="#3b2a22" />
+                  <circle cx="69" cy="109" r="3.4" fill="#fff" />
+                  <circle cx="125" cy="109" r="3.4" fill="#fff" />
+                  <circle cx="75" cy="119" r="1.6" fill="#fff" opacity="0.8" />
+                  <circle cx="131" cy="119" r="1.6" fill="#fff" opacity="0.8" />
                 </g>
               )}
+              {mood === 'sad' && (
+                <g stroke="#3b2a22" strokeWidth="4" strokeLinecap="round">
+                  <line x1="60" y1="96" x2="80" y2="100" />
+                  <line x1="140" y1="96" x2="120" y2="100" />
+                </g>
+              )}
+            </g>
+
+            {/* はな・くち */}
+            {kind === 'hiyoko' ? (
               <g className="m-mouth">
                 <g className="m-closed">
-                  {mood === 'sad' ? (
-                    <path d="M90 146 Q100 138 110 146" fill="none" stroke="#3b2a22" strokeWidth="4" strokeLinecap="round" />
-                  ) : mood === 'wow' ? (
-                    <ellipse cx="100" cy="144" rx="7" ry="9" fill="#7a3434" />
-                  ) : (
-                    <path d="M88 136 Q94 144 100 136 Q106 144 112 136" fill="none" stroke="#3b2a22" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                  )}
+                  <path d="M88 130 L100 124 L112 130 L100 138 Z" fill="#ff9f43" stroke="#e67e22" strokeWidth="2" strokeLinejoin="round" />
                 </g>
                 <g className="m-open">
-                  <path d="M86 136 Q100 164 114 136 Z" fill="#7a3434" stroke="#3b2a22" strokeWidth="3" strokeLinejoin="round" />
-                  <ellipse cx="100" cy="151" rx="7" ry="4.5" fill="#ff8f9f" />
+                  <path d="M88 128 L100 120 L112 128 Z" fill="#ff9f43" stroke="#e67e22" strokeWidth="2" strokeLinejoin="round" />
+                  <path d="M90 134 L100 146 L110 134 Z" fill="#ff9f43" stroke="#e67e22" strokeWidth="2" strokeLinejoin="round" />
                 </g>
               </g>
+            ) : (
+              <>
+                {kind === 'kuma' ? (
+                  <ellipse cx="100" cy="128" rx="8" ry="6" fill="#5a3a2a" />
+                ) : (
+                  <ellipse cx="100" cy="128" rx="5" ry="3.6" fill={kind === 'usagi' ? '#ff8fb1' : '#ff8fa8'} />
+                )}
+                {kind === 'neko' && (
+                  <g stroke="#b8804a" strokeWidth="2.5" strokeLinecap="round" opacity="0.7">
+                    <line x1="30" y1="126" x2="52" y2="130" />
+                    <line x1="30" y1="138" x2="52" y2="137" />
+                    <line x1="170" y1="126" x2="148" y2="130" />
+                    <line x1="170" y1="138" x2="148" y2="137" />
+                  </g>
+                )}
+                <g className="m-mouth">
+                  <g className="m-closed">
+                    {mood === 'sad' ? (
+                      <path d="M90 146 Q100 138 110 146" fill="none" stroke="#3b2a22" strokeWidth="4" strokeLinecap="round" />
+                    ) : mood === 'wow' ? (
+                      <ellipse cx="100" cy="144" rx="7" ry="9" fill="#7a3434" />
+                    ) : (
+                      <path d="M88 136 Q94 144 100 136 Q106 144 112 136" fill="none" stroke="#3b2a22" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                    )}
+                  </g>
+                  <g className="m-open">
+                    <path d="M86 136 Q100 164 114 136 Z" fill="#7a3434" stroke="#3b2a22" strokeWidth="3" strokeLinejoin="round" />
+                    <ellipse cx="100" cy="151" rx="7" ry="4.5" fill="#ff8f9f" />
+                  </g>
+                </g>
+              </>
+            )}
             </>
           )}
 

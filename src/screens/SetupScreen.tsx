@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { update, useApp } from '../state/store';
+import { addFace } from '../state/faces';
+import { isStandalone } from '../state/backup';
+import FaceCamera from '../components/FaceCamera';
+import FaceBadge from '../components/FaceBadge';
 import { replace } from '../state/router';
 import './parent.css';
 
@@ -12,6 +16,8 @@ export default function SetupScreen() {
   const [suffix, setSuffix] = useState(profile.suffix);
   const [avatar, setAvatar] = useState(profile.avatar);
   const [limit, setLimit] = useState(settings.limitMin);
+  const faces = useApp((s) => s.faces);
+  const [camera, setCamera] = useState(false);
   const valid = HIRAGANA_RE.test(name) && [...name].length <= 8;
 
   const next = () => {
@@ -30,6 +36,11 @@ export default function SetupScreen() {
       <div className="parent-scroll">
         <div className="parent-card setup">
           <h1>はじめに(おうちの方へ)</h1>
+          {!isStandalone() && (
+            <p className="warn" data-testid="setup-standalone">
+              📲 いまはSafariで開いています。先に共有ボタン →「ホーム画面に追加」をして、ホーム画面のアイコンから開いて設定するのがおすすめです(Safariとホーム画面のアプリでは、記録が別々に保存されます)。
+            </p>
+          )}
           <p className="lead">
             「ひらがな ぼうけん」は、キャラクターといっしょに、ひらがなを<b>よむ・かく・えほんをよむ</b>まで、ひとりで楽しく進められる学習アプリです。
             文字はすべて音声で読み上げるので、字が読めなくても遊べます。
@@ -70,7 +81,20 @@ export default function SetupScreen() {
                   <span className="emoji">{a}</span>
                 </button>
               ))}
+              {faces.map((f) => (
+                <button key={f.id} className={avatar === `face:${f.id}` ? 'on' : ''} onClick={() => setAvatar(`face:${f.id}`)}>
+                  <FaceBadge img={f.img} size={44} />
+                </button>
+              ))}
             </div>
+          </div>
+
+          <div className="field">
+            <span>かおしゃしん(なくてもOK)</span>
+            <button className="secondary" onClick={() => setCamera(true)} data-testid="setup-face">
+              📷 {faces.length ? 'もう1まい入れる' : 'お子さまの顔写真を入れる'}
+            </button>
+            <small>顔写真を入れると、あいぼうの顔や絵本に出てくる子になって、いっしょに動きます。写真はこのiPadの中だけに保存されます。あとから「おうちの方へ」でも入れられます。</small>
           </div>
 
           <div className="field">
@@ -88,14 +112,26 @@ export default function SetupScreen() {
           <div className="tips">
             <h2>iPadでのおすすめ設定</h2>
             <ol>
-              <li>Safariの共有ボタン →「ホーム画面に追加」で、アプリのように全画面で使えます(オフラインでも動きます)。</li>
+              <li>Safariの共有ボタン →「ホーム画面に追加」で、アプリのように全画面で使えます(オフラインでも動きます)。Safariとホーム画面のアプリでは記録が別々に保存されるので、ホーム画面のアプリで遊んでください。</li>
               <li>
-                「設定 → アクセシビリティ → 読み上げコンテンツ → 声 → 日本語」から <b>Kyoko(拡張)</b> などの声をダウンロードすると、読み上げがより自然になります。
+                読み上げには、かわいい声(VOICEVOX:ずんだもん)を使います。お子さまの名前だけはiPadの読み上げ機能で読むので、「設定 → アクセシビリティ → 読み上げコンテンツ → 声 → 日本語」から <b>Kyoko(拡張)</b> などをダウンロードしておくと自然になります。
               </li>
               <li>「設定 → アクセシビリティ → アクセスガイド」を使うと、お子さまがアプリの外に出られないようにできます。</li>
               <li>Apple Pencil を使うと、手のひらが画面に触れても大丈夫です(ペンを使うと指の入力を自動で無視します)。</li>
+              <li>記録はこのiPadの中に自動で保存されます。ときどき「おうちの方へ → データ → ファイルに保存」で iCloud Drive などにバックアップしておくと安心です。</li>
             </ol>
           </div>
+
+          {camera && (
+            <FaceCamera
+              onClose={() => setCamera(false)}
+              onSave={(img) => {
+                const id = addFace(img);
+                if (id && !faces.length) setAvatar(`face:${id}`);
+                setCamera(false);
+              }}
+            />
+          )}
 
           <button className="primary" onClick={next} disabled={!valid} data-testid="setup-next">
             つぎへ(お子さまに渡してください)

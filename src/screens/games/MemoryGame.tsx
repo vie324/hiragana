@@ -13,6 +13,7 @@ import { completeActivity, recordAnswer, type RewardResult } from '../../state/a
 import { wordsStartingWith, sayWord, type Word } from '../../data/words';
 import { findNode, stageOfNode, kanaUpToStage } from '../../data/curriculum';
 import { knownPool, starsFromMistakes } from './pools';
+import { L } from '../../voice/lines';
 import './games.css';
 
 interface Card {
@@ -76,7 +77,7 @@ export default function MemoryGame({ nodeId }: { nodeId?: string }) {
       setOpen([]);
       setMood('happy');
       const w = (a.word ?? b.word)!;
-      await speak(`${sayWord(w)}の「${sayKana(a.pair)}」! ぴったり!`, { caption: `${w.w} の「${a.pair}」` });
+      await speak(L.memoryHit(w, a.pair), { caption: `${w.w} の「${a.pair}」` });
       if (!alive.current) return;
       setBusy(false);
       if (m.size >= pairs) {

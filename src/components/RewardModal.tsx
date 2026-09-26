@@ -4,9 +4,10 @@ import { Btn, Emoji, Stars } from './ui';
 import { speak, wait } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { burstAt, celebrate } from '../lib/confetti';
-import { useApp } from '../state/store';
+import { useApp, useBuddyFace } from '../state/store';
 import { useIdle } from '../lib/hooks';
 import Mascot from './Mascot';
+import { L } from '../voice/lines';
 import './reward.css';
 
 interface Props {
@@ -27,6 +28,7 @@ export default function RewardModal({ result, onClose, headline }: Props) {
   const giftRef = useRef<HTMLButtonElement>(null);
   const stickerRef = useRef<HTMLDivElement>(null);
   const kind = useApp((s) => s.profile.buddy);
+  const face = useBuddyFace();
   const buddyName = useApp((s) => s.profile.buddyName);
   const alive = useRef(true);
   const opened = useRef(false);
@@ -67,7 +69,7 @@ export default function RewardModal({ result, onClose, headline }: Props) {
     }
     if (result.outfit && alive.current) {
       sfx.sparkle();
-      await speak(`${result.outfit.say}を もらったよ! ${buddyName}に つけて あげたよ。`);
+      await speak(L.gotOutfit(result.outfit.say, buddyName));
     }
     if (alive.current) setStep('done');
   };
@@ -96,7 +98,7 @@ export default function RewardModal({ result, onClose, headline }: Props) {
           )}
           {result.outfit && (step === 'open' || step === 'done') && (
             <div className="reward-outfit pop-in">
-              <Mascot kind={kind} outfit={result.outfit.id} mood="happy" size={150} />
+              <Mascot kind={kind} outfit={result.outfit.id} face={face} mood="happy" size={150} />
             </div>
           )}
           {result.stamp && (step === 'open' || step === 'done') && (
