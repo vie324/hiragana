@@ -131,8 +131,9 @@ export interface SpeakOptions {
  * @returns さいごまで よめたら true、とちゅうで とめられたら false
  */
 export function speak(text: string, opts: SpeakOptions = {}): Promise<boolean> {
-  if (cancelCurrent) cancelCurrent();
+  // さきに id を すすめて、まえの よみあげの おわりで「しゃべっていない」と しらせないようにする
   const id = ++currentId;
+  if (cancelCurrent) cancelCurrent();
   const rate = opts.rate ?? prefs.rate;
   const pitch = opts.pitch ?? prefs.pitch;
   // ふきだしには ひらがなだけを だす (よみあげ用の 漢字は みせない)
@@ -237,7 +238,10 @@ export async function speakSequence(
     opts.onPart?.(i);
     const ok = await speak(parts[i], opts);
     if (!ok) return false;
+    const mine = currentId;
     if (opts.gapMs && i < parts.length - 1) await wait(opts.gapMs);
+    // まっている あいだに ほかの よみあげが はじまったら やめる
+    if (currentId !== mine) return false;
   }
   return true;
 }

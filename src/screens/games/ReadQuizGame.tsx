@@ -58,7 +58,8 @@ export default function ReadQuizGame({ nodeId }: { nodeId?: string }) {
     recordWord(word.w, roundMiss === 0);
     [...word.w].forEach((c) => recordAnswer(c, roundMiss === 0));
     setMood('happy');
-    await speakSequence(units.map(sayKana), { gapMs: 30, onPart: (i) => setLit(i), rate: 1.1 });
+    await speakSequence(units.map(sayKana), { gapMs: 30, onPart: (i) => alive.current && setLit(i), rate: 1.1 });
+    if (!alive.current) return;
     setLit(-1);
     celebrate();
     await speak(`${sayWord(word)}! よめたね!`, { caption: `${word.w}! よめたね!` });

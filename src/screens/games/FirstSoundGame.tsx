@@ -66,7 +66,7 @@ export default function FirstSoundGame({ kana, nodeId }: { kana?: string[]; node
   const total = questions.length;
 
   const correct = async () => {
-    recordAnswer(q.kana, roundMiss === 0);
+    if (roundMiss === 0) recordAnswer(q.kana, true);
     setMood('happy');
     await speak(`${sayWord(q.answer)}! 「${sayKana(q.kana)}」から はじまるね!`, { caption: `${q.answer.w}!` });
     await wait(200);

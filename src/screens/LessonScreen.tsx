@@ -57,12 +57,17 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
     setReady(false);
     setMood('normal');
     let t: ReturnType<typeof setTimeout> | undefined;
+    // つぎの ステップに すすんだら (または 画面を とじたら) この ながれは とめる
+    let stale = false;
+    const live = () => !stale && alive.current;
     (async () => {
       switch (step) {
         case 'intro':
+          // カードを タッチして よみあげが とぎれても、おなじ ステップなら つづける
           await say(`これは、「${sayKana(kana)}」。いっしょに いってみよう。`);
-          if (!alive.current) return;
+          if (!live()) return;
           await wait(250);
+          if (!live()) return;
           setBump((b) => b + 1);
           await say(sayKana(kana));
           break;
@@ -75,16 +80,19 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
           break;
         case 'write':
           setShowSkip(false);
-          t = setTimeout(() => alive.current && setShowSkip(true), 15000);
+          t = setTimeout(() => live() && setShowSkip(true), 15000);
           await say(settings.finger === 'pen' ? 'ペンで なぞって みよう。' : 'ゆびか ペンで、なぞって みよう。');
           return;
         case 'find':
           await say(`「${sayKana(kana)}」は どれかな?`);
           return;
       }
-      if (alive.current) setReady(true);
+      if (live()) setReady(true);
     })();
-    return () => clearTimeout(t);
+    return () => {
+      stale = true;
+      clearTimeout(t);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 

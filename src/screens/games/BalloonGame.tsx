@@ -71,7 +71,8 @@ export default function BalloonGame({ kana, nodeId }: { kana?: string[]; nodeId?
       setPopped(b.kana);
       sfx.pop();
       burstAt(el, 40);
-      recordAnswer(target, roundMistakes === 0);
+      // まちがえた ラウンドは さいしょの ミスで きろく ずみ
+      if (roundMistakes === 0) recordAnswer(target, true);
       setMood('happy');
       await speak(`「${sayKana(target)}」! あたり!`);
       await wait(200);
@@ -89,7 +90,7 @@ export default function BalloonGame({ kana, nodeId }: { kana?: string[]; nodeId?
       setRoundMistakes((m) => m + 1);
       if (roundMistakes === 0) recordAnswer(target, false);
       setMood('think');
-      await speak(`これは「${sayKana(b.kana)}」。「${sayKana(target)}」は どれかな?`);
+      await speak(`これは「${sayKana(b.kana)}」。「${sayKana(target)}」は どれかな?`, { caption: `これは「${b.kana}」。もういちど きいてね` });
     }
   };
 

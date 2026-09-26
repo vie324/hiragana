@@ -82,8 +82,8 @@ interface Layout {
 }
 
 export default function MapScreen({ focus }: { focus?: string }) {
-  const nodes = useApp((s) => s.nodes);
-  const unlockAll = useApp((s) => s.settings.unlockAll);
+  const data = useApp((s) => s);
+  const nodes = data.nodes;
   const buddy = useApp((s) => s.profile.buddy);
   const wear = useApp((s) => s.wear);
   const profile = useApp((s) => s.profile);
@@ -179,6 +179,12 @@ export default function MapScreen({ focus }: { focus?: string }) {
     }
     sfx.tap();
     if (n.kind === 'treasure') {
+      if (d.nodes[n.id]) {
+        // もう あけた たからばこ: ごほうびは 1かいだけ
+        sfx.sparkle();
+        void speak('この たからばこは もう あけたよ。つぎの たからばこを めざそう!');
+        return;
+      }
       sfx.open();
       setTreasure(completeActivity({ nodeId: n.id, stars: 3 }));
       return;
@@ -252,7 +258,7 @@ export default function MapScreen({ focus }: { focus?: string }) {
             const pos = layout[i];
             if (!pos) return null;
             const rec = nodes[n.id];
-            const unlocked = unlockAll || i <= current || !!rec;
+            const unlocked = isNodeUnlocked(data, i);
             const isCurrent = i === current;
             return (
               <button

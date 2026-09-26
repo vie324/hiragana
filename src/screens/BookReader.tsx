@@ -35,6 +35,8 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
   const recorder = useRef<VoiceRecorder | null>(null);
   const recTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [rec, setRec] = useState<'idle' | 'recording' | 'playing'>('idle');
+  const starting = useRef(false);
+  const recGen = useRef(0);
   const [micOk, setMicOk] = useState(canRecord());
 
   const pages = book?.pages ?? [];
@@ -49,7 +51,15 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
         if (readToken.current !== my || !alive.current) return;
         setLit({ l, t });
         const ok = await speak(lines[l][t].say, { caption: null });
-        if (!ok || readToken.current !== my) return;
+        if (readToken.current !== my) return;
+        if (!ok) {
+          // ほかの りゆうで とまった (バックグラウンド など): ボタンを もとに もどす
+          if (alive.current) {
+            setPlaying(false);
+            setLit(null);
+          }
+          return;
+        }
         await wait(60);
       }
       await wait(260);
@@ -72,20 +82,32 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
 
   /** 🎤 じぶんの こえで よんで、きいてみる */
   const toggleRecord = async () => {
-    if (rec === 'playing') return;
+    if (rec === 'playing' || starting.current) return;
     if (rec === 'idle') {
       stopReading();
+      starting.current = true;
+      const gen = recGen.current;
+      const r = new VoiceRecorder();
       try {
-        const r = new VoiceRecorder();
         await r.start();
-        recorder.current = r;
-        setRec('recording');
-        sfx.tap();
-        recTimer.current = setTimeout(() => void finishRecord(), 25_000);
       } catch {
+        starting.current = false;
+        if (!alive.current) return;
         setMicOk(false);
         void speak('マイクが つかえないみたい。おうちの ひとに きいてね。');
+        return;
       }
+      starting.current = false;
+      // まっている あいだに ページを かえた・とじた ときは すぐ とめる
+      if (!alive.current || gen !== recGen.current) {
+        r.cleanup();
+        return;
+      }
+      recorder.current = r;
+      setRec('recording');
+      sfx.tap();
+      clearTimeout(recTimer.current);
+      recTimer.current = setTimeout(() => void finishRecord(), 25_000);
       return;
     }
     await finishRecord();
@@ -96,22 +118,33 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
     const r = recorder.current;
     recorder.current = null;
     if (!r) return;
+    const gen = recGen.current;
     const blob = await r.stop();
-    if (!alive.current) return;
+    if (!alive.current || gen !== recGen.current) return;
     if (!blob) {
       setRec('idle');
       return;
     }
     setRec('playing');
     await playBlob(blob);
-    if (!alive.current) return;
+    if (!alive.current || gen !== recGen.current) return;
     setRec('idle');
     sfx.sparkle();
     await speak('じょうずに よめたね!');
   };
 
+  /** ろくおんを すぐに やめる (ページを かえる・とじる とき) */
+  const abortRecording = () => {
+    recGen.current++;
+    clearTimeout(recTimer.current);
+    recorder.current?.cleanup();
+    recorder.current = null;
+    setRec('idle');
+  };
+
   useEffect(
     () => () => {
+      recGen.current++;
       clearTimeout(recTimer.current);
       recorder.current?.cleanup();
     },
@@ -139,12 +172,7 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
   }, [page]);
 
   const turn = (delta: number) => {
-    if (recorder.current) {
-      clearTimeout(recTimer.current);
-      recorder.current.cleanup();
-      recorder.current = null;
-      setRec('idle');
-    }
+    abortRecording();
     readToken.current++;
     setLit(null);
     setPlaying(false);
@@ -154,6 +182,7 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
 
   const start = (m: Mode) => {
     sfx.open();
+    seen.current.clear();
     setMode(m);
     setDir('next');
     setPage(0);
@@ -166,10 +195,11 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
     sfx.fanfare();
     await speak('おしまい。 さいごまで よめたね!');
     if (!alive.current) return;
-    // ちゃんと ページを みた ときだけ ごほうび
-    const looked = [...seen.current.values()].filter((s) => s >= 2.5).length;
-    if (nodeId || looked >= Math.ceil(pages.length * 0.7)) {
-      setReward(completeActivity({ nodeId, stars: 3 }));
+    // ちゃんと ページを みた ときだけ ごほうび (ぼうけんの えほんは すすめるように ほしを へらすだけ)
+    const looked = [...seen.current.values()].filter((t) => t >= 2.5).length;
+    const enough = looked >= Math.ceil(pages.length * 0.7);
+    if (nodeId || enough) {
+      setReward(completeActivity({ nodeId, stars: enough ? 3 : 1 }));
     }
   };
 

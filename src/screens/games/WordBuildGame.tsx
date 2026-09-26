@@ -84,7 +84,9 @@ export default function WordBuildGame({ nodeId }: { nodeId?: string }) {
         recordWord(word.w, roundMiss === 0);
         units.forEach((u) => [...u].forEach((c) => recordAnswer(c, roundMiss === 0)));
         await wait(250);
-        await speakSequence(units.map(sayKana), { gapMs: 60, onPart: (i) => setLit(i) });
+        if (!alive.current) return;
+        await speakSequence(units.map(sayKana), { gapMs: 60, onPart: (i) => alive.current && setLit(i) });
+        if (!alive.current) return;
         setLit(99);
         celebrate();
         sfx.correct();

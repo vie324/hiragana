@@ -12,6 +12,11 @@
   cursor: crosshair;
 }
 
+.writing-pad * {
+  /* タッチは いつも svg ほんたいで うける */
+  pointer-events: none;
+}
+
 .writing-pad.finished .ink-done {
   animation: ink-glow 0.8s ease-out;
 }

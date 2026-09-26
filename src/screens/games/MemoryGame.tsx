@@ -67,6 +67,7 @@ export default function MemoryGame({ nodeId }: { nodeId?: string }) {
     if (a.pair === b.pair && a.kind !== b.kind) {
       setBusy(true);
       await new Promise((r) => setTimeout(r, 500));
+      if (!alive.current) return;
       sfx.correct();
       burstAt(el, 30);
       recordAnswer(a.pair, true);
@@ -76,8 +77,9 @@ export default function MemoryGame({ nodeId }: { nodeId?: string }) {
       setMood('happy');
       const w = (a.word ?? b.word)!;
       await speak(`${sayWord(w)}の「${sayKana(a.pair)}」! ぴったり!`, { caption: `${w.w} の「${a.pair}」` });
+      if (!alive.current) return;
       setBusy(false);
-      if (m.size >= pairs && alive.current) {
+      if (m.size >= pairs) {
         celebrate();
         setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, pairs * 2) }));
       }
@@ -86,6 +88,7 @@ export default function MemoryGame({ nodeId }: { nodeId?: string }) {
       setMistakes((x) => x + 1);
       setMood('think');
       await new Promise((r) => setTimeout(r, 1300));
+      if (!alive.current) return;
       sfx.whoosh();
       setOpen([]);
       setBusy(false);

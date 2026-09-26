@@ -38,6 +38,9 @@ iPad と Apple Pencil で、キャラクターといっしょに **ひらがな�
 
 公開ページ: **https://vie324.github.io/hiragana/**
 
+<img src="docs/qr-ipad.png" width="160" alt="公開ページの QR コード"><br>
+iPad のカメラでこの QR コードを読み取ると、公開ページが開きます。
+
 ### 1. iPad のホーム画面に追加する
 
 1. iPad の **Safari** で上の URL を開きます。

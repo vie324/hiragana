@@ -188,6 +188,25 @@ test('シールを ドラッグして はる', async ({ page }) => {
   await expect(page.locator('.sb-placed')).toHaveCount(1);
   const placed = await page.evaluate(() => window.__hiragana!.getData().placed['meadow']?.length);
   expect(placed).toBe(1);
+  // タップだけでも はれる
+  await item.click();
+  await expect(page.locator('.sb-placed')).toHaveCount(2);
+  // もう のこっていない シールは はれない
+  await item.click();
+  await expect(page.locator('.sb-placed')).toHaveCount(2);
+});
+
+test('あけた たからばこは 2かい もらえない', async ({ page }) => {
+  const done = ['a:lesson:あ', 'a:lesson:い', 'a:balloon:1', 'a:lesson:う', 'a:lesson:え', 'a:lesson:お', 'a:firstsound:1', 'a:balloon:2', 'a:treasure'];
+  const nodes = Object.fromEntries(done.map((id) => [id, { stars: 3, at: 1, plays: 1 }]));
+  await prepare(page, seedProfile({ nodes, stickers: { '🐶': 1 } }));
+  await start(page);
+  await page.getByTestId('menu-map').click({ force: true });
+  await page.getByTestId('node-a:treasure').click({ force: true });
+  await page.waitForTimeout(500);
+  await expect(page.getByTestId('gift')).toHaveCount(0);
+  const total = await page.evaluate(() => Object.values(window.__hiragana!.getData().stickers).reduce((a, b) => a + b, 0));
+  expect(total).toBe(1);
 });
 
 test('しりとり', async ({ page }) => {
@@ -224,5 +243,27 @@ test('「みないで」モードでも かける', async ({ page }) => {
   // さいしょは ヒント(みどりの まる)が でない
   await expect(page.locator('.start-dot')).toHaveCount(0);
   await drawKana(page, 'く');
+  await expect(page.locator('.write-result')).toBeVisible();
+});
+
+test('まちがえた線の うえから かきなおしても かける', async ({ page }) => {
+  await prepare(page, seedProfile());
+  await start(page);
+  await page.evaluate(() => window.__hiragana!.navigate({ name: 'writeKana', kana: 'い' }));
+  const pad = page.getByTestId('writing-pad');
+  const box = (await pad.boundingBox())!;
+  const at = (x: number, y: number) => ({ x: box.x + (x / 109) * box.width, y: box.y + (y / 109) * box.height });
+  // みぎの 画を さきに かいて 2かい まちがえる (はいいろの 線が のこる)
+  for (let i = 0; i < 2; i++) {
+    const a = at(73, 37);
+    const b = at(91, 70);
+    await page.mouse.move(a.x, a.y);
+    await page.mouse.down();
+    await page.mouse.move(b.x, b.y, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(100);
+  }
+  await expect(pad).toHaveAttribute('data-stroke-index', '0');
+  await drawKana(page, 'い');
   await expect(page.locator('.write-result')).toBeVisible();
 });

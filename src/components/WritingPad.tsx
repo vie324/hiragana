@@ -33,8 +33,9 @@ interface Props {
 const INK_COLORS = ['#ff6b8b', '#ff9f43', '#4db4ff', '#4cc76f', '#a78bff', '#ff7eaa'];
 const MAX_TRIES = 3;
 
-/** pen を いちど つかったら 指の タッチは むし する (てのひら たいさく) */
-let penSeen = false;
+/** さいごに ペンを つかった じかん。ペンを つかっている あいだは 指(てのひら)の タッチを むしする */
+let lastPenAt = 0;
+const PEN_WINDOW_MS = 30_000;
 
 function toPath(pts: readonly Pt[]): string {
   if (!pts.length) return '';
@@ -88,7 +89,8 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
   const data = getStrokes(kana);
   const svgRef = useRef<SVGSVGElement>(null);
   const liveRef = useRef<SVGPathElement>(null);
-  const active = useRef<{ id: number; type: string; pts: Pt[] } | null>(null);
+  const active = useRef<{ id: number; type: string; pts: Pt[]; lastT: number } | null>(null);
+  const completeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState<{ pts: Pt[]; auto?: boolean }[]>([]);
   const [failed, setFailed] = useState<{ d: string; key: number } | null>(null);
@@ -107,6 +109,9 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
 
   // リセット
   useEffect(() => {
+    clearTimeout(completeTimer.current);
+    active.current = null;
+    liveRef.current?.setAttribute('d', '');
     setIndex(0);
     setDone([]);
     setFailed(null);
@@ -116,6 +121,8 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
     retries.current = 0;
     setHint((h) => h + 1);
   }, [kana, resetKey, mode]);
+
+  useEffect(() => () => clearTimeout(completeTimer.current), []);
 
   useEffect(() => {
     if (!hintKey) return;
@@ -153,7 +160,10 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
         if (index + 1 >= total) {
           setFinished(true);
           const stars = starsFromScores(scores.current, retries.current);
-          setTimeout(() => cb.current.onComplete({ stars, scores: scores.current, strokes: next.map((s) => s.pts), retries: retries.current }), 450);
+          completeTimer.current = setTimeout(
+            () => cb.current.onComplete({ stars, scores: scores.current, strokes: next.map((s) => s.pts), retries: retries.current }),
+            450,
+          );
         } else {
           setIndex(index + 1);
           if (mode === 'trace') setHint((h) => h + 1);
@@ -173,7 +183,10 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
           if (index + 1 >= total) {
             setFinished(true);
             const stars = starsFromScores(scores.current, retries.current);
-            setTimeout(() => cb.current.onComplete({ stars, scores: scores.current, strokes: next.map((s) => s.pts), retries: retries.current }), 700);
+            completeTimer.current = setTimeout(
+              () => cb.current.onComplete({ stars, scores: scores.current, strokes: next.map((s) => s.pts), retries: retries.current }),
+              700,
+            );
           } else {
             setIndex(index + 1);
           }
@@ -186,14 +199,16 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
 
   const onDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (finished || !data) return;
-    if (e.pointerType === 'pen') penSeen = true;
+    const now = performance.now();
+    if (e.pointerType === 'pen') lastPenAt = now;
     if (e.pointerType === 'touch') {
       if (finger === 'pen') return;
-      if (finger === 'auto' && penSeen) return;
+      if (finger === 'auto' && lastPenAt && now - lastPenAt < PEN_WINDOW_MS) return;
     }
     if (active.current) {
-      // てのひらの あとに ペンが きたら ペンを ゆうせん
-      if (e.pointerType === 'pen' && active.current.type !== 'pen') {
+      const stale = now - active.current.lastT > 1500;
+      // てのひらの あとに ペンが きたら ペンを ゆうせん。うごかない ままの ものは すてる
+      if (stale || (e.pointerType === 'pen' && active.current.type !== 'pen')) {
         active.current = null;
       } else {
         return;
@@ -201,12 +216,13 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
     }
     e.preventDefault();
     try {
-      (e.target as Element).setPointerCapture?.(e.pointerId);
+      // 子要素ではなく svg ぜんたいで うけとる (子要素が きえても とぎれない)
+      e.currentTarget.setPointerCapture?.(e.pointerId);
     } catch {
       /* noop */
     }
     const p = toLocal(e);
-    active.current = { id: e.pointerId, type: e.pointerType, pts: [p] };
+    active.current = { id: e.pointerId, type: e.pointerType, pts: [p], lastT: now };
     if (liveRef.current) liveRef.current.setAttribute('d', toPath([p]));
     setFailed(null);
     cb.current.onStart?.();
@@ -216,6 +232,8 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
     const a = active.current;
     if (!a || a.id !== e.pointerId) return;
     e.preventDefault();
+    a.lastT = performance.now();
+    if (a.type === 'pen') lastPenAt = a.lastT;
     const native = e.nativeEvent as PointerEvent;
     const events = typeof native.getCoalescedEvents === 'function' ? native.getCoalescedEvents() : [];
     const list = events.length ? events : [native];
@@ -231,10 +249,13 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
     const a = active.current;
     if (!a || a.id !== e.pointerId) return;
     active.current = null;
-    if (e.type !== 'pointercancel' || a.pts.length > 4) {
-      const p = toLocal(e);
-      const last = a.pts[a.pts.length - 1];
-      if (e.type !== 'pointercancel' && Math.hypot(p.x - last.x, p.y - last.y) > 0.3) a.pts.push(p);
+    const ended = e.type === 'pointerup';
+    if (ended || a.pts.length > 4) {
+      if (ended) {
+        const p = toLocal(e);
+        const last = a.pts[a.pts.length - 1];
+        if (Math.hypot(p.x - last.x, p.y - last.y) > 0.3) a.pts.push(p);
+      }
       finishStroke(a.pts);
     }
     if (liveRef.current) liveRef.current.setAttribute('d', '');
@@ -266,6 +287,7 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
       onPointerMove={onMove}
       onPointerUp={onUp}
       onPointerCancel={onUp}
+      onLostPointerCapture={onUp}
       onContextMenu={(e) => e.preventDefault()}
       data-testid="writing-pad"
       data-stroke-index={index}

@@ -67,8 +67,12 @@ export default function HomeScreen() {
   const next = ALL_NODES[nextNodeIndex((id) => !!nodes[id])];
 
   useEffect(() => {
+    let here = true;
     const first = !days[todayKey()]?.acts;
-    void speakAfterCurrent(first ? `きょうは なにして あそぶ?` : `${callName(profile)}、つぎは なにに する?`);
+    void speakAfterCurrent(first ? `きょうは なにして あそぶ?` : `${callName(profile)}、つぎは なにに する?`, undefined, 6000, () => here);
+    return () => {
+      here = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

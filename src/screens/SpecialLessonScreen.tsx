@@ -91,9 +91,13 @@ export default function SpecialLessonScreen({ lessonId, nodeId }: { lessonId: st
   };
 
   useEffect(() => {
+    let stale = false;
     setReady(false);
     setMood('normal');
-    void sayCurrent().then(() => alive.current && setReady(true));
+    void sayCurrent().then(() => !stale && alive.current && setReady(true));
+    return () => {
+      stale = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pos]);
 

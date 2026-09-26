@@ -130,7 +130,8 @@
   justify-content: center;
   font-size: 62px;
   cursor: grab;
-  touch-action: none;
+  /* よこは スクロール、たては ドラッグ */
+  touch-action: pan-x;
 }
 
 .sb-item.none {

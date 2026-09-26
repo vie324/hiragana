@@ -49,9 +49,37 @@ export default function StickerBook() {
   const total = Object.values(stickers).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
-    void speak(total ? 'シールを ゆびで うごかして、すきな ところに はってね。' : 'ゲームを すると シールが もらえるよ。');
+    void speak(total ? 'シールを うえに ひっぱって、すきな ところに はってね。タッチしても はれるよ。' : 'ゲームを すると シールが もらえるよ。');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** シールを ばめんに はる (x, y は %) */
+  const place = (sticker: string, x: number, y: number, fromId?: string) => {
+    update((d) => {
+      const list = (d.placed[pageId] ??= []);
+      if (fromId) {
+        const p = list.find((q) => q.id === fromId);
+        if (p) {
+          p.x = x;
+          p.y = y;
+          // いちばん うえに
+          list.splice(list.indexOf(p), 1);
+          list.push(p);
+        }
+      } else {
+        const item: PlacedSticker = {
+          id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+          s: sticker,
+          x,
+          y,
+          r: Math.round((Math.random() - 0.5) * 30),
+          scale: 1,
+        };
+        list.push(item);
+      }
+    });
+    sfx.sticker();
+  };
 
   useEffect(() => {
     if (!drag) return;
@@ -59,37 +87,15 @@ export default function StickerBook() {
       if (e.pointerId !== drag.pointerId) return;
       setDrag((d) => (d ? { ...d, x: e.clientX, y: e.clientY } : d));
     };
+    const cancel = (e: PointerEvent) => {
+      if (e.pointerId === drag.pointerId) setDrag(null);
+    };
     const up = (e: PointerEvent) => {
       if (e.pointerId !== drag.pointerId) return;
       const r = sceneRef.current?.getBoundingClientRect();
       const inside = r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
       if (r && inside) {
-        const x = ((e.clientX - r.left) / r.width) * 100;
-        const y = ((e.clientY - r.top) / r.height) * 100;
-        update((d) => {
-          const list = (d.placed[pageId] ??= []);
-          if (drag.fromId) {
-            const p = list.find((q) => q.id === drag.fromId);
-            if (p) {
-              p.x = x;
-              p.y = y;
-              // いちばん うえに
-              list.splice(list.indexOf(p), 1);
-              list.push(p);
-            }
-          } else {
-            const item: PlacedSticker = {
-              id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-              s: drag.s,
-              x,
-              y,
-              r: Math.round((Math.random() - 0.5) * 30),
-              scale: 1,
-            };
-            list.push(item);
-          }
-        });
-        sfx.sticker();
+        place(drag.s, ((e.clientX - r.left) / r.width) * 100, ((e.clientY - r.top) / r.height) * 100, drag.fromId);
       } else if (drag.fromId) {
         // そとに だしたら はがす
         update((d) => {
@@ -101,13 +107,49 @@ export default function StickerBook() {
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
-    window.addEventListener('pointercancel', up);
+    window.addEventListener('pointercancel', cancel);
     return () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      window.removeEventListener('pointercancel', up);
+      window.removeEventListener('pointercancel', cancel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drag, pageId]);
+
+  /**
+   * トレイの シール: よこに うごかすと スクロール、うえに うごかすと ドラッグ、
+   * そのまま はなすと ばめんの どこかに ぽんと はる。
+   */
+  const pressTray = (e: React.PointerEvent, sticker: string) => {
+    const id = e.pointerId;
+    const x0 = e.clientX;
+    const y0 = e.clientY;
+    const cleanup = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', cleanup);
+    };
+    const move = (ev: PointerEvent) => {
+      if (ev.pointerId !== id) return;
+      const dx = ev.clientX - x0;
+      const dy = ev.clientY - y0;
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx) * 0.5) {
+        cleanup();
+        sfx.tap();
+        setDrag({ s: sticker, x: ev.clientX, y: ev.clientY, pointerId: id });
+      } else if (Math.abs(dx) > 14) {
+        cleanup(); // よこスクロール
+      }
+    };
+    const up = (ev: PointerEvent) => {
+      if (ev.pointerId !== id) return;
+      cleanup();
+      place(sticker, 15 + Math.random() * 70, 30 + Math.random() * 50);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', cleanup);
+  };
 
   const startDrag = (e: React.PointerEvent, s: string, fromId?: string) => {
     e.preventDefault();
@@ -157,7 +199,7 @@ export default function StickerBook() {
           <div
             key={s}
             className={`sb-item ${left <= 0 ? 'none' : ''} ${RARE.has(s) ? 'rare' : ''}`}
-            onPointerDown={(e) => left > 0 && startDrag(e, s)}
+            onPointerDown={(e) => left > 0 && pressTray(e, s)}
             data-testid={`tray-${s}`}
           >
             <span className="emoji">{s}</span>
