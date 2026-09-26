@@ -1,20 +1,21 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { Actor, Bg } from '../data/scene';
 import Mascot from './Mascot';
 import { useApp } from '../state/store';
 import './scene.css';
 
 export function SceneBackground({ bg }: { bg: Bg }) {
+  const id = `sky-${bg}-${useId().replace(/:/g, '')}`;
   return (
     <svg className="scene-bg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden>
       <defs>
-        <linearGradient id={`sky-${bg}`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
           {skyStops(bg).map(([o, c]) => (
             <stop key={o} offset={o} stopColor={c} />
           ))}
         </linearGradient>
       </defs>
-      <rect x="0" y="0" width="160" height="100" fill={`url(#sky-${bg})`} />
+      <rect x="0" y="0" width="160" height="100" fill={`url(#${id})`} />
       {BG_LAYERS[bg]}
     </svg>
   );

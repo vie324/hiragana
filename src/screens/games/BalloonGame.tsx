@@ -51,7 +51,8 @@ export default function BalloonGame({ kana, nodeId }: { kana?: string[]; nodeId?
     }));
   }, [target, nChoices, kana]);
 
-  const prompt = () => speak(`「${sayKana(target)}」の ふうせんを わってね。`);
+  // きく れんしゅう なので ふきだしには こたえの もじを ださない
+  const prompt = () => speak(`「${sayKana(target)}」の ふうせんを わってね。`, { caption: 'きこえた もじの ふうせんを わってね' });
 
   useEffect(() => {
     if (!target) return;

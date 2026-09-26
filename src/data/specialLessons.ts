@@ -168,7 +168,7 @@ export const SPECIAL_LESSONS: SpecialLesson[] = [
     ],
     quiz: [
       { say: 'ぞう は どれかな?', caption: '「ぞう」は どれかな?', answer: 'ぞう', choices: ['そう', 'ぞう', 'ぞ'] },
-      { say: 'こおり は どれかな?', caption: '「こおり」は どれかな?', answer: 'こおり', choices: ['こおり', 'こり', 'こうり'] },
+      { say: 'こおり は どれかな?', caption: '「こおり」は どれかな?', answer: 'こおり', choices: ['こおり', 'こり', 'おり'] },
     ],
     kana: [],
   },

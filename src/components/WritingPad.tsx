@@ -93,6 +93,8 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
   const [done, setDone] = useState<{ pts: Pt[]; auto?: boolean }[]>([]);
   const [failed, setFailed] = useState<{ d: string; key: number } | null>(null);
   const [hint, setHint] = useState(0);
+  /** 「みないで」モードで ヒントを だすか (まちがえた / 💡 を おした とき) */
+  const [assist, setAssist] = useState(false);
   const [sparkle, setSparkle] = useState<{ p: Pt; key: number } | null>(null);
   const [finished, setFinished] = useState(false);
   const scores = useRef<number[]>([]);
@@ -116,8 +118,15 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
   }, [kana, resetKey, mode]);
 
   useEffect(() => {
-    if (hintKey) setHint((h) => h + 1);
+    if (!hintKey) return;
+    setHint((h) => h + 1);
+    setAssist(true);
   }, [hintKey]);
+
+  // つぎの 画に すすんだら ヒントは いったん けす
+  useEffect(() => {
+    setAssist(false);
+  }, [index, kana, resetKey, mode]);
 
   const toLocal = useCallback((e: { clientX: number; clientY: number }): Pt => {
     const r = svgRef.current!.getBoundingClientRect();
@@ -154,6 +163,7 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
         tries.current += 1;
         retries.current += 1;
         setFailed({ d: toPath(pts), key: Date.now() });
+        setAssist(true);
         if (tries.current >= MAX_TRIES) {
           // 3かい まちがえたら いっしょに かく (おてほんを つかう)
           tries.current = 0;
@@ -295,7 +305,7 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
       {/* まちがえた 画 (きえていく) */}
       {failed && <path key={failed.key} d={failed.d} fill="none" stroke="#b9aea3" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" className="ink-failed" />}
       {/* ヒント: スタートの まる と うごく まる */}
-      {current && currentStart && (mode === 'trace' || hint > 0) && (
+      {current && currentStart && (mode !== 'blank' || assist) && (
         <g key={`hint-${hint}-${index}`} className={mode === 'trace' ? '' : 'hint-flash'}>
           {mode !== 'trace' && <path d={current} fill="none" stroke="#ffcf8a" strokeWidth="8" strokeLinecap="round" className="hint-path" />}
           <circle cx={currentStart.x} cy={currentStart.y} r="6" fill="#4cc76f" className="start-dot" />

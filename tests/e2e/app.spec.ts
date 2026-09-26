@@ -215,3 +215,14 @@ test('たからばこで きせかえが もらえる', async ({ page }) => {
   expect(d.wear).toBe('ribbon');
   await expect(page.getByTestId('node-a:treasure')).toHaveClass(/done/);
 });
+
+test('「みないで」モードでも かける', async ({ page }) => {
+  await prepare(page, seedProfile());
+  await start(page);
+  await page.evaluate(() => window.__hiragana!.navigate({ name: 'writeKana', kana: 'く' }));
+  await page.getByTestId('mode-blank').click({ force: true });
+  // さいしょは ヒント(みどりの まる)が でない
+  await expect(page.locator('.start-dot')).toHaveCount(0);
+  await drawKana(page, 'く');
+  await expect(page.locator('.write-result')).toBeVisible();
+});

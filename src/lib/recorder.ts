@@ -15,6 +15,18 @@ function pickMime(): string {
   return '';
 }
 
+type AudioSessionNavigator = Navigator & { audioSession?: { type: string } };
+
+/** iPad Safari の オーディオセッションを きりかえる (ろくおん ⇔ さいせい) */
+function setSession(type: 'playback' | 'play-and-record'): void {
+  try {
+    const nav = navigator as AudioSessionNavigator;
+    if (nav.audioSession) nav.audioSession.type = type;
+  } catch {
+    /* noop */
+  }
+}
+
 export class VoiceRecorder {
   private stream: MediaStream | null = null;
   private rec: MediaRecorder | null = null;
@@ -25,7 +37,13 @@ export class VoiceRecorder {
   }
 
   async start(): Promise<void> {
-    this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    setSession('play-and-record');
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    } catch (e) {
+      setSession('playback');
+      throw e;
+    }
     const mime = pickMime();
     this.rec = new MediaRecorder(this.stream, mime ? { mimeType: mime } : undefined);
     this.chunks = [];
@@ -56,6 +74,7 @@ export class VoiceRecorder {
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
     this.rec = null;
+    setSession('playback');
   }
 }
 
