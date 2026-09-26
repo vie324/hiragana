@@ -1,0 +1,66 @@
+.buddy-screen {
+  background: radial-gradient(circle at 50% 30%, #fff 0%, #ffeccc 70%);
+  align-items: center;
+  justify-content: center;
+  gap: 3vh;
+}
+
+.buddy-caption {
+  min-height: 90px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  max-width: 90vw;
+}
+
+.buddy-choices {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2.4vw;
+  width: min(96vw, 1100px);
+}
+
+@media (orientation: portrait) {
+  .buddy-choices {
+    grid-template-columns: repeat(2, 1fr);
+    width: min(80vw, 560px);
+  }
+}
+
+.buddy-choice {
+  border: 5px solid transparent;
+  background: #fff;
+  border-radius: 36px;
+  padding: 18px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 8px 0 #f1dcc0, 0 16px 26px rgba(120, 80, 40, 0.12);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.buddy-choice .mascot {
+  width: 100%;
+  max-width: 230px;
+}
+
+.buddy-choice.on {
+  border-color: var(--orange);
+  transform: translateY(-8px) scale(1.04);
+}
+
+.buddy-name {
+  font-size: calc(var(--u) * 4.4);
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.buddy-actions {
+  min-height: 90px;
+}
+
+.buddy-ok {
+  font-size: calc(var(--u) * 4.4);
+  padding: 0.35em 1.2em;
+}

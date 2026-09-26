@@ -1,0 +1,50 @@
+/** 1もじごとの 「〇〇の 〇」 に つかう れいの ことば */
+import { findWord, type Word } from './words';
+
+export interface KanaExample {
+  /** ひらがなの ことば (かくにん用に もじを ハイライト する) */
+  word: string;
+  emoji: string;
+  say: string;
+  /** ことばの あたまに ある か */
+  head: boolean;
+}
+
+const MAP: Record<string, string> = {
+  あ: 'あり', い: 'いぬ', う: 'うさぎ', え: 'えんぴつ', お: 'おにぎり',
+  か: 'かめ', き: 'きりん', く: 'くま', け: 'けいと', こ: 'こおり',
+  さ: 'さかな', し: 'しか', す: 'すいか', せ: 'せっけん', そ: 'そり',
+  た: 'たこ', ち: 'ちきゅう', つ: 'つき', て: 'てがみ', と: 'とり',
+  な: 'なす', に: 'にじ', ぬ: 'ぬいぐるみ', ね: 'ねこ', の: 'のこぎり',
+  は: 'はな', ひ: 'ひよこ', ふ: 'ふうせん', へ: 'へび', ほ: 'ほし',
+  ま: 'まる', み: 'みかん', む: 'むし', め: 'めがね', も: 'もも',
+  や: 'やま', ゆ: 'ゆきだるま', よ: 'よつば',
+  ら: 'らくだ', り: 'りんご', る: 'さる', れ: 'れっしゃ', ろ: 'ろうそく',
+  わ: 'わに', ん: 'にんじん',
+  が: 'がっこう', ぎ: 'かぎ', ぐ: 'どんぐり', げ: 'とかげ', ご: 'ごはん',
+  ざ: 'ざりがに', じ: 'じてんしゃ', ず: 'みず', ぜ: 'かぜ', ぞ: 'ぞう',
+  だ: 'だんご', づ: 'かなづち', で: 'でんしゃ', ど: 'どんぐり',
+  ば: 'ばら', び: 'へび', ぶ: 'ぶた', べ: 'べんとう', ぼ: 'ぼうし',
+  ぱ: 'はっぱ', ぴ: 'えんぴつ', ぷ: 'てんぷら', ぽ: 'たんぽぽ',
+};
+
+const INLINE: Record<string, KanaExample> = {
+  を: { word: 'ほんを よむ', emoji: '📖', say: '本を読む', head: false },
+  ぺ: { word: 'ぺろぺろ', emoji: '👅', say: 'ぺろぺろ', head: true },
+  ぢ: { word: 'ちぢむ', emoji: '👕', say: '縮む', head: false },
+};
+
+export function kanaExample(kana: string): KanaExample | null {
+  if (INLINE[kana]) return INLINE[kana];
+  const w: Word | undefined = MAP[kana] ? findWord(MAP[kana]) : undefined;
+  if (!w) return null;
+  return { word: w.w, emoji: w.e, say: w.say ?? w.w, head: w.w.startsWith(kana) };
+}
+
+/** 「〇〇の 〇」 の よみあげ */
+export function exampleSentence(kana: string): { text: string; say: string } | null {
+  const ex = kanaExample(kana);
+  if (!ex) return null;
+  if (kana === 'を') return { text: 'ほんを よむ の を', say: '本を読む の、を' };
+  return { text: `${ex.word} の ${kana}`, say: `${ex.say} の、${kana}` };
+}

@@ -1,0 +1,265 @@
+.lesson-screen {
+  background: radial-gradient(circle at 50% 40%, #fffdf6 0%, #ffefd2 100%);
+}
+
+.lesson-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  gap: 1vw;
+}
+
+.lesson-buddy {
+  flex: 0 0 22%;
+  display: flex;
+  justify-content: center;
+  align-self: flex-end;
+  padding-bottom: 2vh;
+}
+
+.lesson-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-width: 0;
+}
+
+.lesson-next {
+  flex: 0 0 14%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  align-self: stretch;
+  padding-bottom: 4vh;
+}
+
+.lesson-next .btn .emoji {
+  font-size: 54px;
+}
+
+.lesson-next .skip {
+  font-size: 26px;
+}
+
+.kana-hero {
+  width: min(60vh, 46vw);
+  height: min(60vh, 46vw);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.kana-hero .kana-big {
+  font-size: min(46vh, 36vw);
+  color: var(--ink);
+}
+
+.word-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3vh;
+}
+
+.word-pic {
+  border: none;
+  background: #fff;
+  border-radius: 50%;
+  width: min(38vh, 32vw);
+  height: min(38vh, 32vw);
+  font-size: min(24vh, 20vw);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 0 var(--line), 0 14px 30px rgba(120, 80, 40, 0.12);
+  cursor: pointer;
+  animation: pop-in 0.5s ease-out both, float-y 2.6s ease-in-out 0.5s infinite;
+}
+
+.word-letters {
+  display: flex;
+  gap: 10px;
+}
+
+.word-letters .gap {
+  width: 20px;
+}
+
+.word-letter {
+  border: none;
+  background: #fff;
+  border-radius: 20px;
+  font-size: min(12vh, 9vw);
+  font-weight: 700;
+  width: 1.3em;
+  height: 1.3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 5px 0 var(--line);
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.word-letter.target {
+  background: var(--yellow);
+  box-shadow: 0 5px 0 var(--yellow-d);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.order-step,
+.write-step {
+  position: relative;
+}
+
+.order-step {
+  background: #fffdf8;
+  border-radius: 24px;
+  box-shadow: 0 7px 0 #f0dcc3, 0 16px 30px rgba(120, 80, 40, 0.14);
+}
+
+.find-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4vh;
+}
+
+.find-prompt {
+  font-size: min(6vh, 5vw);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.kana-big.small {
+  font-size: 1.8em;
+  color: var(--orange-d);
+}
+
+@media (orientation: portrait) {
+  .lesson-body {
+    flex-direction: column;
+  }
+  .lesson-buddy {
+    order: 2;
+    flex: 0 0 auto;
+    align-self: center;
+    padding: 0;
+  }
+  .lesson-stage {
+    order: 1;
+  }
+  .lesson-next {
+    order: 3;
+    flex: 0 0 auto;
+    padding: 0;
+    min-height: 120px;
+    align-items: center;
+  }
+}
+
+/* ---------- とくべつレッスン ---------- */
+
+.sp-card {
+  background: #fff;
+  border-radius: 36px;
+  padding: 4vh 4vw;
+  box-shadow: 0 8px 0 var(--line), 0 16px 30px rgba(120, 80, 40, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3vh;
+  max-width: 100%;
+}
+
+.sp-icon {
+  font-size: min(30vh, 22vw);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--purple-d);
+}
+
+.sp-title {
+  font-size: min(8vh, 6vw);
+  font-weight: 700;
+}
+
+.sp-formula {
+  display: flex;
+  align-items: center;
+  gap: 1.4vw;
+}
+
+.sp-part {
+  border: none;
+  background: #fff7e8;
+  border-radius: 24px;
+  font-size: min(17vh, 12vw);
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.12em 0.18em;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--line);
+}
+
+.sp-part.mark {
+  color: var(--pink-d);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  padding: 0;
+}
+
+.sp-part.result {
+  background: var(--yellow);
+  box-shadow: 0 5px 0 var(--yellow-d);
+  animation: pop-in 0.5s 0.6s both;
+}
+
+.sp-op {
+  font-size: min(10vh, 7vw);
+  font-weight: 700;
+  color: var(--orange-d);
+}
+
+.sp-word {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.05em;
+  font-size: min(18vh, 11vw);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sp-ch.small {
+  color: var(--pink-d);
+}
+
+.sp-ch.space {
+  width: 0.4em;
+}
+
+.sp-example {
+  display: flex;
+  align-items: center;
+  gap: 2vw;
+}
+
+.sp-emoji {
+  font-size: min(16vh, 12vw);
+}
+
+.sp-example-word {
+  font-size: min(8vh, 6vw);
+  font-weight: 700;
+}

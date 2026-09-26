@@ -1,0 +1,241 @@
+.menu-screen {
+  background: linear-gradient(180deg, #fff5dc 0%, #ffe6c2 100%);
+}
+
+.menu-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2vw;
+  min-height: 0;
+}
+
+.menu-buddy {
+  flex: 0 0 22%;
+  align-self: flex-end;
+  display: flex;
+  justify-content: center;
+  padding-bottom: 2vh;
+}
+
+.menu-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3vh 2vw;
+  padding: 2vh 2vw 4vh 0;
+}
+
+.menu-card {
+  flex-direction: column;
+  aspect-ratio: 1.1;
+  border-radius: 34px;
+  font-size: calc(var(--u) * 3.4);
+  white-space: nowrap;
+}
+
+.menu-card-emoji {
+  font-size: calc(var(--u) * 9);
+}
+
+@media (orientation: portrait) {
+  .menu-body {
+    flex-direction: column-reverse;
+  }
+  .menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0;
+  }
+}
+
+/* ---------- 50音の グリッド ---------- */
+
+.kana-grid-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  display: flex;
+  justify-content: center;
+  padding: 1vh 0 2vh;
+}
+
+.kana-grid {
+  display: grid;
+  grid-auto-flow: column;
+  direction: rtl;
+  gap: 1vh 0.8vw;
+  align-content: start;
+}
+
+.kana-grid > * {
+  direction: ltr;
+}
+
+.kana-cell {
+  width: min(8.4vw, 11.5vh);
+  height: min(8.4vw, 11.5vh);
+  border-radius: 18px;
+  border: none;
+  background: #fff;
+  box-shadow: 0 5px 0 var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  color: var(--ink);
+  padding: 0;
+}
+
+.kana-cell .k {
+  font-size: min(5.4vw, 7.4vh);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.kana-cell .stars {
+  position: absolute;
+  bottom: 2px;
+  font-size: min(1.5vw, 2vh) !important;
+}
+
+.kana-cell.empty {
+  background: transparent;
+  box-shadow: none;
+  cursor: default;
+}
+
+.kana-cell.m1 {
+  background: #fff8e1;
+}
+
+.kana-cell.m2 {
+  background: #ffefb3;
+}
+
+.kana-cell.m3 {
+  background: #ffe066;
+  box-shadow: 0 5px 0 var(--yellow-d);
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.tab {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 24px;
+  font-size: calc(var(--u) * 3);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink-soft);
+  cursor: pointer;
+  min-height: 56px;
+  white-space: nowrap;
+}
+
+.tab.on {
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 5px 0 var(--orange-d);
+}
+
+.write-name-row {
+  display: flex;
+  justify-content: center;
+  padding: 1.4vh 0 1vh;
+}
+
+.write-name-row .btn {
+  font-size: calc(var(--u) * 3.2);
+}
+
+/* ---------- 50音表の くわしく ---------- */
+
+.chart-detail {
+  position: relative;
+  padding: 3vh 3vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.4vh;
+  max-width: 92vw;
+}
+
+.chart-close {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  background: #fff !important;
+  border: none;
+  background: #f5ede3;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.chart-detail-main {
+  display: flex;
+  gap: 3vw;
+  align-items: center;
+}
+
+.chart-big {
+  border: none;
+  background: #fff7e8;
+  border-radius: 30px;
+  font-size: min(26vh, 20vw);
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.1em 0.18em;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.chart-order {
+  width: min(34vh, 28vw);
+  height: min(34vh, 28vw);
+  background: #fffdf8;
+  border-radius: 20px;
+  box-shadow: inset 0 0 0 2px #f3e3cf;
+  cursor: pointer;
+}
+
+.chart-example {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: none;
+  background: #f7f3ee;
+  border-radius: 999px;
+  padding: 8px 28px 8px 16px;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.chart-ex-emoji {
+  font-size: min(10vh, 8vw);
+}
+
+.chart-ex-word {
+  font-size: min(7vh, 5.4vw);
+  font-weight: 700;
+}
+
+.chart-ex-word .hl {
+  color: var(--orange-d);
+}
+
+.chart-actions {
+  display: flex;
+  gap: 2vw;
+}

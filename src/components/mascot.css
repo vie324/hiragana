@@ -1,0 +1,311 @@
+.mascot {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mascot-hop {
+  width: 100%;
+  animation: m-poke 0.5s ease-out;
+  transform-origin: 50% 100%;
+}
+
+.mascot-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  transform-origin: 50% 95%;
+  animation: m-bob 2.6s ease-in-out infinite;
+}
+
+.mascot-svg,
+.m-eyes-open,
+.m-ear,
+.m-arm,
+.m-open,
+.m-outfit,
+.m-zzz text,
+.m-shadow {
+  transform-box: fill-box;
+}
+
+.m-eyes-open {
+  transform-origin: center;
+  animation: m-blink 4.6s infinite;
+}
+
+.m-open {
+  display: none;
+}
+
+.mascot.talking .m-open {
+  display: inline;
+  animation: m-talk 0.26s steps(2, jump-none) infinite;
+  transform-origin: 50% 0%;
+}
+
+.mascot.talking .m-closed {
+  display: none;
+}
+
+.m-ear-l {
+  transform-origin: 70% 100%;
+  animation: m-ear-l 3.2s ease-in-out infinite;
+}
+
+.m-ear-r {
+  transform-origin: 30% 100%;
+  animation: m-ear-r 3.2s ease-in-out infinite;
+}
+
+.kind-kuma .m-ear-l,
+.kind-kuma .m-ear-r {
+  animation-duration: 4.5s;
+}
+
+.m-arm-l {
+  transform-origin: 80% 20%;
+}
+
+.m-arm-r {
+  transform-origin: 20% 20%;
+}
+
+.mascot.waving .m-arm-r,
+.mascot.mood-cheer .m-arm-r {
+  animation: m-wave 0.7s ease-in-out infinite;
+}
+
+.mascot.mood-cheer .m-arm-l {
+  animation: m-wave-l 0.7s ease-in-out infinite;
+}
+
+.mascot.mood-happy .mascot-svg {
+  animation: m-jump 0.7s cubic-bezier(0.3, 0.7, 0.4, 1) 2, m-bob 2.6s ease-in-out 1.4s infinite;
+}
+
+.mascot.mood-cheer .mascot-svg {
+  animation: m-jump 0.6s cubic-bezier(0.3, 0.7, 0.4, 1) infinite;
+}
+
+.mascot.mood-sad .mascot-svg {
+  animation: m-sad 2.4s ease-in-out infinite;
+}
+
+.mascot.mood-sad .m-ear-l {
+  animation: none;
+  transform: rotate(-28deg);
+}
+
+.mascot.mood-sad .m-ear-r {
+  animation: none;
+  transform: rotate(28deg);
+}
+
+.mascot.mood-think .mascot-svg {
+  animation: m-think 2.4s ease-in-out infinite;
+}
+
+.mascot.mood-sleep .mascot-svg {
+  animation: m-sleep 3.2s ease-in-out infinite;
+}
+
+.mascot.mood-wow .mascot-svg {
+  animation: m-wow 0.5s ease-out, m-bob 2.6s ease-in-out 0.5s infinite;
+}
+
+.m-zzz text {
+  animation: m-zzz 2.4s ease-in-out infinite;
+}
+
+.m-zzz text:nth-child(2) {
+  animation-delay: 0.8s;
+}
+
+.m-outfit {
+  animation: m-outfit-in 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  transform-origin: center;
+}
+
+.m-shadow {
+  transform-origin: center;
+  animation: m-shadow 2.6s ease-in-out infinite;
+}
+
+@keyframes m-bob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.01, 0.99);
+  }
+}
+
+@keyframes m-shadow {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.94);
+  }
+}
+
+@keyframes m-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes m-talk {
+  0% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.45);
+  }
+}
+
+@keyframes m-ear-l {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(-6deg);
+  }
+}
+
+@keyframes m-ear-r {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+
+@keyframes m-wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(-70deg);
+  }
+}
+
+@keyframes m-wave-l {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(70deg);
+  }
+}
+
+@keyframes m-jump {
+  0% {
+    transform: translateY(0) scale(1.08, 0.9);
+  }
+  35% {
+    transform: translateY(-38px) scale(0.94, 1.08);
+  }
+  70% {
+    transform: translateY(0) scale(1.1, 0.88);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes m-sad {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(2px);
+  }
+  50% {
+    transform: rotate(3deg) translateY(2px);
+  }
+}
+
+@keyframes m-think {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(-3deg) translateY(-3px);
+  }
+}
+
+@keyframes m-sleep {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.03, 0.97);
+  }
+}
+
+@keyframes m-wow {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12, 0.92) translateY(-10px);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes m-zzz {
+  0% {
+    opacity: 0;
+    transform: translate(0, 6px);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(10px, -14px);
+  }
+}
+
+@keyframes m-poke {
+  0% {
+    transform: scale(1, 1);
+  }
+  30% {
+    transform: scale(1.12, 0.86);
+  }
+  60% {
+    transform: scale(0.95, 1.06);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes m-outfit-in {
+  from {
+    transform: scale(0) rotate(-40deg);
+  }
+  to {
+    transform: scale(1) rotate(0);
+  }
+}
