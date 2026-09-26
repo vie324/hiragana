@@ -93,15 +93,18 @@ function loadPacks(): Promise<void> {
 }
 
 /**
- * はじめて ひらいた ときは Service Worker が まだ うごいていないので、
- * パックを じぶんで キャッシュに いれて つぎから オフラインでも つかえるように する。
+ * はじめて ひらいた ときは Service Worker が まだ うごいていない (または とちゅうで うごきだす) ので、
+ * キャッシュに なければ じぶんで いれて、つぎから オフラインでも つかえるように する。
  */
 function keepOffline(href: string, buf: ArrayBuffer) {
-  if (!import.meta.env.PROD || typeof caches === 'undefined' || navigator.serviceWorker?.controller) return;
+  if (!import.meta.env.PROD || typeof caches === 'undefined') return;
   const req = new URL(href, location.href).href;
   void caches
     .open('hiragana-voice')
-    .then((c) => c.put(req, new Response(buf.slice(0), { headers: { 'Content-Type': 'application/octet-stream' } })))
+    .then(async (c) => {
+      if (await c.match(req)) return;
+      await c.put(req, new Response(buf.slice(0), { headers: { 'Content-Type': 'application/octet-stream' } }));
+    })
     .catch(() => undefined);
 }
 
@@ -155,11 +158,10 @@ export function planVoice(text: string, names: readonly string[], needPacks = tr
     for (let i = 0; i < pieces.length; i++) {
       const p = pieces[i];
       if ('name' in p) pushTts(p.name);
-      else if (!pushClip(p.text)) {
-        // なまえに くっついた「も」「と」などは なまえと いっしょに よむ
-        if (!isTinyFragment(p.text)) return null;
-        pushTts(p.text);
-      }
+      // なまえに くっついた「は」「と」「も」などは なまえと いっしょに よむ
+      // (1もじの 声は もじの よみかた なので つかわない)
+      else if (isTinyFragment(p.text)) pushTts(p.text);
+      else if (!pushClip(p.text)) return null;
     }
   }
   return out.length ? out : null;
@@ -197,11 +199,17 @@ export function playClip(key: string): { done: Promise<'ok' | 'stopped' | 'faile
   let finish: (v: 'ok' | 'stopped' | 'failed') => void = () => undefined;
   const done = new Promise<'ok' | 'stopped' | 'failed'>((resolve) => {
     finish = resolve;
-    void decode(key).then((buf) => {
+    void decode(key).then(async (buf) => {
       const out = getAudioOut();
       if (stopped) return resolve('stopped');
       if (!buf || !out) return resolve('failed');
-      if (out.ctx.state !== 'running') void out.ctx.resume().catch(() => undefined);
+      // でんわ・ロックの あとなどで とまっている ときは うごかしてみる。
+      // うごかなければ ならさない (あとで まとめて なりださないように)
+      if (out.ctx.state !== 'running') {
+        await Promise.race([out.ctx.resume().catch(() => undefined), new Promise((r) => setTimeout(r, 400))]);
+        if (stopped) return resolve('stopped');
+        if ((out.ctx.state as AudioContextState) !== 'running') return resolve('failed');
+      }
       try {
         src = out.ctx.createBufferSource();
         src.buffer = buf;
@@ -212,7 +220,14 @@ export function playClip(key: string): { done: Promise<'ok' | 'stopped' | 'faile
         return resolve('failed');
       }
       // iPad で onended が こないときの ほけん
-      setTimeout(() => resolve(stopped ? 'stopped' : 'ok'), buf.duration * 1000 + 1500);
+      setTimeout(() => {
+        try {
+          src?.stop();
+        } catch {
+          /* noop */
+        }
+        resolve(stopped ? 'stopped' : 'ok');
+      }, buf.duration * 1000 + 1500);
     });
   });
   return {

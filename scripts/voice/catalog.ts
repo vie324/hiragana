@@ -4,9 +4,10 @@
  */
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { buildCatalog } from '../../src/voice/catalog';
 
-const ROOT = new URL('../../', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 /** おうちの方むけの 画面は よみあげないので のぞく */
 const SKIP = [/\.test\./, /ParentScreen\.tsx$/, /SetupScreen\.tsx$/, /ParentGate\.tsx$/, /screens\/parent\//];
 
@@ -17,18 +18,20 @@ function walk(dir: string): string[] {
   });
 }
 
-/** ソースに ちょくせつ かいてある 日本語の もじれつ ('...' と "...") */
+/** ソースに ちょくせつ かいてある 日本語の もじれつ ('...' "..." と、\${} の ない `...`) */
 function staticTexts(): string[] {
   const files = ['src/screens', 'src/components']
     .flatMap((d) => walk(join(ROOT, d)))
     .filter((f) => /\.tsx?$/.test(f) && !SKIP.some((re) => re.test(f)));
   const out = new Set<string>();
-  const re = /'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"/g;
+  const re = /'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\\n$]|\\.)*)`/g;
   for (const f of files) {
     const src = readFileSync(f, 'utf8');
     for (const m of src.matchAll(re)) {
-      const s = m[1] ?? m[2] ?? '';
-      if (!/[぀-ヿ]/.test(s) || s.length > 80 || s.includes('${')) continue;
+      const s = m[1] ?? m[2] ?? m[3] ?? '';
+      if (!/[\u3040-\u30ff]/.test(s) || s.length > 80 || s.includes('${')) continue;
+      // `...` は コードの きれはしを ひろわないように、ふつうの ぶんだけ
+      if (m[3] !== undefined && /[{}<>();=]/.test(s)) continue;
       out.add(s);
     }
   }

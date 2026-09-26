@@ -33,30 +33,47 @@ const KANJI = /[\u3400-\u4dbf\u4e00-\u9fff]/;
 let captionTimer: ReturnType<typeof setTimeout> | undefined;
 /** iPad で よみあげを つかえるように する ための むおんの よみあげ中 */
 let unlocking = false;
-let unlocked = false;
+let unlockState: 'no' | 'trying' | 'yes' = 'no';
 
 /**
- * さいしょの タッチで むおんの よみあげを して、iPad の よみあげを つかえるように する。
- * (まえもって つくった 声の あとに なまえだけ よむ とき、タッチの そとでも よめるように)
+ * タップ (click) の なかで むおんの よみあげを して、iPad の よみあげを つかえるように する。
+ * まえもって つくった 声の あとに なまえだけ よむ ときも、タップの そとで よめるように なる。
+ * iPad が ほんとうに よんだ (onstart/onend が きた) ときだけ おわりに して、だめなら つぎの タップで もういちど。
  */
 export function unlockSpeech(): void {
-  if (unlocked || !synth) return;
-  unlocked = true;
-  if (synth.speaking || synth.pending) return;
+  if (unlockState !== 'no' || !synth) return;
+  // もう なにか よんでいるなら つかえる
+  if (synth.speaking || synth.pending) {
+    unlockState = 'yes';
+    return;
+  }
   try {
     const u = new SpeechSynthesisUtterance(' ');
     u.lang = 'ja-JP';
     u.volume = 0;
-    u.onend = u.onerror = () => {
+    const ok = () => {
+      unlockState = 'yes';
       unlocking = false;
       keep.delete(u);
     };
+    u.onstart = ok;
+    u.onend = ok;
+    u.onerror = () => {
+      unlocking = false;
+      keep.delete(u);
+      if (unlockState === 'trying') unlockState = 'no';
+    };
     keep.add(u);
+    unlockState = 'trying';
     unlocking = true;
     synth.speak(u);
-    setTimeout(() => (unlocking = false), 1500);
+    setTimeout(() => {
+      unlocking = false;
+      if (unlockState === 'trying') unlockState = 'no';
+    }, 1500);
   } catch {
     unlocking = false;
+    unlockState = 'no';
   }
 }
 

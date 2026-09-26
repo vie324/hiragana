@@ -68,6 +68,17 @@ describe('catalog', () => {
     }
   });
 
+  it('ソースに ちょくせつ かいた セリフ (`...` も) と、まちがいの タイルの もじも ある', () => {
+    const all = buildCatalog(['きょうは なにして あそぶ?', 'すごい! じょうずに かけたね!']);
+    const k2 = new Set(all.map((e) => e.key));
+    expect(k2.has(voiceKey('きょうは なにして あそぶ?'))).toBe(true);
+    expect(k2.has(voiceKey('じょうずに かけたね!'))).toBe(true);
+    for (const k of ['を', 'ぢ', 'ぺ', 'ゃ', 'ゅ', 'ょ', 'っ']) {
+      expect(covered(L.buildMiss(k, false)), k).toBe(true);
+      expect(covered(L.buildNext(k)), k).toBe(true);
+    }
+  });
+
   it('なまえが はいる セリフは なまえ いがいが ある', () => {
     const names = ['さくらちゃん', 'もこ'];
     expect(covered(L.homeNext('さくらちゃん'), names)).toBe(true);

@@ -39,7 +39,10 @@ const CACHE = 'hiragana-${version}';
 const VOICE_CACHE = 'hiragana-voice';
 const FILES = ${JSON.stringify(['./', ...files.map((f) => './' + f)])};
 const PACKS = ${JSON.stringify(packs.map((f) => './' + f))};
-const isPack = (url) => /\/voice\/[^/]+\/[^/]+\.bin$/.test(new URL(url).pathname);
+const isPack = (url) => {
+  const path = new URL(url).pathname;
+  return path.includes('/voice/') && path.endsWith('.bin');
+};
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
 });

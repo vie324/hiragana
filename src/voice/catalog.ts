@@ -15,7 +15,7 @@ import { BOOKS, fillTitle, tokenize } from '../data/books';
 import { SPECIAL_LESSONS } from '../data/specialLessons';
 import { OUTFITS } from '../data/outfits';
 import { exampleSentence, kanaExample } from '../data/kanaInfo';
-import { ALL_NODES } from '../data/curriculum';
+import { ALL_NODES, STAGES } from '../data/curriculum';
 import { findSpecialLesson } from '../data/specialLessons';
 import { findBook } from '../data/books';
 import { BUDDY_DEFAULT_NAMES, BUDDY_KIND_SAY, type BuddyKind } from '../state/store';
@@ -36,10 +36,11 @@ const uniq = <T,>(xs: Iterable<T>): T[] => [...new Set(xs)];
 const YOUON = YOUON_ROWS.flatMap((r) => r.cells.filter((c): c is string => !!c));
 const SPECIAL_KANA = uniq(SPECIAL_LESSONS.flatMap((l) => l.kana));
 const WORD_UNITS = uniq(WORDS.flatMap((w) => splitUnits(w.w)));
+const STAGE_KANA = uniq(STAGES.flatMap((s) => s.kana));
 /** ゲームや レッスンに でてくる もじ */
-const GAME_KANA = uniq([...BASIC_KANA, ...SPECIAL_KANA]);
+const GAME_KANA = uniq([...BASIC_KANA, ...SPECIAL_KANA, ...STAGE_KANA]);
 /** とにかく よまれる かもしれない もじ */
-const ALL_KANA = uniq([...WRITABLE_KANA, ...SMALL_KANA, ...YOUON, ...WORD_UNITS, ...SPECIAL_KANA]);
+const ALL_KANA = uniq([...WRITABLE_KANA, ...SMALL_KANA, ...YOUON, ...WORD_UNITS, ...SPECIAL_KANA, ...STAGE_KANA]);
 const BUDDIES = Object.keys(BUDDY_DEFAULT_NAMES) as BuddyKind[];
 const BUDDY_NAMES = BUDDIES.map((k) => BUDDY_DEFAULT_NAMES[k]);
 /** なまえが ない ときは「きみ」 */
@@ -103,7 +104,8 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
     add(L.nameNext(k), 'kana');
     for (const n of NAMES) add(L.nameStart(n, k), 'kana');
   }
-  for (const unit of WORD_UNITS) {
+  // ことばづくりの まちがいの タイルは、ならった もじ なら なんでも でる
+  for (const unit of ALL_KANA) {
     add(L.buildNext(unit), 'kana');
     add(L.buildMiss(unit, true), 'kana');
     add(L.buildMiss(unit, false), 'kana');

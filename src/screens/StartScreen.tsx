@@ -1,6 +1,6 @@
 import { useApp, callName, useBuddyFace } from '../state/store';
 import { navigate, replace } from '../state/router';
-import { speak } from '../lib/speech';
+import { speak, unlockSpeech } from '../lib/speech';
 import { startBgm, unlockAudio, sfx } from '../lib/sound';
 import { greeting } from '../lib/session';
 import Mascot from '../components/Mascot';
@@ -20,6 +20,7 @@ export default function StartScreen() {
 
   const start = () => {
     unlockAudio();
+    unlockSpeech();
     sfx.open();
     // iPad では タップの なかで よみあげを はじめる ひつようが ある
     if (profile.setup) {
@@ -67,6 +68,7 @@ export default function StartScreen() {
         onClick={(e) => {
           e.stopPropagation();
           unlockAudio();
+          unlockSpeech();
           navigate({ name: 'parent' });
         }}
       >

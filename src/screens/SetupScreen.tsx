@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { update, useApp } from '../state/store';
+import { MAX_FACES, update, useApp } from '../state/store';
 import { addFace } from '../state/faces';
 import { isStandalone } from '../state/backup';
 import FaceCamera from '../components/FaceCamera';
@@ -91,9 +91,11 @@ export default function SetupScreen() {
 
           <div className="field">
             <span>かおしゃしん(なくてもOK)</span>
-            <button className="secondary" onClick={() => setCamera(true)} data-testid="setup-face">
-              📷 {faces.length ? 'もう1まい入れる' : 'お子さまの顔写真を入れる'}
-            </button>
+            {faces.length < MAX_FACES && (
+              <button className="secondary" onClick={() => setCamera(true)} data-testid="setup-face">
+                📷 {faces.length ? 'もう1まい入れる' : 'お子さまの顔写真を入れる'}
+              </button>
+            )}
             <small>顔写真を入れると、あいぼうの顔や絵本に出てくる子になって、いっしょに動きます。写真はこのiPadの中だけに保存されます。あとから「おうちの方へ」でも入れられます。</small>
           </div>
 

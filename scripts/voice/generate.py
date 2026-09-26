@@ -11,10 +11,12 @@ VOICEVOX で アプリの 声を つくる (ローカルで 1かい だけ う�
 mp3 に するため ffmpeg (libmp3lame) が いる (--ffmpeg で ばしょを しめせる)。
 """
 import argparse
+import array
 import concurrent.futures as cf
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import subprocess
@@ -87,9 +89,32 @@ def synth(engine, speaker, text):
     return post(f'{engine}/synthesis?speaker={speaker}', json.dumps(q).encode())
 
 
+# 1もじ・みじかい ことばは 20dB ちかく ちいさく できるので、しゃべっている ところの おおきさを そろえる
+TARGET_DB = -24.0
+PEAK_DB = -1.0
+MAX_GAIN_DB = 26.0
+
+
+def loudness_gain(wav_path):
+    """しゃべっている ところ (いちばん おおきい ところから 30dB いない) の RMS を TARGET_DB に する"""
+    with wave.open(wav_path) as w:
+        rate = w.getframerate()
+        a = array.array('h', w.readframes(w.getnframes()))
+    if not a:
+        return 0.0
+    n = max(1, int(rate * 0.02))
+    rms = [math.sqrt(sum(x * x for x in a[i:i + n]) / n) / 32768 + 1e-9 for i in range(0, max(1, len(a) - n), n)]
+    top = max(rms)
+    active = [r for r in rms if r > top * 10 ** (-30 / 20)]
+    arms = 20 * math.log10(math.sqrt(sum(r * r for r in active) / len(active)))
+    peak = 20 * math.log10(max(abs(x) for x in a) / 32768 + 1e-9)
+    return max(-12.0, min(TARGET_DB - arms, PEAK_DB - peak, MAX_GAIN_DB))
+
+
 def encode_mp3(ffmpeg, wav_path, bitrate):
+    gain = loudness_gain(wav_path)
     p = subprocess.run(
-        [ffmpeg, '-hide_banner', '-loglevel', 'error', '-i', wav_path, '-ac', '1', '-ar', '24000',
+        [ffmpeg, '-hide_banner', '-loglevel', 'error', '-i', wav_path, '-af', f'volume={gain:.2f}dB', '-ac', '1', '-ar', '24000',
          '-codec:a', 'libmp3lame', '-b:a', bitrate, '-f', 'mp3', 'pipe:1'],
         capture_output=True, check=True)
     return p.stdout
@@ -134,7 +159,7 @@ def main():
             open(wav_path + '.tmp', 'wb').write(wav)
             os.replace(wav_path + '.tmp', wav_path)
         ms = wav_ms(open(wav_path, 'rb').read())
-        mp3_path = os.path.join(cache_dir, f'{h}.{args.bitrate}.mp3')
+        mp3_path = os.path.join(cache_dir, f'{h}.{args.bitrate}.n{TARGET_DB:g}.mp3')
         if not os.path.exists(mp3_path):
             open(mp3_path + '.tmp', 'wb').write(encode_mp3(args.ffmpeg, wav_path, args.bitrate))
             os.replace(mp3_path + '.tmp', mp3_path)

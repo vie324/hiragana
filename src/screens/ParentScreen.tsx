@@ -567,8 +567,8 @@ function DataTab() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState('');
   const [pending, setPending] = useState<ReturnType<typeof parseBackup> | null>(null);
-  const [last, setLast] = useState(lastBackupAt());
-  const [undo, setUndo] = useState(undoInfo());
+  const [last, setLast] = useState(() => lastBackupAt());
+  const [undo, setUndo] = useState(() => undoInfo());
   const [status, setStatus] = useState<{ persisted: boolean | null; usage: number | null }>({ persisted: null, usage: null });
   const standalone = isStandalone();
   const summary = currentSummary();

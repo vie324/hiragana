@@ -40,11 +40,59 @@ function ensure(): AudioContext | null {
   return ctx;
 }
 
+let keepAlive: HTMLAudioElement | null = null;
+
+/** むおんの wav (Blob URL) */
+function silentWavUrl(): string {
+  const rate = 8000;
+  const n = rate; // 1びょう
+  const buf = new ArrayBuffer(44 + n * 2);
+  const v = new DataView(buf);
+  const str = (o: number, t: string) => [...t].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)));
+  str(0, 'RIFF');
+  v.setUint32(4, 36 + n * 2, true);
+  str(8, 'WAVE');
+  str(12, 'fmt ');
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  str(36, 'data');
+  v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+
+/**
+ * ふるい iPad (audioSession が ない) では、Web Audio の 音が 消音モードで きこえなくなる。
+ * むおんの audio を ながしておくと 「さいせい」あつかいに なって、消音モードでも 声が きこえる。
+ */
+function keepPlaybackSession(): void {
+  if (keepAlive || typeof Audio === 'undefined') return;
+  try {
+    const a = new Audio(silentWavUrl());
+    a.loop = true;
+    a.setAttribute('playsinline', '');
+    keepAlive = a;
+    void a.play().catch(() => (keepAlive = null));
+    document.addEventListener('visibilitychange', () => {
+      if (!keepAlive) return;
+      if (document.hidden) keepAlive.pause();
+      else void keepAlive.play().catch(() => undefined);
+    });
+  } catch {
+    keepAlive = null;
+  }
+}
+
 /** タップの 中で よぶ (iPad では これが ないと 音が でない) */
 export function unlockAudio(): void {
   try {
     const nav = navigator as AudioSessionNavigator;
     if (nav.audioSession) nav.audioSession.type = 'playback';
+    else if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document) keepPlaybackSession();
   } catch {
     /* noop */
   }
