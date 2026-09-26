@@ -25,6 +25,23 @@ export const OUTFITS: Outfit[] = [
   { id: 'tulip', emoji: '🌷', say: 'チューリップ', pos: 'hand' },
   { id: 'grad', emoji: '🎓', say: 'はかせの ぼうし', pos: 'head' },
   { id: 'gem', emoji: '💎', say: 'ほうせき', pos: 'neck' },
+  // カタカナの ぼうけんの たからばこ
+  { id: 'headphones', emoji: '🎧', say: 'ヘッドホン', pos: 'head' },
+  { id: 'sunflower', emoji: '🌻', say: 'ひまわり', pos: 'ear' },
+  { id: 'lollipop', emoji: '🍭', say: 'キャンディ', pos: 'hand' },
+  { id: 'medal', emoji: '🏅', say: 'メダル', pos: 'neck' },
+  { id: 'helmet', emoji: '⛑️', say: 'ヘルメット', pos: 'head' },
+  { id: 'heart', emoji: '💖', say: 'ハート', pos: 'ear' },
+  { id: 'icecream', emoji: '🍦', say: 'ソフトクリーム', pos: 'hand' },
+  { id: 'mushroom', emoji: '🍄', say: 'きのこ', pos: 'ear' },
+  { id: 'mic', emoji: '🎤', say: 'マイク', pos: 'hand' },
+  { id: 'guitar', emoji: '🎸', say: 'ギター', pos: 'hand' },
+  { id: 'sparkles', emoji: '✨', say: 'キラキラ', pos: 'ear' },
+  { id: 'rose', emoji: '🌹', say: 'バラ', pos: 'hand' },
+  { id: 'rocket', emoji: '🚀', say: 'ロケット', pos: 'hand' },
+  { id: 'bell', emoji: '🔔', say: 'すず', pos: 'neck' },
+  { id: 'windchime', emoji: '🎐', say: 'ふうりん', pos: 'hand' },
+  { id: 'party', emoji: '🎉', say: 'クラッカー', pos: 'hand' },
 ];
 
 export function findOutfit(id: string | null | undefined): Outfit | undefined {

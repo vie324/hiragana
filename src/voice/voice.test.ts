@@ -4,7 +4,8 @@ import { buildCatalog } from './catalog';
 import { L, WRITE_MODE_SAY } from './lines';
 import { WORDS, lastSound } from '../data/words';
 import { BASIC_KANA, WRITABLE_KANA, splitUnits } from '../lib/kana';
-import { BOOKS, tokenize } from '../data/books';
+import { ALL_BOOKS as BOOKS, tokenize } from '../data/books';
+import { MISSIONS } from '../data/missions';
 
 describe('split', () => {
   it('ぶんに わける', () => {
@@ -77,6 +78,12 @@ describe('catalog', () => {
       expect(covered(L.buildMiss(k, false)), k).toBe(true);
       expect(covered(L.buildNext(k)), k).toBe(true);
     }
+  });
+
+  it('ミッション・レベル・れんぞくの セリフが ある', () => {
+    for (const m of Object.values(MISSIONS)) expect(covered(m.say), m.kind).toBe(true);
+    for (const n of [2, 10, 99]) expect(covered(L.levelUp(n)), String(n)).toBe(true);
+    for (const n of [2, 3, 14, 20, 30, 100]) expect(covered(L.streak(n)), String(n)).toBe(true);
   });
 
   it('なまえが はいる セリフは なまえ いがいが ある', () => {

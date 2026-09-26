@@ -2,9 +2,18 @@
 import { update, getData, todayKey, type AppData } from './store';
 import { answer, introduce, recordWrite } from '../lib/srs';
 import { STICKERS, RARE } from '../data/stickers';
-import { findNode, ALL_NODES } from '../data/curriculum';
+import { findNode, nodesOf } from '../data/curriculum';
+import type { Script } from '../lib/kana';
 import { findOutfit, type Outfit } from '../data/outfits';
 import { weightedPick } from '../lib/random';
+import { CHEST_XP, MISSION_XP, type MissionKind } from '../data/missions';
+import { chestReady, levelInfo, streakDays, unseenMissions } from './progress';
+
+/**
+ * なにを した あとの ごほうびか (ミッションの かぞえかたに つかう)。
+ * マップの ゲームは 「ぼうけん」と 「ゲーム」の りょうほうに かぞえる。'other' は どちらにも かぞえない
+ */
+export type ActivityKind = 'lesson' | 'game' | 'write' | 'book' | 'treasure' | 'other';
 
 export interface RewardResult {
   stars: number;
@@ -15,6 +24,16 @@ export interface RewardResult {
   outfit?: Outfit;
   /** はじめて クリアした ノード */
   firstClear: boolean;
+  /** もらった けいけんち */
+  xp: number;
+  /** レベルが あがったら あたらしい レベル */
+  levelUp?: number;
+  /** この かつどうで クリアした ミッション */
+  missions: MissionKind[];
+  /** きょうの ミッションが ぜんぶ おわった (たからばこが あけられる) */
+  allMissions: boolean;
+  /** きょう はじめての ときの れんぞく にっすう (それ いがいは 0) */
+  streak: number;
 }
 
 function day(d: AppData) {
@@ -23,27 +42,56 @@ function day(d: AppData) {
   return d.days[k];
 }
 
-function drawSticker(d: AppData, bonusRare: boolean): string {
+function bumpMission(d: AppData, kind: MissionKind, n = 1): void {
+  const today = day(d);
+  today.m = { ...today.m, [kind]: (today.m?.[kind] ?? 0) + n };
+}
+
+/** 'bonus' = キラキラが でやすい, 'rare' = かならず キラキラ */
+function drawSticker(d: AppData, mode: 'normal' | 'bonus' | 'rare'): string {
   const owned = d.stickers;
-  return weightedPick(
-    STICKERS,
-    (x) => {
-      const have = owned[x.s] ?? 0;
-      const base = x.rare ? (bonusRare ? 6 : 1) : 6;
-      // まだ もっていない シールが でやすい
-      return base / (1 + have * 1.5);
-    },
-  ).s;
+  const pool = mode === 'rare' ? STICKERS.filter((x) => x.rare) : STICKERS;
+  return weightedPick(pool, (x) => {
+    const have = owned[x.s] ?? 0;
+    const base = x.rare ? (mode === 'normal' ? 1 : 6) : 6;
+    // まだ もっていない シールが でやすい
+    return base / (1 + have * 1.5);
+  }).s;
+}
+
+/** けいけんちを たして、レベルが あがったら その レベルを かえす */
+function gainXp(d: AppData, xp: number): number | undefined {
+  const before = levelInfo(d.xp).level;
+  d.xp = Math.max(0, (d.xp || 0) + xp);
+  const after = levelInfo(d.xp).level;
+  return after > before ? after : undefined;
 }
 
 /** かつどうが おわったとき (ほし 1〜3) */
-export function completeActivity(opts: { nodeId?: string; stars: number }): RewardResult {
-  let result: RewardResult = { stars: opts.stars, sticker: '⭐', rare: false, stamp: false, firstClear: false };
+export function completeActivity(opts: { nodeId?: string; stars: number; kind: ActivityKind }): RewardResult {
+  let result: RewardResult = {
+    stars: opts.stars,
+    sticker: '⭐',
+    rare: false,
+    stamp: false,
+    firstClear: false,
+    xp: 0,
+    missions: [],
+    allMissions: false,
+    streak: 0,
+  };
   update((d) => {
     const today = day(d);
     today.acts += 1;
     const stamp = !today.stamp;
     today.stamp = true;
+
+    // ミッション: マップの ノードは 「ぼうけん」、ゲーム・えほんは それぞれ
+    if (opts.nodeId) bumpMission(d, 'adventure');
+    if (opts.kind === 'game') bumpMission(d, 'game');
+    if (opts.kind === 'book') bumpMission(d, 'book');
+    const missions = unseenMissions(d.days);
+    if (missions.length) today.seen = [...(today.seen ?? []), ...missions];
 
     let outfit: Outfit | undefined;
     let firstClear = false;
@@ -62,12 +110,84 @@ export function completeActivity(opts: { nodeId?: string; stars: number }): Rewa
         d.wear = node.outfit;
       }
     }
-    const sticker = drawSticker(d, node?.kind === 'treasure' || opts.stars >= 3);
+    const sticker = drawSticker(d, node?.kind === 'treasure' || opts.stars >= 3 ? 'bonus' : 'normal');
     d.stickers[sticker] = (d.stickers[sticker] ?? 0) + 1;
-    result = { stars: opts.stars, sticker, rare: RARE.has(sticker), stamp, outfit, firstClear };
+    const xp = Math.max(1, opts.stars) + missions.length * MISSION_XP;
+    const levelUp = gainXp(d, xp);
+    result = {
+      stars: opts.stars,
+      sticker,
+      rare: RARE.has(sticker),
+      stamp,
+      outfit,
+      firstClear,
+      xp,
+      levelUp,
+      missions,
+      allMissions: missions.length > 0 && chestReady(d.days),
+      streak: stamp ? streakDays(d.days) : 0,
+    };
   });
   return result;
 }
+
+export interface ChestResult {
+  sticker: string;
+  levelUp?: number;
+}
+
+/** きょうの ミッションの たからばこを あける (キラキラ シール + けいけんち) */
+export function openMissionChest(): ChestResult | null {
+  let out: ChestResult | null = null;
+  update((d) => {
+    if (!chestReady(d.days)) return;
+    day(d).chest = true;
+    const sticker = drawSticker(d, 'rare');
+    d.stickers[sticker] = (d.stickers[sticker] ?? 0) + 1;
+    out = { sticker, levelUp: gainXp(d, CHEST_XP) };
+  });
+  return out;
+}
+
+/**
+ * ホームで 「クリア!」を いった ミッションを おぼえておく。
+ * かく ミッションは ごほうびの がめんを とおらずに おわることが あるので、けいけんちも ここで わたす
+ */
+export function markMissionsSeen(kinds: MissionKind[]): { xp: number; levelUp?: number } {
+  let out: { xp: number; levelUp?: number } = { xp: 0 };
+  const seen = new Set(getData().days[todayKey()]?.seen ?? []);
+  const fresh = [...new Set(kinds)].filter((k) => !seen.has(k));
+  if (!fresh.length) return out;
+  update((d) => {
+    const today = day(d);
+    today.seen = [...(today.seen ?? []), ...fresh];
+    const xp = fresh.length * MISSION_XP;
+    out = { xp, levelUp: gainXp(d, xp) };
+  });
+  return out;
+}
+
+/** もじの きで みた みを おぼえておく */
+export function markTreeSeen(kana: string[]): void {
+  const cur = new Set(getData().treeSeen);
+  if (kana.every((k) => cur.has(k))) return;
+  update((d) => {
+    d.treeSeen = [...new Set([...d.treeSeen, ...kana])];
+  });
+}
+
+/** もじの きに みずを あげる (1日 1かい)。あげられたら true */
+export function waterTree(): boolean {
+  let ok = false;
+  update((d) => {
+    const today = day(d);
+    if (today.water) return;
+    today.water = true;
+    ok = true;
+  });
+  return ok;
+}
+
 
 export function markIntroduced(kana: string[]): void {
   const now = Date.now();
@@ -94,6 +214,7 @@ export function recordWriting(kana: string, stars: number): void {
   const now = Date.now();
   update((d) => {
     d.kana[kana] = recordWrite(d.kana[kana], stars, now);
+    bumpMission(d, 'write');
   });
 }
 
@@ -135,9 +256,10 @@ export function isNodeDone(d: AppData, id: string): boolean {
 }
 
 /** ノードが ひらいているか (ひとつ まえが おわっていれば OK) */
-export function isNodeUnlocked(d: AppData, index: number): boolean {
+export function isNodeUnlocked(d: AppData, index: number, script: Script = 'hira'): boolean {
   if (d.settings.unlockAll || index <= 0) return true;
-  return !!d.nodes[ALL_NODES[index - 1].id] || !!d.nodes[ALL_NODES[index].id];
+  const nodes = nodesOf(script);
+  return !!d.nodes[nodes[index - 1].id] || !!d.nodes[nodes[index].id];
 }
 
 /** おぼえた (ならった or こたえた) もじ */

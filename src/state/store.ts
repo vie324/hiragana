@@ -5,6 +5,8 @@
 import { useSyncExternalStore } from 'react';
 import type { KanaProgress } from '../lib/srs';
 import type { WriteLevel } from '../lib/stroke';
+import type { Script } from '../lib/kana';
+import type { MissionKind } from '../data/missions';
 
 export type BuddyKind = 'usagi' | 'kuma' | 'neko' | 'hiyoko';
 export type FingerMode = 'auto' | 'allow' | 'pen';
@@ -25,6 +27,10 @@ export interface Settings {
   unlockAll: boolean;
   /** ふきだしに もじを だす */
   caption: boolean;
+  /** いま まなんでいる もじ (ホームの きりかえ) */
+  script: Script;
+  /** カタカナの きりかえを だす */
+  kata: boolean;
 }
 
 export interface Profile {
@@ -69,6 +75,14 @@ export interface DayRecord {
   sec: number;
   acts: number;
   stamp: boolean;
+  /** きょうの ミッションの かず */
+  m?: Partial<Record<MissionKind, number>>;
+  /** 「クリア!」を もう いった ミッション */
+  seen?: MissionKind[];
+  /** ミッションの たからばこを あけた */
+  chest?: boolean;
+  /** もじの きに みずを あげた */
+  water?: boolean;
 }
 
 export interface AppData {
@@ -88,6 +102,10 @@ export interface AppData {
   days: Record<string, DayRecord>;
   /** おうちのひとが のばした ふん (日付ごと) */
   extra: Record<string, number>;
+  /** けいけんち (あつめた ほし など)。レベルに なる */
+  xp: number;
+  /** もじの きで もう みた み (あたらしい みを ポンと だす) */
+  treeSeen: string[];
 }
 
 export const DATA_VERSION = 1;
@@ -125,6 +143,8 @@ export function defaultData(): AppData {
       limitMin: 0,
       unlockAll: false,
       caption: true,
+      script: 'hira',
+      kata: true,
     },
     kana: {},
     nodes: {},
@@ -137,6 +157,8 @@ export function defaultData(): AppData {
     faces: [],
     days: {},
     extra: {},
+    xp: 0,
+    treeSeen: [],
   };
 }
 
@@ -166,6 +188,21 @@ export function normalizeData(input: unknown): AppData {
   const ids = new Set(merged.faces.map((f) => f.id));
   if (merged.profile.buddyFace && !ids.has(merged.profile.buddyFace)) merged.profile.buddyFace = null;
   if (merged.profile.avatar.startsWith('face:') && !ids.has(merged.profile.avatar.slice(5))) merged.profile.avatar = '🧒';
+  if (merged.settings.script !== 'hira' && merged.settings.script !== 'kata') merged.settings.script = 'hira';
+  // ひごとの きろくの かたちを そろえる (こわれた データでも うごくように)
+  for (const [k, day] of Object.entries(merged.days)) {
+    if (!isObj(day)) {
+      delete merged.days[k];
+      continue;
+    }
+    if (day.m !== undefined && !isObj(day.m)) delete day.m;
+    if (day.seen !== undefined && !Array.isArray(day.seen)) delete day.seen;
+  }
+  // レベルが なかった ころの データ: これまで あそんだ かずから けいけんちを つくる
+  if (!isObj(input) || typeof input.xp !== 'number') {
+    merged.xp = Object.values(merged.days).reduce((a, day) => a + (isObj(day) && typeof day.acts === 'number' ? day.acts * 2 : 0), 0);
+  }
+  merged.xp = Number.isFinite(merged.xp) ? Math.max(0, Math.floor(merged.xp)) : 0;
   return merged;
 }
 
@@ -260,6 +297,15 @@ export function todayKey(d = new Date()): string {
 
 export function faceImg(d: AppData, id: string | null | undefined): string | null {
   return (id && d.faces.find((f) => f.id === id)?.img) || null;
+}
+
+/** いま えらんでいる もじ (カタカナを かくす せっていなら ひらがな) */
+export function currentScript(d: AppData = state): Script {
+  return d.settings.kata ? d.settings.script : 'hira';
+}
+
+export function useScript(): Script {
+  return useApp((s) => currentScript(s));
 }
 
 /** あいぼうの かお (しゃしん) */

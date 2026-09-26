@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { collectReward, drawKana, prepare, seedProfile, start } from './helpers';
+import { collectReward, drawKana, prepare, seedProfile, settled, start, tapNext } from './helpers';
 
 test('はじめての セットアップから ホームまで', async ({ page }) => {
   await prepare(page);
@@ -34,9 +34,9 @@ test('「あ」の レッスンを さいごまで すすめる', async ({ page 
   await page.getByTestId('menu-map').click({ force: true });
   await page.getByTestId('node-a:lesson:あ').click({ force: true });
 
-  await page.getByTestId('next').click({ force: true }); // もじ
-  await page.getByTestId('next').click({ force: true }); // ことば
-  await page.getByTestId('next').click({ force: true, timeout: 20_000 }); // かきじゅん
+  await tapNext(page); // もじ
+  await tapNext(page); // ことば
+  await tapNext(page); // かきじゅん
 
   await expect(page.getByTestId('writing-pad')).toBeVisible();
   await drawKana(page, 'あ');
@@ -62,6 +62,7 @@ test('かきじゅんと ちがう 線は はねられる', async ({ page }) => 
   await prepare(page, seedProfile());
   await start(page);
   await page.evaluate(() => window.__hiragana!.navigate({ name: 'writeKana', kana: 'い' }));
+  await settled(page);
   const pad = page.getByTestId('writing-pad');
   await expect(pad).toHaveAttribute('data-stroke-index', '0');
   // みぎの 画を さきに かく → まちがい
@@ -179,6 +180,7 @@ test('シールを ドラッグして はる', async ({ page }) => {
   await prepare(page, seedProfile({ stickers: { '🐶': 2 } }));
   await start(page);
   await page.evaluate(() => window.__hiragana!.navigate({ name: 'stickers' }));
+  await settled(page);
   const item = page.getByTestId('tray-🐶');
   const scene = page.getByTestId('sticker-scene');
   const a = (await item.boundingBox())!;
@@ -241,6 +243,7 @@ test('「みないで」モードでも かける', async ({ page }) => {
   await prepare(page, seedProfile());
   await start(page);
   await page.evaluate(() => window.__hiragana!.navigate({ name: 'writeKana', kana: 'く' }));
+  await settled(page);
   await page.getByTestId('mode-blank').click({ force: true });
   // さいしょは ヒント(みどりの まる)が でない
   await expect(page.locator('.start-dot')).toHaveCount(0);
@@ -252,6 +255,7 @@ test('まちがえた線の うえから かきなおしても かける', async
   await prepare(page, seedProfile());
   await start(page);
   await page.evaluate(() => window.__hiragana!.navigate({ name: 'writeKana', kana: 'い' }));
+  await settled(page);
   const pad = page.getByTestId('writing-pad');
   const box = (await pad.boundingBox())!;
   const at = (x: number, y: number) => ({ x: box.x + (x / 109) * box.width, y: box.y + (y / 109) * box.height });

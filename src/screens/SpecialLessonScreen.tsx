@@ -18,7 +18,7 @@ function CardShow({ card }: { card: LessonCard }) {
   return (
     <div className="sp-card pop-in">
       {isFormula ? (
-        <div className="sp-formula">
+        <div className={`sp-formula ${parts.some((p) => [...p].length > 1) ? 'long' : ''}`}>
           {parts.map((p, i) =>
             p === '＋' ? (
               <span key={i} className="sp-op">
@@ -51,7 +51,7 @@ function CardShow({ card }: { card: LessonCard }) {
       ) : (
         <div className="sp-word">
           {[...card.show].map((c, i) => (
-            <span key={i} className={`sp-ch ${'っゃゅょ'.includes(c) ? 'small' : ''} ${c === ' ' ? 'space' : ''}`}>
+            <span key={i} className={`sp-ch ${'っゃゅょッャュョー'.includes(c) ? 'small' : ''} ${c === ' ' ? 'space' : ''}`}>
               {c}
             </span>
           ))}
@@ -72,7 +72,9 @@ export default function SpecialLessonScreen({ lessonId, nodeId }: { lessonId: st
   const alive = useAlive();
   // -1 = はじめの せつめい, 0..cards-1 = カード, cards.. = クイズ
   const [pos, setPos] = useState(-1);
-  const [ready, setReady] = useState(false);
+  // 「つぎへ」を だして よい カード (pos が かわった その ばで ボタンが きえるように、pos ごとに もつ)
+  const [readyPos, setReadyPos] = useState<number | null>(null);
+  const ready = readyPos === pos;
   const [mistakes, setMistakes] = useState(0);
   const [mood, setMood] = useState<'normal' | 'happy' | 'think'>('normal');
   const [reward, setReward] = useState<RewardResult | null>(null);
@@ -92,9 +94,8 @@ export default function SpecialLessonScreen({ lessonId, nodeId }: { lessonId: st
 
   useEffect(() => {
     let stale = false;
-    setReady(false);
     setMood('normal');
-    void sayCurrent().then(() => !stale && alive.current && setReady(true));
+    void sayCurrent().then(() => !stale && alive.current && setReadyPos(pos));
     return () => {
       stale = true;
     };
@@ -114,7 +115,7 @@ export default function SpecialLessonScreen({ lessonId, nodeId }: { lessonId: st
     if (!alive.current) return;
     if (pos + 1 >= nCards + nQuiz) {
       markIntroduced(lesson.kana);
-      setReward(completeActivity({ nodeId, stars: mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1 }));
+      setReward(completeActivity({ nodeId, stars: mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1, kind: 'lesson' }));
     } else {
       setPos((p) => p + 1);
     }

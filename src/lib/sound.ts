@@ -287,6 +287,40 @@ export const sfx = {
       for (let i = 0; i < 5; i++) tone(NOTE(72 + i * 3), i * 0.05, 0.16, { type: 'triangle', gain: 0.15 });
     }),
   locked: () => play(() => tone(260, 0, 0.12, { type: 'triangle', gain: 0.14 })),
+  /** れんぞく せいかい: かずが ふえるほど たかい おと */
+  combo: (n: number) =>
+    play(() => {
+      const base = 72 + Math.min(12, (n - 2) * 2);
+      [0, 4, 7, 12].forEach((d, i) => tone(NOTE(base + d), i * 0.045, 0.16, { type: 'triangle', gain: 0.12 }));
+    }),
+  levelUp: () =>
+    play(() => {
+      const mel: [number, number, number][] = [
+        [67, 0, 0.1],
+        [72, 0.1, 0.1],
+        [76, 0.2, 0.1],
+        [79, 0.3, 0.1],
+        [84, 0.4, 0.18],
+        [88, 0.62, 0.12],
+        [91, 0.76, 0.7],
+      ];
+      for (const [n, at, d] of mel) {
+        tone(NOTE(n), at, d + 0.15, { type: 'triangle', gain: 0.2 });
+        tone(NOTE(n + 12), at, d + 0.1, { gain: 0.05 });
+      }
+      tone(NOTE(48), 0.76, 0.8, { type: 'triangle', gain: 0.18 });
+      tone(NOTE(55), 0.76, 0.8, { type: 'triangle', gain: 0.12 });
+    }),
+  water: () =>
+    play(() => {
+      for (let i = 0; i < 7; i++) tone(NOTE(PENTA[(i * 3) % PENTA.length] + 7), i * 0.09, 0.12, { gain: 0.09, slideTo: NOTE(PENTA[(i * 3) % PENTA.length] + 12) });
+      noise(0, 0.6, { gain: 0.06, freq: 3000, q: 0.6 });
+    }),
+  chest: () =>
+    play(() => {
+      tone(180, 0, 0.12, { gain: 0.25, slideTo: 90 });
+      for (let i = 0; i < 8; i++) tone(NOTE(PENTA[i] + 12), 0.12 + i * 0.05, 0.22, { gain: 0.08 });
+    }),
 };
 
 /* ---------------- BGM: オルゴールふうの ちいさな きょく ---------------- */

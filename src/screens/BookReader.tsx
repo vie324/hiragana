@@ -200,7 +200,8 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
     const looked = [...seen.current.values()].filter((t) => t >= 2.5).length;
     const enough = looked >= Math.ceil(pages.length * 0.7);
     if (nodeId || enough) {
-      setReward(completeActivity({ nodeId, stars: enough ? 3 : 1 }));
+      // 「えほん」の ミッションは ちゃんと よんだ ときだけ
+      setReward(completeActivity({ nodeId, stars: enough ? 3 : 1, kind: enough ? 'book' : 'other' }));
     }
   };
 

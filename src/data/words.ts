@@ -3,7 +3,8 @@
  * ふだん ひらがなで かく ことば だけ (カタカナの ことばは いれない)。
  * say: よみあげ用 (同音の ことばを ただしく よませるため)
  */
-import { splitUnits } from '../lib/kana';
+import { splitUnits, scriptOf, type Script } from '../lib/kana';
+import { KATA_WORDS } from './kataWords';
 
 export type WordCat = 'animal' | 'food' | 'nature' | 'thing' | 'ride' | 'place' | 'body' | 'people' | 'color' | 'shape';
 
@@ -265,7 +266,14 @@ export const WORDS: Word[] = [
   ]),
 ];
 
-const byWord = new Map(WORDS.map((w) => [w.w, w]));
+export { KATA_WORDS };
+
+const byWord = new Map([...WORDS, ...KATA_WORDS].map((w) => [w.w, w]));
+
+/** ひらがなの ことば / カタカナの ことば */
+export function wordsOf(script: Script): Word[] {
+  return script === 'kata' ? KATA_WORDS : WORDS;
+}
 
 export function findWord(w: string): Word | undefined {
   return byWord.get(w);
@@ -279,8 +287,8 @@ export function sayWord(w: Word | string): string {
 }
 
 /** ぜんぶの もじを しっている ことば */
-export function wordsWithin(known: ReadonlySet<string>, opts: { maxUnits?: number; minUnits?: number } = {}): Word[] {
-  return WORDS.filter((w) => {
+export function wordsWithin(known: ReadonlySet<string>, opts: { maxUnits?: number; minUnits?: number } = {}, script: Script = 'hira'): Word[] {
+  return wordsOf(script).filter((w) => {
     const units = splitUnits(w.w);
     if (opts.maxUnits && units.length > opts.maxUnits) return false;
     if (opts.minUnits && units.length < opts.minUnits) return false;
@@ -288,16 +296,19 @@ export function wordsWithin(known: ReadonlySet<string>, opts: { maxUnits?: numbe
   });
 }
 
-/** さいしょの おと (拍) が kana の ことば */
+/** さいしょの おと (拍) が kana の ことば (カタカナなら カタカナの ことばから) */
 export function wordsStartingWith(kana: string): Word[] {
-  return WORDS.filter((w) => splitUnits(w.w)[0] === kana);
+  return wordsOf(scriptOf(kana)).filter((w) => splitUnits(w.w)[0] === kana);
 }
 
 /** しりとり用: さいごの おと (小さい や ゆ よ は おおきく、ー は つかわない) */
 export function lastSound(word: string): string {
   const units = splitUnits(word);
   const last = units[units.length - 1] ?? '';
-  const big: Record<string, string> = { ゃ: 'や', ゅ: 'ゆ', ょ: 'よ', ぁ: 'あ', ぃ: 'い', ぅ: 'う', ぇ: 'え', ぉ: 'お' };
+  const big: Record<string, string> = {
+    ゃ: 'や', ゅ: 'ゆ', ょ: 'よ', ぁ: 'あ', ぃ: 'い', ぅ: 'う', ぇ: 'え', ぉ: 'お',
+    ャ: 'ヤ', ュ: 'ユ', ョ: 'ヨ', ァ: 'ア', ィ: 'イ', ゥ: 'ウ', ェ: 'エ', ォ: 'オ',
+  };
   const ch = last.slice(-1);
   return big[ch] ?? ch;
 }

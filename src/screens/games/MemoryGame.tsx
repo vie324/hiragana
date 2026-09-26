@@ -6,13 +6,15 @@ import { sayKana } from '../../lib/kana';
 import { speak } from '../../lib/speech';
 import { sfx } from '../../lib/sound';
 import { burstAt, celebrate } from '../../lib/confetti';
+import { badAnswer, goodAnswer } from '../../lib/feedback';
 import { useAlive } from '../../lib/hooks';
 import { shuffle, pick } from '../../lib/random';
 import { back } from '../../state/router';
 import { completeActivity, recordAnswer, type RewardResult } from '../../state/actions';
 import { wordsStartingWith, sayWord, type Word } from '../../data/words';
 import { findNode, stageOfNode, kanaUpToStage } from '../../data/curriculum';
-import { knownPool, starsFromMistakes } from './pools';
+import { gameScript, knownPool, starsFromMistakes } from './pools';
+import type { Script } from '../../lib/kana';
 import { L } from '../../voice/lines';
 import './games.css';
 
@@ -23,11 +25,11 @@ interface Card {
   word?: Word;
 }
 
-function makeCards(nodeId?: string): Card[] {
+function makeCards(nodeId: string | undefined, script: Script): Card[] {
   const node = findNode(nodeId);
   const stage = nodeId ? stageOfNode(nodeId) : undefined;
-  let pool = (node?.kana ?? (stage ? kanaUpToStage(stage.id).slice(-10) : knownPool())).filter((k) => wordsStartingWith(k).length > 0);
-  if (pool.length < 4) pool = [...new Set([...pool, ...knownPool().filter((k) => wordsStartingWith(k).length > 0)])];
+  let pool = (node?.kana ?? (stage ? kanaUpToStage(stage.id).slice(-10) : knownPool(script))).filter((k) => wordsStartingWith(k).length > 0);
+  if (pool.length < 4) pool = [...new Set([...pool, ...knownPool(script).filter((k) => wordsStartingWith(k).length > 0)])];
   const pairs = shuffle(pool).slice(0, Math.min(6, pool.length >= 6 ? 6 : 4));
   let id = 0;
   const cards: Card[] = [];
@@ -39,9 +41,9 @@ function makeCards(nodeId?: string): Card[] {
   return shuffle(cards);
 }
 
-export default function MemoryGame({ nodeId }: { nodeId?: string }) {
+export default function MemoryGame({ nodeId, script: scriptProp }: { nodeId?: string; script?: Script }) {
   const alive = useAlive();
-  const cards = useMemo(() => makeCards(nodeId), [nodeId]);
+  const cards = useMemo(() => makeCards(nodeId, gameScript(scriptProp, nodeId)), [nodeId, scriptProp]);
   const [open, setOpen] = useState<number[]>([]);
   const [matched, setMatched] = useState<Set<string>>(new Set());
   const [mistakes, setMistakes] = useState(0);
@@ -71,6 +73,7 @@ export default function MemoryGame({ nodeId }: { nodeId?: string }) {
       if (!alive.current) return;
       sfx.correct();
       burstAt(el, 30);
+      goodAnswer(el);
       recordAnswer(a.pair, true);
       const m = new Set(matched).add(a.pair);
       setMatched(m);
@@ -82,10 +85,11 @@ export default function MemoryGame({ nodeId }: { nodeId?: string }) {
       setBusy(false);
       if (m.size >= pairs) {
         celebrate();
-        setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, pairs * 2) }));
+        setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, pairs * 2), kind: 'game' }));
       }
     } else {
       setBusy(true);
+      badAnswer();
       setMistakes((x) => x + 1);
       setMood('think');
       await new Promise((r) => setTimeout(r, 1300));

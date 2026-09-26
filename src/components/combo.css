@@ -1,0 +1,76 @@
+.combo-badge {
+  position: fixed;
+  z-index: 40;
+  left: 50%;
+  top: calc(var(--safe-t) + 78px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 18px 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffb35c, #ff8f3f);
+  color: #fff;
+  font-family: var(--kids);
+  font-weight: 700;
+  box-shadow: 0 4px 0 var(--orange-d), 0 10px 20px rgba(255, 120, 40, 0.35);
+  pointer-events: none;
+  animation: combo-in 0.5s cubic-bezier(0.2, 1.7, 0.4, 1) both;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+}
+
+.combo-badge .emoji {
+  font-size: 28px;
+}
+
+.combo-badge b {
+  font-family: var(--ui);
+  font-weight: 800;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.combo-label {
+  font-size: 22px;
+}
+
+.combo-badge.warm {
+  background: linear-gradient(180deg, #ff8fb8, #ff5f96);
+  box-shadow: 0 4px 0 var(--pink-d), 0 10px 22px rgba(255, 80, 140, 0.4);
+}
+
+.combo-badge.hot {
+  background: linear-gradient(90deg, #ff6b6b, #ffb800, #4cc76f, #4db4ff, #a78bff);
+  background-size: 200% 100%;
+  box-shadow: 0 4px 0 #7c5fe0, 0 0 26px rgba(255, 200, 60, 0.8);
+  animation: combo-in 0.5s cubic-bezier(0.2, 1.7, 0.4, 1) both, combo-rainbow 2s linear 2;
+}
+
+@keyframes combo-in {
+  from {
+    transform: translateX(-50%) scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes combo-rainbow {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+.fly-star {
+  position: fixed;
+  left: -22px;
+  top: -22px;
+  z-index: 120;
+  font-family: var(--emoji);
+  font-size: 44px;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+}

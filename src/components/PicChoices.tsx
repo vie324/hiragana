@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Word } from '../data/words';
 import { sfx } from '../lib/sound';
 import { burstAt } from '../lib/confetti';
+import { badAnswer, goodAnswer } from '../lib/feedback';
 
 interface Props {
   choices: Word[];
@@ -30,10 +31,12 @@ export default function PicChoices({ choices, answer, onCorrect, onWrong, size =
               setRight(true);
               sfx.correct();
               burstAt(e.currentTarget, 36);
+              goodAnswer(e.currentTarget);
               onCorrect();
             } else {
               setWrong(w.w);
               sfx.wrong();
+              badAnswer();
               setTimeout(() => setWrong(null), 600);
               onWrong(w);
             }

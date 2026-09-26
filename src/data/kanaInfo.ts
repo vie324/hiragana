@@ -28,6 +28,25 @@ const MAP: Record<string, string> = {
   ぱ: 'はっぱ', ぴ: 'えんぴつ', ぷ: 'てんぷら', ぽ: 'たんぽぽ',
 };
 
+/** カタカナの れい (カタカナの ことばから) */
+const K_MAP: Record<string, string> = {
+  ア: 'アイス', イ: 'イルカ', ウ: 'ウサギ', エ: 'エビ', オ: 'オレンジ',
+  カ: 'カメラ', キ: 'キウイ', ク: 'クッキー', ケ: 'ケーキ', コ: 'コアラ',
+  サ: 'サンドイッチ', シ: 'シマウマ', ス: 'スプーン', セ: 'セーター', ソ: 'ソフトクリーム',
+  タ: 'タクシー', チ: 'チーズ', ツ: 'ツリー', テ: 'テレビ', ト: 'トマト',
+  ナ: 'ナッツ', ニ: 'テニス', ヌ: 'カヌー', ネ: 'ネクタイ', ノ: 'ノート',
+  ハ: 'ハンバーガー', ヒ: 'ヒーロー', フ: 'フラミンゴ', ヘ: 'ヘリコプター', ホ: 'ホットドッグ',
+  マ: 'マイク', ミ: 'ミルク', ム: 'ゲーム', メ: 'メロン', モ: 'モノレール',
+  ヤ: 'ヤギ', ユ: 'ユニコーン', ヨ: 'ヨット',
+  ラ: 'ライオン', リ: 'リボン', ル: 'ボール', レ: 'レモン', ロ: 'ロボット',
+  ワ: 'ワッフル', ン: 'パン',
+  ガ: 'ガム', ギ: 'ギター', グ: 'グローブ', ゲ: 'ゲーム', ゴ: 'ゴリラ',
+  ザ: 'ピザ', ジ: 'ジーンズ', ズ: 'チーズ', ゼ: 'ゼロ', ゾ: 'ゾウ',
+  ダ: 'ダンス', デ: 'デパート', ド: 'ドーナツ',
+  バ: 'バナナ', ビ: 'ビル', ブ: 'ブロッコリー', ベ: 'ベッド', ボ: 'ボート',
+  パ: 'パンダ', ピ: 'ピアノ', プ: 'プリン', ペ: 'ペンギン', ポ: 'ポスト',
+};
+
 const INLINE: Record<string, KanaExample> = {
   を: { word: 'ほんを よむ', emoji: '📖', say: '本を読む', head: false },
   ぺ: { word: 'ぺろぺろ', emoji: '👅', say: 'ぺろぺろ', head: true },
@@ -36,7 +55,8 @@ const INLINE: Record<string, KanaExample> = {
 
 export function kanaExample(kana: string): KanaExample | null {
   if (INLINE[kana]) return INLINE[kana];
-  const w: Word | undefined = MAP[kana] ? findWord(MAP[kana]) : undefined;
+  const name = MAP[kana] ?? K_MAP[kana];
+  const w: Word | undefined = name ? findWord(name) : undefined;
   if (!w) return null;
   return { word: w.w, emoji: w.e, say: w.say ?? w.w, head: w.w.startsWith(kana) };
 }

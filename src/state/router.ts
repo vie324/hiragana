@@ -1,5 +1,6 @@
 /** かんたんな 画面の きりかえ (スタック方式) */
 import { useSyncExternalStore } from 'react';
+import type { Script } from '../lib/kana';
 
 export type Route =
   | { name: 'start' }
@@ -9,11 +10,11 @@ export type Route =
   | { name: 'map'; focus?: string }
   | { name: 'lesson'; kana: string; nodeId?: string }
   | { name: 'special'; lessonId: string; nodeId?: string }
-  | { name: 'balloon'; kana?: string[]; nodeId?: string }
-  | { name: 'firstsound'; kana?: string[]; nodeId?: string }
-  | { name: 'wordbuild'; nodeId?: string; pool?: string[] }
-  | { name: 'readquiz'; nodeId?: string; pool?: string[] }
-  | { name: 'memory'; nodeId?: string }
+  | { name: 'balloon'; kana?: string[]; nodeId?: string; script?: Script }
+  | { name: 'firstsound'; kana?: string[]; nodeId?: string; script?: Script }
+  | { name: 'wordbuild'; nodeId?: string; pool?: string[]; script?: Script }
+  | { name: 'readquiz'; nodeId?: string; pool?: string[]; script?: Script }
+  | { name: 'memory'; nodeId?: string; script?: Script }
   | { name: 'shiritori' }
   | { name: 'play' }
   | { name: 'write'; tab?: string }
@@ -25,6 +26,7 @@ export type Route =
   | { name: 'stickers' }
   | { name: 'dressup' }
   | { name: 'stamps' }
+  | { name: 'tree' }
   | { name: 'parent' }
   | { name: 'sleep' };
 

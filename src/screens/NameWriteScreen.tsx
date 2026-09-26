@@ -61,7 +61,7 @@ export default function NameWriteScreen() {
       sfx.fanfare();
       addNameSample({ at: Date.now(), name: profile.name, chars: chars.map((c, j) => ({ kana: c, strokes: round(next[j]) })) });
       await speak(L.nameDone(callName(profile)));
-      if (alive.current) setTimeout(() => alive.current && setReward(completeActivity({ stars: 3 })), 1500);
+      if (alive.current) setTimeout(() => alive.current && setReward(completeActivity({ stars: 3, kind: 'write' })), 1500);
     } else {
       await speak(L.nameNext(chars[i + 1]));
       if (alive.current) setI(i + 1);

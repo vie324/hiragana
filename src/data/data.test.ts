@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { WORDS, wordsStartingWith, wordsWithin, lastSound } from './words';
-import { BASIC_KANA, SEION, isHiragana, splitUnits } from '../lib/kana';
+import { KATA_WORDS, WORDS, wordsStartingWith, wordsWithin, lastSound } from './words';
+import { BASIC_KANA, K_BASIC_KANA, K_SEION, K_WRITABLE_KANA, SEION, isHiragana, isKana, isKatakana, isOfScript, splitUnits, toKata } from '../lib/kana';
+import { bookKana, readability } from './bookInfo';
 import { kanaExample } from './kanaInfo';
-import { ALL_NODES, STAGES, kanaUpToStage } from './curriculum';
-import { BOOKS, findBook, particleSay, tokenize } from './books';
-import { SPECIAL_LESSONS } from './specialLessons';
+import { ALL_NODES, KATA_NODES, KATA_STAGES, STAGES, kanaUpToStage, nextNodeIndex, scriptOfNode } from './curriculum';
+import { ALL_BOOKS as BOOKS, findBook, particleSay, tokenize } from './books';
+import { ALL_SPECIAL_LESSONS as SPECIAL_LESSONS } from './specialLessons';
+import strokes from './strokes.json';
 import { OUTFITS } from './outfits';
 import { STICKERS } from './stickers';
 
@@ -50,10 +52,78 @@ describe('word bank', () => {
   });
 });
 
+describe('katakana', () => {
+  it('uses only katakana words with unique words/emoji', () => {
+    const ws = new Set<string>();
+    const es = new Set<string>();
+    for (const w of KATA_WORDS) {
+      expect([...w.w].every(isKatakana), w.w).toBe(true);
+      expect(ws.has(w.w), `dup word ${w.w}`).toBe(false);
+      expect(es.has(w.e), `dup emoji ${w.e} (${w.w})`).toBe(false);
+      ws.add(w.w);
+      es.add(w.e);
+    }
+    expect(KATA_WORDS.length).toBeGreaterThan(120);
+  });
+
+  it('has an example for every basic katakana except ヲ ヂ ヅ', () => {
+    for (const k of K_BASIC_KANA) {
+      if ('ヲヂヅ'.includes(k)) continue;
+      const ex = kanaExample(k);
+      expect(ex, k).not.toBeNull();
+      expect(ex!.word.includes(k), `${k} in ${ex!.word}`).toBe(true);
+    }
+  });
+
+  it('has stroke order for every katakana that can be written', () => {
+    for (const k of K_WRITABLE_KANA) expect((strokes as Record<string, unknown>)[k], k).toBeDefined();
+  });
+
+  it('offers katakana words for the early word games', () => {
+    const upToKa = new Set([...kanaUpToStage('k-ka'), 'ー']);
+    expect(wordsWithin(upToKa, {}, 'kata').length).toBeGreaterThanOrEqual(5);
+    const upToSa = new Set([...kanaUpToStage('k-sa'), 'ー']);
+    expect(wordsWithin(upToSa, { maxUnits: 4 }, 'kata').length).toBeGreaterThanOrEqual(10);
+    expect(wordsStartingWith('ア').every((w) => w.w.startsWith('ア'))).toBe(true);
+    expect(wordsStartingWith('あ').every((w) => w.w.startsWith('あ'))).toBe(true);
+  });
+
+  it('introduces every katakana seion except ヲ in a lesson', () => {
+    const lessons = new Set(KATA_NODES.filter((n) => n.kind === 'lesson').flatMap((n) => n.kana!));
+    for (const k of K_SEION) if (k !== 'ヲ') expect(lessons.has(k), k).toBe(true);
+    expect(KATA_NODES.every((n) => scriptOfNode(n.id) === 'kata')).toBe(true);
+    expect(ALL_NODES.every((n) => scriptOfNode(n.id) === 'hira')).toBe(true);
+    expect(nextNodeIndex(() => false, 'kata')).toBe(0);
+    expect(KATA_STAGES.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it('only counts a katakana book as readable when its katakana is known', () => {
+    const omise = findBook('omise')!;
+    const hira = new Set(SEION);
+    expect(readability(omise, (k) => hira.has(k))).toBeLessThan(0.5);
+    const kata = new Set([...K_SEION, ...K_BASIC_KANA, ...SEION]);
+    expect(readability(omise, (k) => kata.has(k) || !isKatakana(k))).toBeGreaterThan(0.8);
+    expect(bookKana(omise)).not.toContain('ー');
+  });
+
+  it('tells which script a tile belongs to', () => {
+    expect(isOfScript('ー', 'hira')).toBe(false);
+    expect(isOfScript('ー', 'kata')).toBe(true);
+    expect(isOfScript('きゃ', 'hira')).toBe(true);
+    expect(isOfScript('キャ', 'hira')).toBe(false);
+  });
+
+  it('converts between hiragana and katakana', () => {
+    expect(toKata('きゃべつ')).toBe('キャベツ');
+    expect(splitUnits('ジュース')).toEqual(['ジュ', 'ー', 'ス']);
+    expect(lastSound('シャワー')).toBe('ー');
+  });
+});
+
 describe('curriculum', () => {
   it('has unique node ids and valid references', () => {
     const ids = new Set<string>();
-    for (const n of ALL_NODES) {
+    for (const n of [...ALL_NODES, ...KATA_NODES]) {
       expect(ids.has(n.id), n.id).toBe(false);
       ids.add(n.id);
       if (n.kind === 'book') expect(findBook(n.bookId!), n.id).toBeDefined();
@@ -68,19 +138,19 @@ describe('curriculum', () => {
   });
 
   it('uses each outfit at most once', () => {
-    const outfits = ALL_NODES.filter((n) => n.kind === 'treasure').map((n) => n.outfit);
+    const outfits = [...ALL_NODES, ...KATA_NODES].filter((n) => n.kind === 'treasure').map((n) => n.outfit);
     expect(new Set(outfits).size).toBe(outfits.length);
     expect(STAGES.length).toBeGreaterThanOrEqual(15);
   });
 });
 
 describe('books', () => {
-  it('only uses hiragana text (plus punctuation and placeholders)', () => {
+  it('only uses kana text (plus punctuation and placeholders)', () => {
     for (const b of BOOKS) {
       for (const p of [{ text: b.title }, ...b.pages]) {
         const plain = p.text.replace(/\{name\}|\{buddy\}/g, '').replace(/\|[^\s]+/g, '');
         for (const ch of plain) {
-          const ok = isHiragana(ch) || /[\s、。!?！？「」…〜ー]/.test(ch);
+          const ok = isKana(ch) || /[\s、。!?！？「」…〜ー]/.test(ch);
           expect(ok, `${b.id}: "${ch}" in ${p.text}`).toBe(true);
         }
       }

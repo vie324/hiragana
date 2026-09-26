@@ -5,6 +5,8 @@ import { setVoicePrefs } from './lib/speech';
 import { loadVoice } from './voice/bank';
 import { setSoundPrefs, wantBgm } from './lib/sound';
 import { attachConfetti } from './lib/confetti';
+import { comboReset } from './state/combo';
+import ComboBadge from './components/ComboBadge';
 import { addPlaySeconds, remainingSeconds } from './state/actions';
 import StartScreen from './screens/StartScreen';
 import SetupScreen from './screens/SetupScreen';
@@ -29,10 +31,11 @@ import BookReader from './screens/BookReader';
 import StickerBook from './screens/StickerBook';
 import DressUpScreen from './screens/DressUpScreen';
 import StampScreen from './screens/StampScreen';
+import TreeScreen from './screens/TreeScreen';
 import ParentScreen from './screens/ParentScreen';
 import SleepScreen from './screens/SleepScreen';
 
-const BGM_SCREENS = new Set<Route['name']>(['home', 'map', 'stickers', 'dressup', 'stamps', 'play', 'books', 'chart', 'write', 'buddy']);
+const BGM_SCREENS = new Set<Route['name']>(['home', 'map', 'stickers', 'dressup', 'stamps', 'play', 'books', 'chart', 'write', 'buddy', 'tree']);
 const UNTIMED = new Set<Route['name']>(['start', 'setup', 'parent', 'sleep']);
 
 function Screen({ route }: { route: Route }) {
@@ -52,15 +55,15 @@ function Screen({ route }: { route: Route }) {
     case 'special':
       return <SpecialLessonScreen lessonId={route.lessonId} nodeId={route.nodeId} />;
     case 'balloon':
-      return <BalloonGame kana={route.kana} nodeId={route.nodeId} />;
+      return <BalloonGame kana={route.kana} nodeId={route.nodeId} script={route.script} />;
     case 'firstsound':
-      return <FirstSoundGame kana={route.kana} nodeId={route.nodeId} />;
+      return <FirstSoundGame kana={route.kana} nodeId={route.nodeId} script={route.script} />;
     case 'wordbuild':
-      return <WordBuildGame nodeId={route.nodeId} />;
+      return <WordBuildGame nodeId={route.nodeId} script={route.script} />;
     case 'readquiz':
-      return <ReadQuizGame nodeId={route.nodeId} />;
+      return <ReadQuizGame nodeId={route.nodeId} script={route.script} />;
     case 'memory':
-      return <MemoryGame nodeId={route.nodeId} />;
+      return <MemoryGame nodeId={route.nodeId} script={route.script} />;
     case 'shiritori':
       return <ShiritoriGame />;
     case 'play':
@@ -83,6 +86,8 @@ function Screen({ route }: { route: Route }) {
       return <DressUpScreen />;
     case 'stamps':
       return <StampScreen />;
+    case 'tree':
+      return <TreeScreen />;
     case 'parent':
       return <ParentScreen />;
     case 'sleep':
@@ -127,9 +132,20 @@ function usePlayTimer(name: Route['name']) {
   }, []);
 }
 
+/** すすむ / もどる で 画面の はいりかたを かえる */
+function useNavDirection(version: number, depth: number): 'fwd' | 'back' | 'swap' {
+  const last = useRef({ version, depth, dir: 'swap' as 'fwd' | 'back' | 'swap' });
+  if (last.current.version !== version) {
+    const dir = depth > last.current.depth ? 'fwd' : depth < last.current.depth ? 'back' : 'swap';
+    last.current = { version, depth, dir };
+  }
+  return last.current.dir;
+}
+
 export default function App() {
-  const { route, version } = useRoute();
+  const { route, version, depth } = useRoute();
   const settings = useApp((s) => s.settings);
+  const nav = useNavDirection(version, depth);
 
   useEffect(() => {
     setVoicePrefs({ voiceURI: settings.voiceURI, rate: settings.rate, pitch: settings.pitch });
@@ -146,11 +162,15 @@ export default function App() {
     wantBgm(BGM_SCREENS.has(route.name));
   }, [route.name]);
 
+  // コンボは その 画面の なかだけ
+  useEffect(() => comboReset(), [version]);
+
   usePlayTimer(route.name);
 
   return (
-    <div className="app">
+    <div className="app" data-nav={nav}>
       <Screen route={route} key={version} />
+      <ComboBadge />
       <canvas ref={attachConfetti} className="confetti-layer" aria-hidden />
     </div>
   );

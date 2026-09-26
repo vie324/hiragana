@@ -9,8 +9,9 @@ import { useAlive, useIdle } from '../../lib/hooks';
 import { shuffle, pick, sample } from '../../lib/random';
 import { back } from '../../state/router';
 import { completeActivity, recordAnswer, type RewardResult } from '../../state/actions';
-import { WORDS, wordsStartingWith, type Word } from '../../data/words';
-import { starsFromMistakes, targetKana } from './pools';
+import { wordsOf, wordsStartingWith, type Word } from '../../data/words';
+import { gameScript, starsFromMistakes, targetKana } from './pools';
+import type { Script } from '../../lib/kana';
 import { L } from '../../voice/lines';
 import './games.css';
 
@@ -22,9 +23,9 @@ interface Q {
   choices: Word[];
 }
 
-function makeQuestions(kana?: string[]): Q[] {
+function makeQuestions(kana: string[] | undefined, script: Script): Q[] {
   const usable = (kana ?? []).filter((k) => wordsStartingWith(k).length > 0);
-  const targets = targetKana(usable.length ? usable : undefined, ROUNDS * 2).filter((k) => wordsStartingWith(k).length > 0);
+  const targets = targetKana(usable.length ? usable : undefined, ROUNDS * 2, script).filter((k) => wordsStartingWith(k).length > 0);
   const out: Q[] = [];
   const usedWords = new Set<string>();
   for (const k of targets) {
@@ -34,7 +35,7 @@ function makeQuestions(kana?: string[]): Q[] {
     const answer = pick(cands);
     usedWords.add(answer.w);
     const others = sample(
-      WORDS.filter((w) => splitUnits(w.w)[0] !== k && [...w.w].length <= 5),
+      wordsOf(script).filter((w) => splitUnits(w.w)[0] !== k && [...w.w].length <= 5),
       2,
     );
     out.push({ kana: k, answer, choices: shuffle([answer, ...others]) });
@@ -42,9 +43,9 @@ function makeQuestions(kana?: string[]): Q[] {
   return out;
 }
 
-export default function FirstSoundGame({ kana, nodeId }: { kana?: string[]; nodeId?: string }) {
+export default function FirstSoundGame({ kana, nodeId, script: scriptProp }: { kana?: string[]; nodeId?: string; script?: Script }) {
   const alive = useAlive();
-  const questions = useMemo(() => makeQuestions(kana), [kana]);
+  const questions = useMemo(() => makeQuestions(kana, gameScript(scriptProp, nodeId, kana)), [kana, nodeId, scriptProp]);
   const [round, setRound] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [roundMiss, setRoundMiss] = useState(0);
@@ -72,7 +73,7 @@ export default function FirstSoundGame({ kana, nodeId }: { kana?: string[]; node
     await speak(L.firstHit(q.answer, q.kana), { caption: `${q.answer.w}!` });
     await wait(200);
     if (!alive.current) return;
-    if (round + 1 >= total) setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, total) }));
+    if (round + 1 >= total) setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, total), kind: 'game' }));
     else setRound((r) => r + 1);
   };
 

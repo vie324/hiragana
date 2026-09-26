@@ -1,0 +1,306 @@
+.mission-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 28px;
+  padding: 10px 14px 12px;
+  box-shadow: 0 5px 0 rgba(120, 90, 60, 0.14), 0 12px 26px rgba(60, 60, 120, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.mission-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 700;
+  color: var(--pink-d);
+  padding-left: 4px;
+}
+
+.mission-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mission {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.mission-dial {
+  position: relative;
+  width: calc(var(--u) * 9);
+  height: calc(var(--u) * 9);
+  min-width: 64px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mission:active .mission-dial {
+  transform: scale(0.94);
+}
+
+.mission-ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: #fff7ec;
+  stroke: #f1e5d6;
+  stroke-width: 6;
+}
+
+.ring-fg {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.3, 1.2, 0.5, 1);
+}
+
+.mission.done .ring-fg {
+  stroke: var(--green);
+}
+
+.mission.done .ring-bg {
+  fill: #eaffef;
+}
+
+.mission-icon {
+  position: relative;
+  font-size: calc(var(--u) * 4.4);
+}
+
+.mission-check {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-family: var(--ui);
+  font-weight: 800;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 0 var(--green-d);
+  animation: pop-in 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.mission-pips {
+  display: flex;
+  gap: 4px;
+}
+
+.mission-pips i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #eadfd2;
+}
+
+.mission-pips i.on {
+  background: var(--orange);
+}
+
+.mission.done .mission-pips i {
+  background: var(--green);
+}
+
+/* ---------- たからばこ ---------- */
+
+.mission-chest {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  padding: 0;
+  width: calc(var(--u) * 11);
+  min-width: 76px;
+  cursor: pointer;
+}
+
+.mission-chest.locked {
+  filter: grayscale(0.55) opacity(0.75);
+}
+
+.mission-chest.nope {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+.mission-chest.ready {
+  animation: chest-hop 1.3s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(255, 210, 60, 0.95));
+}
+
+@keyframes chest-hop {
+  0%,
+  55%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  65% {
+    transform: translateY(-10px) rotate(-6deg);
+  }
+  75% {
+    transform: translateY(0) rotate(5deg);
+  }
+  85% {
+    transform: translateY(-4px) rotate(-2deg);
+  }
+}
+
+.chest-icon {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.chest-base {
+  fill: #c0773a;
+}
+
+.chest-rim {
+  fill: #9a5a26;
+}
+
+.chest-top {
+  fill: #d98c49;
+}
+
+.chest-band {
+  fill: #ffcf3f;
+}
+
+.chest-lock {
+  fill: #ffcf3f;
+  stroke: #d9a400;
+  stroke-width: 1.5;
+}
+
+.chest-keyhole {
+  fill: #7a4a14;
+}
+
+.chest-lid {
+  transform-box: view-box;
+  transform-origin: 8px 34px;
+  transition: transform 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.chest-icon.open .chest-lid {
+  transform: translate(0, -10px) rotate(-24deg);
+}
+
+.chest-icon.open .chest-lock,
+.chest-icon.open .chest-keyhole {
+  opacity: 0;
+}
+
+.chest-icon.open .chest-base {
+  fill: #b86d31;
+}
+
+/* ---------- たからばこを あける がめん ---------- */
+
+.chest-card {
+  width: min(86vw, 560px);
+  padding: 30px 28px 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.chest-stage {
+  position: relative;
+  width: 280px;
+  height: 290px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.chest-big {
+  width: 190px;
+  position: relative;
+  z-index: 1;
+}
+
+.chest-stage.closed .chest-big {
+  animation: gift-shake 0.9s ease-in-out infinite;
+}
+
+.chest-rays {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 420px;
+  height: 420px;
+  margin: -210px 0 0 -210px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 214, 80, 0.5) 0deg 9deg, transparent 9deg 22deg);
+  -webkit-mask: radial-gradient(circle, #000 18%, transparent 66%);
+  mask: radial-gradient(circle, #000 18%, transparent 66%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  animation: sun-spin 16s linear infinite;
+}
+
+.chest-stage:not(.closed) .chest-rays {
+  opacity: 1;
+}
+
+.chest-sticker {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: -6px;
+  font-size: 104px;
+  line-height: 1;
+  transform: translateX(-50%);
+  animation: chest-sticker 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both, shine 1.6s linear 3 0.9s;
+}
+
+@keyframes chest-sticker {
+  from {
+    transform: translate(-50%, 120px) scale(0.2) rotate(-160deg);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0) scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+.chest-ok {
+  font-size: 32px;
+  padding: 0.35em 1.4em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-chest.ready,
+  .chest-rays,
+  .chest-stage.closed .chest-big {
+    animation: none;
+  }
+}

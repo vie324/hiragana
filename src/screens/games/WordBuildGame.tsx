@@ -2,16 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Buddy from '../../components/Buddy';
 import { Emoji, ProgressDots, SpeakerButton, TopBar } from '../../components/ui';
 import RewardModal from '../../components/RewardModal';
-import { sayKana, splitUnits } from '../../lib/kana';
+import { isOfScript, sayKana, splitUnits } from '../../lib/kana';
 import { speak, speakSequence, wait } from '../../lib/speech';
 import { sfx } from '../../lib/sound';
 import { burstAt, celebrate } from '../../lib/confetti';
+import { badAnswer, goodAnswer } from '../../lib/feedback';
 import { useAlive, useIdle } from '../../lib/hooks';
 import { shuffle } from '../../lib/random';
 import { back } from '../../state/router';
 import { completeActivity, recordAnswer, recordWord, type RewardResult } from '../../state/actions';
 import { sayWord, type Word } from '../../data/words';
-import { distractors, pickWords, starsFromMistakes, wordKanaSet } from './pools';
+import { distractors, gameScript, pickWords, starsFromMistakes, wordKanaSet } from './pools';
+import type { Script } from '../../lib/kana';
 import { L } from '../../voice/lines';
 import './games.css';
 
@@ -29,10 +31,11 @@ function makeTiles(word: Word, pool: string[]): Tile[] {
   return shuffle([...units, ...extra]).map((unit, id) => ({ id, unit, used: false }));
 }
 
-export default function WordBuildGame({ nodeId }: { nodeId?: string }) {
+export default function WordBuildGame({ nodeId, script: scriptProp }: { nodeId?: string; script?: Script }) {
   const alive = useAlive();
-  const words = useMemo(() => pickWords(nodeId, ROUNDS, { maxUnits: 4, minUnits: 2 }), [nodeId]);
-  const pool = useMemo(() => [...wordKanaSet(nodeId)], [nodeId]);
+  const script = useMemo(() => gameScript(scriptProp, nodeId), [scriptProp, nodeId]);
+  const words = useMemo(() => pickWords(nodeId, ROUNDS, { maxUnits: 4, minUnits: 2 }, script), [nodeId, script]);
+  const pool = useMemo(() => [...wordKanaSet(nodeId, script)].filter((k) => isOfScript(k, script)), [nodeId, script]);
   const [round, setRound] = useState(0);
   const word = words[round];
   const units = useMemo(() => (word ? splitUnits(word.w) : []), [word]);
@@ -81,6 +84,7 @@ export default function WordBuildGame({ nodeId }: { nodeId?: string }) {
       setTiles((ts) => ts.map((x) => (x.id === t.id ? { ...x, used: true } : x)));
       if (nf.length >= units.length) {
         setDone(true);
+        goodAnswer(el);
         setMood('happy');
         recordWord(word.w, roundMiss === 0);
         units.forEach((u) => [...u].forEach((c) => recordAnswer(c, roundMiss === 0)));
@@ -94,13 +98,14 @@ export default function WordBuildGame({ nodeId }: { nodeId?: string }) {
         await speak(L.buildDone(word), { caption: `${word.w}! できたね!` });
         await wait(300);
         if (!alive.current) return;
-        if (round + 1 >= words.length) setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, words.length * 2) }));
+        if (round + 1 >= words.length) setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, words.length * 2), kind: 'game' }));
         else setRound((r) => r + 1);
       } else {
         void speak(sayKana(t.unit));
       }
     } else {
       sfx.wrong();
+      badAnswer();
       setWrongId(t.id);
       setTimeout(() => setWrongId(null), 600);
       setMistakes((m) => m + 1);

@@ -10,26 +10,28 @@ import { useAlive, useIdle } from '../../lib/hooks';
 import { shuffle, sample } from '../../lib/random';
 import { back } from '../../state/router';
 import { completeActivity, recordAnswer, recordWord, type RewardResult } from '../../state/actions';
-import { WORDS, type Word } from '../../data/words';
-import { pickWords, starsFromMistakes } from './pools';
+import { wordsOf, type Word } from '../../data/words';
+import { gameScript, pickWords, starsFromMistakes } from './pools';
+import type { Script } from '../../lib/kana';
 import { L } from '../../voice/lines';
 import './games.css';
 
 const ROUNDS = 5;
 
-export default function ReadQuizGame({ nodeId }: { nodeId?: string }) {
+export default function ReadQuizGame({ nodeId, script: scriptProp }: { nodeId?: string; script?: Script }) {
   const alive = useAlive();
-  const words = useMemo(() => pickWords(nodeId, ROUNDS, { maxUnits: 5 }), [nodeId]);
+  const script = useMemo(() => gameScript(scriptProp, nodeId), [scriptProp, nodeId]);
+  const words = useMemo(() => pickWords(nodeId, ROUNDS, { maxUnits: 5 }, script), [nodeId, script]);
   const [round, setRound] = useState(0);
   const word = words[round];
   const choices = useMemo(() => {
     if (!word) return [];
     const others = sample(
-      WORDS.filter((w) => w.w !== word.w && w.cat !== 'color' && w.cat !== 'shape'),
+      wordsOf(script).filter((w) => w.w !== word.w && w.cat !== 'color' && w.cat !== 'shape'),
       2,
     );
     return shuffle([word, ...others]);
-  }, [word]);
+  }, [word, script]);
   const units = useMemo(() => (word ? splitUnits(word.w) : []), [word]);
   const [lit, setLit] = useState<number | null>(null);
   const [mistakes, setMistakes] = useState(0);
@@ -66,7 +68,7 @@ export default function ReadQuizGame({ nodeId }: { nodeId?: string }) {
     await speak(L.readHit(word), { caption: `${word.w}! よめたね!` });
     await wait(300);
     if (!alive.current) return;
-    if (round + 1 >= words.length) setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, words.length) }));
+    if (round + 1 >= words.length) setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, words.length), kind: 'game' }));
     else setRound((r) => r + 1);
   };
 

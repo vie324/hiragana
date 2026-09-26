@@ -7,6 +7,7 @@
  */
 import { sayKana } from '../lib/kana';
 import { sayWord, type Word } from '../data/words';
+import { daysReading } from '../state/progress';
 
 /** かく れんしゅうの モード (WriteKanaScreen) */
 export const WRITE_MODE_SAY = {
@@ -28,6 +29,10 @@ export const L = {
   dressNice: (outfitSay: string) => `${outfitSay}、にあうね!`,
   gotOutfit: (outfitSay: string, buddyName: string) => `${outfitSay}を もらったよ! ${buddyName}に つけて あげたよ。`,
   stamps: (n: number) => (n > 30 ? 'スタンプが たくさん たまったよ!' : `スタンプが ${n}こ たまったよ!`),
+
+  // レベル・れんぞく
+  levelUp: (n: number) => `レベル アップ! レベル ${n}に なったよ!`,
+  streak: (n: number) => `${daysReading(n)} れんぞく! すごいね!`,
 
   // ぼうけんマップ
   learnKana: (k: string) => `「${k}」を おぼえよう!`,

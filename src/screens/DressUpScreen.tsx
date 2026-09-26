@@ -3,6 +3,7 @@ import { Btn, Emoji, TopBar } from '../components/ui';
 import Mascot from '../components/Mascot';
 import FaceBadge from '../components/FaceBadge';
 import { OUTFITS } from '../data/outfits';
+import { KATA_NODES } from '../data/curriculum';
 import { update, useApp, useBuddyFace } from '../state/store';
 import { navigate } from '../state/router';
 import { speak } from '../lib/speech';
@@ -13,12 +14,18 @@ import './dressup.css';
 
 const KIND_EMOJI = { usagi: '🐰', kuma: '🐻', neko: '🐱', hiyoko: '🐤' } as const;
 
+/** カタカナの ぼうけんで もらえる きせかえ */
+const KATA_OUTFITS = new Set(KATA_NODES.filter((n) => n.kind === 'treasure').map((n) => n.outfit));
+
 export default function DressUpScreen() {
   const profile = useApp((s) => s.profile);
   const face = useBuddyFace();
   const outfits = useApp((s) => s.outfits);
   const wear = useApp((s) => s.wear);
   const faces = useApp((s) => s.faces);
+  const kata = useApp((s) => s.settings.kata);
+  // カタカナを かくしている ときは、まだ もっていない カタカナの きせかえは ださない
+  const shown = OUTFITS.filter((o) => kata || !KATA_OUTFITS.has(o.id) || outfits.includes(o.id));
 
   const setFace = (id: string | null) => {
     sfx.sparkle();
@@ -69,7 +76,7 @@ export default function DressUpScreen() {
               ))}
             </div>
           )}
-          {OUTFITS.map((o) => {
+          {shown.map((o) => {
             const have = outfits.includes(o.id);
             return (
               <button

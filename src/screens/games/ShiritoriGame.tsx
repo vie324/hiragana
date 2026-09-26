@@ -5,6 +5,7 @@ import RewardModal from '../../components/RewardModal';
 import { speak, wait } from '../../lib/speech';
 import { sfx } from '../../lib/sound';
 import { burstAt, celebrate } from '../../lib/confetti';
+import { badAnswer, goodAnswer } from '../../lib/feedback';
 import { useAlive, useIdle } from '../../lib/hooks';
 import { shuffle } from '../../lib/random';
 import { back } from '../../state/router';
@@ -77,6 +78,7 @@ export default function ShiritoriGame() {
       setLocked(true);
       sfx.correct();
       burstAt(el, 30);
+      goodAnswer(el);
       recordAnswer(sound, true);
       setMood('happy');
       await speak(L.shiriHit(w), { caption: `${w.w}! つながったね!` });
@@ -86,12 +88,13 @@ export default function ShiritoriGame() {
         celebrate();
         setStep(step + 1);
         await speak('しりとり、ぜんぶ つながったね!');
-        if (alive.current) setReward(completeActivity({ stars: starsFromMistakes(mistakes, LINKS) }));
+        if (alive.current) setReward(completeActivity({ stars: starsFromMistakes(mistakes, LINKS), kind: 'game' }));
       } else {
         setStep(step + 1);
       }
     } else {
       sfx.wrong();
+      badAnswer();
       setWrong(w.w);
       setTimeout(() => setWrong(null), 600);
       setMistakes((m) => m + 1);

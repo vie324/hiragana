@@ -1,0 +1,206 @@
+.level-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  font: inherit;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  padding: 6px 18px 6px 6px;
+  box-shadow: 0 4px 0 rgba(120, 90, 60, 0.15), 0 8px 18px rgba(60, 60, 120, 0.14);
+  cursor: pointer;
+  min-height: 64px;
+}
+
+.level-badge:active {
+  transform: translateY(3px);
+}
+
+.level-avatar {
+  width: calc(var(--u) * 6.4);
+  height: calc(var(--u) * 6.4);
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff3d6, #ffe0a6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--u) * 4.2);
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--yellow);
+  overflow: hidden;
+}
+
+.level-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.level-num {
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 700;
+  color: var(--purple-d);
+  line-height: 1;
+}
+
+.level-num b {
+  font-size: 1.55em;
+  margin-left: 0.2em;
+  font-family: var(--ui);
+  font-weight: 800;
+}
+
+.level-bar {
+  position: relative;
+  width: calc(var(--u) * 15);
+  min-width: 110px;
+  height: 14px;
+  border-radius: 999px;
+  background: #efe6ff;
+  box-shadow: inset 0 2px 0 rgba(120, 90, 200, 0.18);
+}
+
+.level-bar i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffd23f, #ff9f43);
+  transition: width 0.6s cubic-bezier(0.3, 1.3, 0.5, 1);
+  min-width: 14px;
+}
+
+.level-star {
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;
+}
+
+.streak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  font: inherit;
+  min-height: 56px;
+  padding: 4px 16px 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 0 rgba(120, 90, 60, 0.15), 0 8px 18px rgba(60, 60, 120, 0.14);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.streak-chip .flame {
+  font-size: calc(var(--u) * 3.8);
+  filter: grayscale(0.85) opacity(0.6);
+}
+
+.streak-chip b {
+  font-family: var(--ui);
+  font-size: calc(var(--u) * 3.2);
+  font-weight: 800;
+}
+
+.streak-chip.lit {
+  color: var(--orange-d);
+}
+
+.streak-chip.lit .flame {
+  filter: none;
+  animation: flame 1.2s ease-in-out infinite;
+  transform-origin: 50% 90%;
+  display: inline-block;
+}
+
+@keyframes flame {
+  0%,
+  100% {
+    transform: scale(1) rotate(-3deg);
+  }
+  50% {
+    transform: scale(1.12, 1.18) rotate(3deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-chip.lit .flame {
+    animation: none;
+  }
+}
+
+/* ---------- レベル アップ ---------- */
+
+.levelup {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+}
+
+.levelup-banner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 34px 12px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #b69cff, #7c5fe0);
+  color: #fff;
+  box-shadow: 0 6px 0 #5b3fc0, 0 14px 26px rgba(90, 60, 200, 0.35);
+  animation: levelup-in 0.7s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.levelup-rays {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: 360px;
+  height: 360px;
+  margin: -180px 0 0 -180px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 230, 120, 0.55) 0deg 10deg, transparent 10deg 24deg);
+  -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%);
+  mask: radial-gradient(circle, #000 20%, transparent 68%);
+  animation: sun-spin 14s linear infinite;
+  pointer-events: none;
+}
+
+.levelup-text {
+  font-size: 30px;
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgba(60, 20, 140, 0.4);
+  letter-spacing: 0.06em;
+}
+
+.levelup-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff6c9;
+}
+
+.levelup-num b {
+  font-family: var(--ui);
+  font-size: 1.7em;
+  font-weight: 800;
+  margin-left: 0.15em;
+}
+
+@keyframes levelup-in {
+  from {
+    transform: scale(0.2) rotate(-12deg);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}

@@ -1,0 +1,59 @@
+.script-switch {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 0 rgba(120, 90, 60, 0.15), 0 8px 18px rgba(120, 90, 60, 0.12);
+  font-family: var(--kids);
+  isolation: isolate;
+}
+
+.script-switch button {
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: calc(var(--u) * 2.6);
+  padding: 0.35em 1.1em;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 0.25s;
+  white-space: nowrap;
+}
+
+.script-switch.lg button {
+  font-size: calc(var(--u) * 3.2);
+}
+
+.script-switch button.on {
+  color: #fff;
+}
+
+/* えらんでいる ほうへ すべる まるい つまみ */
+.script-thumb {
+  position: absolute;
+  z-index: 0;
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc(50% - 5px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff9f5a, var(--orange));
+  box-shadow: 0 3px 0 var(--orange-d);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s;
+}
+
+.script-switch.is-kata .script-thumb {
+  transform: translateX(100%);
+  background: linear-gradient(180deg, #62c7ff, var(--blue));
+  box-shadow: 0 3px 0 var(--blue-d);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .script-thumb {
+    transition: none;
+  }
+}

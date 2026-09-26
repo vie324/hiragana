@@ -55,7 +55,7 @@ export default function WriteKanaScreen({ kana, list, nodeId }: { kana: string; 
     await speak(r.stars === 3 ? `すごい! じょうずに かけたね!` : r.stars === 2 ? 'よく かけたね!' : 'かけたね! もういっかい やってみよう。');
     if (!alive.current) return;
     // 3かい かいたら ごほうび
-    if (n === 3) setReward(completeActivity({ nodeId, stars: r.stars }));
+    if (n === 3) setReward(completeActivity({ nodeId, stars: r.stars, kind: 'write' }));
   };
 
   const again = () => {
