@@ -1,9 +1,11 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ALL_NODES, STAGES, nextNodeIndex, type MapNode } from '../data/curriculum';
-import { useApp, getData, useBuddyFace } from '../state/store';
+import { nextNodeIndex, nodesOf, scriptOfNode, stagesOf, type MapNode } from '../data/curriculum';
+import { useApp, getData, useBuddyFace, useScript } from '../state/store';
 import { navigate, type Route } from '../state/router';
 import { isNodeUnlocked, completeActivity, type RewardResult } from '../state/actions';
 import { TopBar, Emoji, Stars, Btn } from '../components/ui';
+import ScriptSwitch from '../components/ScriptSwitch';
+import type { Script } from '../lib/kana';
 import Mascot from '../components/Mascot';
 import RewardModal from '../components/RewardModal';
 import { speak } from '../lib/speech';
@@ -18,8 +20,8 @@ const HEADER_H = 150;
 const STEP_H = 124;
 const PAD_BOTTOM = 50;
 
-/** まえに マップを ひらいたときの いまの ばしょ (うごく アニメーション用) */
-let lastCurrent = -1;
+/** まえに マップを ひらいたときの いまの ばしょ (うごく アニメーション用、マップごと) */
+const lastCurrent: Record<string, number> = { hira: -1, kata: -1 };
 
 const KIND_ICON: Record<string, string> = {
   balloon: '🎈',
@@ -38,15 +40,15 @@ export function nodeRoute(n: MapNode): Route | null {
     case 'special':
       return { name: 'special', lessonId: n.lessonId!, nodeId: n.id };
     case 'balloon':
-      return { name: 'balloon', kana: n.kana, nodeId: n.id };
+      return { name: 'balloon', kana: n.kana, nodeId: n.id, script: scriptOfNode(n.id) };
     case 'firstsound':
-      return { name: 'firstsound', kana: n.kana, nodeId: n.id };
+      return { name: 'firstsound', kana: n.kana, nodeId: n.id, script: scriptOfNode(n.id) };
     case 'wordbuild':
-      return { name: 'wordbuild', nodeId: n.id };
+      return { name: 'wordbuild', nodeId: n.id, script: scriptOfNode(n.id) };
     case 'readquiz':
-      return { name: 'readquiz', nodeId: n.id };
+      return { name: 'readquiz', nodeId: n.id, script: scriptOfNode(n.id) };
     case 'memory':
-      return { name: 'memory', nodeId: n.id };
+      return { name: 'memory', nodeId: n.id, script: scriptOfNode(n.id) };
     case 'book':
       return { name: 'book', id: n.bookId!, nodeId: n.id };
     case 'treasure':
@@ -83,8 +85,24 @@ interface Layout {
 }
 
 export default function MapScreen({ focus }: { focus?: string }) {
+  // フォーカスする ノードが あれば その マップ、なければ ホームで えらんだ もじ
+  const homeScript = useScript();
+  const [script, setScript] = useState<Script>(focus ? scriptOfNode(focus) : homeScript);
+  const prevHome = useRef(homeScript);
+  useEffect(() => {
+    // マップの うえで きりかえた とき (さいしょは フォーカスの マップの まま)
+    if (prevHome.current === homeScript) return;
+    prevHome.current = homeScript;
+    setScript(homeScript);
+  }, [homeScript]);
+  return <MapView key={script} focus={focus && scriptOfNode(focus) === script ? focus : undefined} script={script} />;
+}
+
+function MapView({ focus, script }: { focus?: string; script: Script }) {
   const data = useApp((s) => s);
   const nodes = data.nodes;
+  const STAGES = stagesOf(script);
+  const ALL_NODES = nodesOf(script);
   const buddy = useApp((s) => s.profile.buddy);
   const wear = useApp((s) => s.wear);
   const face = useBuddyFace();
@@ -93,8 +111,9 @@ export default function MapScreen({ focus }: { focus?: string }) {
   const [width, setWidth] = useState(800);
   const [wiggle, setWiggle] = useState<string | null>(null);
   const [treasure, setTreasure] = useState<RewardResult | null>(null);
-  const current = nextNodeIndex((id) => !!nodes[id]);
-  const [buddyAt, setBuddyAt] = useState(lastCurrent >= 0 && lastCurrent < current ? lastCurrent : current);
+  const current = nextNodeIndex((id) => !!nodes[id], script);
+  const last = lastCurrent[script];
+  const [buddyAt, setBuddyAt] = useState(last >= 0 && last < current ? last : current);
   const vars = { name: callName(profile), buddy: profile.buddyName };
 
   useLayoutEffect(() => {
@@ -125,7 +144,8 @@ export default function MapScreen({ focus }: { focus?: string }) {
       sections.push({ top, height: y - top });
     }
     return { layout, sections, height: y };
-  }, [width]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [width, script]);
 
   const pathD = useMemo(() => {
     if (!layout.length) return '';
@@ -165,14 +185,14 @@ export default function MapScreen({ focus }: { focus?: string }) {
       if (n) void speak(current === 0 ? 'ぼうけんの はじまり! ひかっている ところを タッチしてね。' : 'つぎは どこに いこうかな?');
       else void speak('ぜんぶ クリア! すごい!');
     }
-    lastCurrent = current;
+    lastCurrent[script] = current;
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const tapNode = (n: MapNode, i: number) => {
     const d = getData();
-    if (!isNodeUnlocked(d, i)) {
+    if (!isNodeUnlocked(d, i, script)) {
       sfx.locked();
       setWiggle(n.id);
       setTimeout(() => setWiggle(null), 600);
@@ -188,7 +208,7 @@ export default function MapScreen({ focus }: { focus?: string }) {
         return;
       }
       sfx.open();
-      setTreasure(completeActivity({ nodeId: n.id, stars: 3 }));
+      setTreasure(completeActivity({ nodeId: n.id, stars: 3, kind: 'treasure' }));
       return;
     }
     void speak(nodeSay(n, vars));
@@ -208,6 +228,8 @@ export default function MapScreen({ focus }: { focus?: string }) {
           </>
         }
         right={
+          <div className="map-top-right">
+            <ScriptSwitch />
           <Btn
             round
             size={72}
@@ -220,6 +242,7 @@ export default function MapScreen({ focus }: { focus?: string }) {
           >
             <Emoji>📍</Emoji>
           </Btn>
+          </div>
         }
       />
       <div className="map-scroll" ref={scroller} data-testid="map-scroll">
@@ -231,10 +254,15 @@ export default function MapScreen({ focus }: { focus?: string }) {
               style={{ top: sections[si].top, height: sections[si].height, background: `linear-gradient(180deg, ${s.land.sky[0]}, ${s.land.sky[1]})` }}
             >
               <div className="land-ground" style={{ background: s.land.ground }} />
-              <div className="land-sign">
+              <div className={`land-sign ${s.nodes.every((n) => nodes[n.id]) ? 'cleared' : ''}`}>
                 <span className="emoji">{s.land.deco[0]}</span>
                 <span className="land-name">{s.land.name}</span>
                 {s.kana.length > 0 && s.kana.length <= 5 && <span className="land-kana">{s.kana.join(' ')}</span>}
+                {s.nodes.every((n) => nodes[n.id]) && (
+                  <span className="land-medal" data-testid={`medal-${s.id}`}>
+                    <Emoji>🏅</Emoji>
+                  </span>
+                )}
               </div>
               {s.land.deco.map((e, di) => (
                 <span
@@ -260,7 +288,7 @@ export default function MapScreen({ focus }: { focus?: string }) {
             const pos = layout[i];
             if (!pos) return null;
             const rec = nodes[n.id];
-            const unlocked = isNodeUnlocked(data, i);
+            const unlocked = isNodeUnlocked(data, i, script);
             const isCurrent = i === current;
             return (
               <button

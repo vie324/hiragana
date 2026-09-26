@@ -9,17 +9,19 @@
  */
 import { L, WRITE_MODE_SAY } from './lines';
 import { NAME_MARK, isTinyFragment, splitNames, splitSentences, voiceKey } from './split';
-import { BASIC_KANA, SMALL_KANA, WRITABLE_KANA, YOUON_ROWS, sayKana, splitUnits } from '../lib/kana';
-import { WORDS, lastSound, sayWord, type Word } from '../data/words';
-import { BOOKS, fillTitle, tokenize } from '../data/books';
-import { SPECIAL_LESSONS } from '../data/specialLessons';
+import { BASIC_KANA, K_BASIC_KANA, K_SMALL_KANA, K_WRITABLE_KANA, K_YOUON_ROWS, SMALL_KANA, WRITABLE_KANA, YOUON_ROWS, sayKana, splitUnits } from '../lib/kana';
+import { KATA_WORDS, WORDS, lastSound, sayWord, type Word } from '../data/words';
+import { ALL_BOOKS, fillTitle, tokenize } from '../data/books';
+import { ALL_SPECIAL_LESSONS } from '../data/specialLessons';
 import { OUTFITS } from '../data/outfits';
 import { exampleSentence, kanaExample } from '../data/kanaInfo';
-import { ALL_NODES, STAGES } from '../data/curriculum';
+import { ALL_NODES, KATA_NODES, KATA_STAGES, STAGES } from '../data/curriculum';
 import { findSpecialLesson } from '../data/specialLessons';
 import { findBook } from '../data/books';
 import { BUDDY_DEFAULT_NAMES, BUDDY_KIND_SAY, type BuddyKind } from '../state/store';
 import { greeting } from '../lib/session';
+import { MISSIONS } from '../data/missions';
+import { MAX_LEVEL, streakWorthPraising } from '../state/progress';
 
 export type Pack = 'kana' | 'word' | 'book' | 'ui';
 
@@ -33,14 +35,15 @@ export interface CatalogEntry {
 const uniq = <T,>(xs: Iterable<T>): T[] => [...new Set(xs)];
 
 /** もじの ぶんるい */
-const YOUON = YOUON_ROWS.flatMap((r) => r.cells.filter((c): c is string => !!c));
-const SPECIAL_KANA = uniq(SPECIAL_LESSONS.flatMap((l) => l.kana));
-const WORD_UNITS = uniq(WORDS.flatMap((w) => splitUnits(w.w)));
-const STAGE_KANA = uniq(STAGES.flatMap((s) => s.kana));
+const YOUON = [...YOUON_ROWS, ...K_YOUON_ROWS].flatMap((r) => r.cells.filter((c): c is string => !!c));
+const SPECIAL_KANA = uniq(ALL_SPECIAL_LESSONS.flatMap((l) => l.kana));
+const ALL_WORDS = [...WORDS, ...KATA_WORDS];
+const WORD_UNITS = uniq(ALL_WORDS.flatMap((w) => splitUnits(w.w)));
+const STAGE_KANA = uniq([...STAGES, ...KATA_STAGES].flatMap((s) => s.kana));
 /** ゲームや レッスンに でてくる もじ */
-const GAME_KANA = uniq([...BASIC_KANA, ...SPECIAL_KANA, ...STAGE_KANA]);
+const GAME_KANA = uniq([...BASIC_KANA, ...K_BASIC_KANA, ...SPECIAL_KANA, ...STAGE_KANA]);
 /** とにかく よまれる かもしれない もじ */
-const ALL_KANA = uniq([...WRITABLE_KANA, ...SMALL_KANA, ...YOUON, ...WORD_UNITS, ...SPECIAL_KANA, ...STAGE_KANA]);
+const ALL_KANA = uniq([...WRITABLE_KANA, ...SMALL_KANA, ...K_WRITABLE_KANA, ...K_SMALL_KANA, ...YOUON, ...WORD_UNITS, ...SPECIAL_KANA, ...STAGE_KANA]);
 const BUDDIES = Object.keys(BUDDY_DEFAULT_NAMES) as BuddyKind[];
 const BUDDY_NAMES = BUDDIES.map((k) => BUDDY_DEFAULT_NAMES[k]);
 /** なまえが ない ときは「きみ」 */
@@ -76,7 +79,7 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
   for (const k of ALL_KANA) add(sayKana(k), 'kana');
 
   // ことば (よみあげ用)
-  for (const w of WORDS) add(sayWord(w), 'word');
+  for (const w of ALL_WORDS) add(sayWord(w), 'word');
 
   // 1もじ レッスン・かく
   for (const k of GAME_KANA) {
@@ -104,6 +107,9 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
     add(L.nameNext(k), 'kana');
     for (const n of NAMES) add(L.nameStart(n, k), 'kana');
   }
+  for (const k of K_WRITABLE_KANA) {
+    for (const mode of Object.values(WRITE_MODE_SAY)) add(L.writeKana(k, mode), 'kana');
+  }
   // ことばづくりの まちがいの タイルは、ならった もじ なら なんでも でる
   for (const unit of ALL_KANA) {
     add(L.buildNext(unit), 'kana');
@@ -111,9 +117,9 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
     add(L.buildMiss(unit, false), 'kana');
   }
 
-  // ことばの ゲーム
+  // ことばの ゲーム (しりとりは ひらがな だけ)
   const soundsOf = uniq(WORDS.map((w) => lastSound(w.w)));
-  for (const w of WORDS) {
+  for (const w of ALL_WORDS) {
     for (const k of firstUnits(w)) {
       add(L.firstHit(w, k), 'word');
       add(L.firstMiss(w, k), 'word');
@@ -123,6 +129,8 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
     add(L.readMiss(w), 'word');
     add(L.buildAsk(w), 'word');
     add(L.buildDone(w), 'word');
+  }
+  for (const w of WORDS) {
     add(L.shiriStart(w), 'word');
     add(L.shiriHit(w), 'word');
     add(L.shiriAsk(w, lastSound(w.w)), 'word');
@@ -130,7 +138,7 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
   }
 
   // えほん (あいぼうの なまえを かえた ときは、なまえと おなじく iPad の 声で よむ)
-  for (const b of BOOKS) {
+  for (const b of ALL_BOOKS) {
     for (const buddy of [...BUDDY_NAMES, NAME_MARK]) {
       const vars = { name: NAME_MARK, buddy };
       add(fillTitle(b.title, vars), 'book');
@@ -143,7 +151,7 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
   }
 
   // とくべつ レッスン
-  for (const l of SPECIAL_LESSONS) {
+  for (const l of ALL_SPECIAL_LESSONS) {
     add(l.intro.say, 'kana');
     for (const c of l.cards) {
       add(c.say, 'kana');
@@ -154,7 +162,7 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
   }
 
   // マップ
-  for (const n of ALL_NODES) {
+  for (const n of [...ALL_NODES, ...KATA_NODES]) {
     if (n.kind === 'lesson' && n.kana) add(L.learnKana(n.kana[0]), 'ui');
     if (n.kind === 'special') add(L.specialLesson(findSpecialLesson(n.lessonId!)?.title ?? ''), 'ui');
     if (n.kind === 'book') {
@@ -180,6 +188,11 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
   }
   for (const o of OUTFITS) add(L.dressNice(o.say), 'ui');
   for (let n = 0; n <= 31; n++) add(L.stamps(n), 'ui');
+
+  // ミッション・レベル・れんぞく
+  for (const m of Object.values(MISSIONS)) add(m.say, 'ui');
+  for (let n = 2; n <= MAX_LEVEL; n++) add(L.levelUp(n), 'ui');
+  for (let n = 2; n <= 400; n++) if (streakWorthPraising(n)) add(L.streak(n), 'ui');
 
   // ソースに かいてある セリフ
   for (const t of staticTexts) add(t, 'ui');

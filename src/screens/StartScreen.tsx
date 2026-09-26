@@ -4,6 +4,7 @@ import { speak, unlockSpeech } from '../lib/speech';
 import { startBgm, unlockAudio, sfx } from '../lib/sound';
 import { greeting } from '../lib/session';
 import Mascot from '../components/Mascot';
+import SkyScene from '../components/SkyScene';
 import { Emoji } from '../components/ui';
 import { L } from '../voice/lines';
 import { VOICES } from '../voice/bank';
@@ -17,6 +18,7 @@ export default function StartScreen() {
   const profile = useApp((s) => s.profile);
   const face = useBuddyFace();
   const voice = useApp((s) => VOICES.find((v) => v.slug === s.settings.voice));
+  const kata = useApp((s) => s.settings.kata);
 
   const start = () => {
     unlockAudio();
@@ -35,9 +37,8 @@ export default function StartScreen() {
 
   return (
     <div className="screen start-screen" onClick={start} data-testid="start">
+      <SkyScene />
       <div className="start-sky" aria-hidden>
-        <span className="emoji s1">☁️</span>
-        <span className="emoji s2">☁️</span>
         <span className="emoji s3">⭐</span>
         <span className="emoji s4">🌈</span>
       </div>
@@ -56,6 +57,7 @@ export default function StartScreen() {
             </span>
           ))}
         </span>
+        {kata && <span className="start-kata">＋カタカナ</span>}
       </h1>
       <div className="start-buddy">
         <Mascot kind={profile.setup ? profile.buddy : 'usagi'} face={profile.setup ? face : null} mood="normal" wave size="min(34vh, 300px)" talking={false} />

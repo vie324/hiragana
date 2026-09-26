@@ -5,11 +5,13 @@ import RewardModal from '../../components/RewardModal';
 import { speak, wait } from '../../lib/speech';
 import { sfx } from '../../lib/sound';
 import { burstAt } from '../../lib/confetti';
+import { badAnswer, goodAnswer } from '../../lib/feedback';
 import { useAlive, useIdle } from '../../lib/hooks';
 import { shuffle } from '../../lib/random';
 import { back } from '../../state/router';
 import { completeActivity, recordAnswer, type RewardResult } from '../../state/actions';
-import { distractors, starsFromMistakes, targetKana } from './pools';
+import { distractors, gameScript, starsFromMistakes, targetKana } from './pools';
+import type { Script } from '../../lib/kana';
 import { L } from '../../voice/lines';
 import './games.css';
 
@@ -24,9 +26,10 @@ interface BalloonSpec {
   delay: number;
 }
 
-export default function BalloonGame({ kana, nodeId }: { kana?: string[]; nodeId?: string }) {
+export default function BalloonGame({ kana, nodeId, script: scriptProp }: { kana?: string[]; nodeId?: string; script?: Script }) {
   const alive = useAlive();
-  const targets = useMemo(() => targetKana(kana, ROUNDS), [kana]);
+  const script = useMemo(() => gameScript(scriptProp, nodeId, kana), [scriptProp, nodeId, kana]);
+  const targets = useMemo(() => targetKana(kana, ROUNDS, script), [kana, script]);
   const [round, setRound] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [roundMistakes, setRoundMistakes] = useState(0);
@@ -71,6 +74,7 @@ export default function BalloonGame({ kana, nodeId }: { kana?: string[]; nodeId?
       setPopped(b.kana);
       sfx.pop();
       burstAt(el, 40);
+      goodAnswer(el);
       // まちがえた ラウンドは さいしょの ミスで きろく ずみ
       if (roundMistakes === 0) recordAnswer(target, true);
       setMood('happy');
@@ -78,12 +82,13 @@ export default function BalloonGame({ kana, nodeId }: { kana?: string[]; nodeId?
       await wait(200);
       if (!alive.current) return;
       if (round + 1 >= ROUNDS) {
-        setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, ROUNDS) }));
+        setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, ROUNDS), kind: 'game' }));
       } else {
         setRound((r) => r + 1);
       }
     } else {
       sfx.wrong();
+      badAnswer();
       setWobble(b.kana);
       setTimeout(() => setWobble(null), 600);
       setMistakes((m) => m + 1);

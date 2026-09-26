@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { Emoji, TopBar } from '../components/ui';
 import Scene from '../components/Scene';
 import { BOOK_ORDER, readability } from '../data/bookInfo';
-import { fillTitle } from '../data/books';
-import { useApp, callName } from '../state/store';
+import { KATA_BOOKS, fillTitle } from '../data/books';
+import { useApp, callName, useScript } from '../state/store';
 import { navigate } from '../state/router';
 import { isKnown } from '../lib/srs';
 import { speak } from '../lib/speech';
@@ -15,6 +15,13 @@ export default function BookShelf() {
   const books = useApp((s) => s.books);
   const profile = useApp((s) => s.profile);
   const vars = { name: callName(profile), buddy: profile.buddyName };
+  const script = useScript();
+  const showKata = useApp((s) => s.settings.kata);
+  const isKata = (id: string) => KATA_BOOKS.some((b) => b.id === id);
+  // カタカナを えらんでいる ときは カタカナの えほんを さきに
+  const order = BOOK_ORDER.filter((b) => showKata || !isKata(b.id)).sort(
+    (a, b) => (script === 'kata' ? Number(isKata(b.id)) - Number(isKata(a.id)) : Number(isKata(a.id)) - Number(isKata(b.id))),
+  );
 
   useEffect(() => {
     void speak('どの えほんを よむ?');
@@ -32,7 +39,7 @@ export default function BookShelf() {
       />
       <div className="shelf-scroll">
         <div className="shelf-grid">
-          {BOOK_ORDER.map((b) => {
+          {order.map((b) => {
             const r = readability(b, (k) => isKnown(kana[k]));
             const title = fillTitle(b.title, vars);
             const reads = books[b.id]?.reads ?? 0;
@@ -50,6 +57,7 @@ export default function BookShelf() {
                 <div className="book-cover">
                   <Scene bg={b.cover.bg} actors={b.cover.actors} className="cover-scene" />
                   {r >= 1 && <span className="book-ribbon">よめる!</span>}
+                  {isKata(b.id) && <span className="book-kata">カタカナ</span>}
                   {reads > 0 && (
                     <span className="book-reads">
                       <Emoji>✅</Emoji>

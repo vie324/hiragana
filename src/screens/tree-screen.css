@@ -1,0 +1,303 @@
+.tree-screen .topbar {
+  position: relative;
+  z-index: 2;
+}
+
+.tree-screen .topbar .title {
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(40, 80, 140, 0.35), 0 0 14px rgba(40, 80, 140, 0.25);
+}
+
+.tree-body {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 2vw;
+  align-items: stretch;
+}
+
+.tree-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.tree-area .letter-tree {
+  height: 100%;
+  max-height: min(80vh, 680px);
+  width: auto;
+  max-width: 100%;
+}
+
+.tree-panel {
+  flex: 0 0 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2.2vh;
+  padding-bottom: 1vh;
+}
+
+.tree-count {
+  width: 100%;
+  max-width: 300px;
+  padding: 14px 22px 12px;
+}
+
+.tree-count-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: calc(var(--u) * 4.4);
+  line-height: 1;
+}
+
+.tree-count-row b {
+  font-family: var(--ui);
+  font-weight: 800;
+}
+
+.tree-count-row small {
+  font-family: var(--ui);
+  font-size: 0.55em;
+  color: var(--ink-soft);
+}
+
+.tree-count-row.small {
+  font-size: calc(var(--u) * 3);
+}
+
+.tree-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffb3bd, #ff4d63);
+  box-shadow: 0 2px 0 rgba(160, 30, 50, 0.3);
+}
+
+.tree-dot.fruit-kata {
+  background: radial-gradient(circle at 35% 30%, #ffe0b0, #ff9a1f);
+  box-shadow: 0 2px 0 rgba(170, 90, 10, 0.3);
+}
+
+.tree-bar {
+  height: 16px;
+  border-radius: 999px;
+  background: #f1e9df;
+  margin: 8px 0 12px;
+  overflow: hidden;
+}
+
+.tree-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff9aa8, #ff4d63);
+  transition: width 0.8s cubic-bezier(0.3, 1.2, 0.5, 1);
+}
+
+.tree-bar i.fill-kata {
+  background: linear-gradient(90deg, #ffcf85, #ff9a1f);
+}
+
+/* ---------- みずやり ---------- */
+
+.watering-can {
+  display: block;
+  overflow: visible;
+}
+
+.can-body {
+  fill: #4db4ff;
+}
+
+.can-spout,
+.can-rose {
+  fill: #2689d6;
+}
+
+.can-handle {
+  fill: none;
+  stroke: #2689d6;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.can-stripe {
+  fill: #fff;
+  opacity: 0.45;
+}
+
+.water-btn {
+  position: relative;
+  border: none;
+  font: inherit;
+  width: calc(var(--u) * 17);
+  height: calc(var(--u) * 17);
+  min-width: 124px;
+  min-height: 124px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f1faff, #c3e7ff);
+  box-shadow: 0 7px 0 #8cc9f0, 0 14px 26px rgba(40, 120, 200, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.water-btn:active {
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 #8cc9f0, 0 6px 12px rgba(40, 120, 200, 0.2);
+}
+
+.water-btn .watering-can {
+  width: 62%;
+}
+
+.water-label {
+  font-size: calc(var(--u) * 2.6);
+  font-weight: 700;
+  color: var(--blue-d);
+}
+
+.water-btn.ready {
+  animation: water-bob 2.2s ease-in-out infinite;
+}
+
+.water-btn.done {
+  background: radial-gradient(circle at 40% 35%, #f4fff6, #d4f5dc);
+  box-shadow: 0 7px 0 #9fdcaf, 0 14px 26px rgba(40, 160, 80, 0.2);
+}
+
+.water-btn.done .water-label {
+  color: var(--green-d);
+}
+
+@keyframes water-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-8px) rotate(-4deg);
+  }
+}
+
+.water-check {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-family: var(--ui);
+  font-weight: 800;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 0 var(--green-d);
+}
+
+.pour {
+  position: absolute;
+  top: 2%;
+  right: 8%;
+  width: 34%;
+  height: 70%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pour .watering-can {
+  width: 70%;
+  margin-left: 22%;
+  transform-origin: 30% 70%;
+  animation: can-tilt 2.2s ease-in-out both;
+}
+
+@keyframes can-tilt {
+  0% {
+    transform: scaleX(-1) translate(-40px, -30px) rotate(0);
+    opacity: 0;
+  }
+  18% {
+    transform: scaleX(-1) rotate(0);
+    opacity: 1;
+  }
+  35%,
+  80% {
+    transform: scaleX(-1) rotate(38deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(-1) rotate(0);
+    opacity: 0;
+  }
+}
+
+.drop {
+  position: absolute;
+  top: 30%;
+  width: 15px;
+  height: 23px;
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: linear-gradient(180deg, #bfe8ff, #3fa9f5);
+  opacity: 0;
+  animation: drop-fall 0.9s ease-in forwards;
+}
+
+@keyframes drop-fall {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(34vh) scale(1);
+    opacity: 0;
+  }
+}
+
+.tree-buddy {
+  display: flex;
+  justify-content: center;
+}
+
+@media (orientation: portrait) {
+  .tree-body {
+    flex-direction: column;
+  }
+  .tree-area .letter-tree {
+    max-height: 58vh;
+  }
+  .tree-panel {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3vw;
+  }
+  .tree-count {
+    max-width: 240px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .water-btn.ready {
+    animation: none;
+  }
+}

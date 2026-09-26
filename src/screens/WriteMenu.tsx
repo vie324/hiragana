@@ -1,28 +1,36 @@
 import { useEffect, useState } from 'react';
 import { Btn, Emoji, Stars, TopBar } from '../components/ui';
 import KanaGrid from '../components/KanaGrid';
-import { SEION_ROWS, DAKUON_ROWS, type KanaRow } from '../lib/kana';
+import { ROWS, type KanaRow, type Script } from '../lib/kana';
+import ScriptSwitch from '../components/ScriptSwitch';
 import { navigate } from '../state/router';
-import { useApp, callName } from '../state/store';
+import { useApp, callName, useScript } from '../state/store';
 import { speak } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { L } from '../voice/lines';
 import './menus.css';
 
-const SMALL_ROWS: KanaRow[] = [
-  { id: 'small1', name: 'ゃ', cells: ['ゃ', 'ゅ', 'ょ', 'っ', null] },
-];
+const SMALL_ROWS: Record<Script, KanaRow[]> = {
+  hira: [{ id: 'small1', name: 'ゃ', cells: ['ゃ', 'ゅ', 'ょ', 'っ', null] }],
+  kata: [{ id: 'ksmall1', name: 'ャ', cells: ['ャ', 'ュ', 'ョ', 'ッ', 'ー'] }],
+};
+
+const TAB_LABEL: Record<Script, [string, string]> = {
+  hira: ['あいうえお', 'が ぱ ゃ'],
+  kata: ['アイウエオ', 'ガ パ ャ ー'],
+};
 
 export default function WriteMenu({ tab: initial }: { tab?: string }) {
   const [tab, setTab] = useState(initial ?? 'seion');
   const kana = useApp((s) => s.kana);
   const profile = useApp((s) => s.profile);
+  const script = useScript();
 
   useEffect(() => {
     void speak('かきたい もじを えらんでね。');
   }, []);
 
-  const rows = tab === 'seion' ? SEION_ROWS : [...DAKUON_ROWS, ...SMALL_ROWS];
+  const rows = tab === 'seion' ? ROWS[script].seion : [...ROWS[script].dakuon, ...SMALL_ROWS[script]];
   const list = rows.flatMap((r) => r.cells.filter((c): c is string => !!c));
 
   return (
@@ -36,11 +44,12 @@ export default function WriteMenu({ tab: initial }: { tab?: string }) {
         }
       >
         <div className="tabs">
+          <ScriptSwitch />
           <button className={`tab ${tab === 'seion' ? 'on' : ''}`} onClick={() => setTab('seion')}>
-            あいうえお
+            {TAB_LABEL[script][0]}
           </button>
           <button className={`tab ${tab === 'daku' ? 'on' : ''}`} onClick={() => setTab('daku')}>
-            が ぱ ゃ
+            {TAB_LABEL[script][1]}
           </button>
         </div>
       </TopBar>

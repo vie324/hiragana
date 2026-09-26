@@ -6,7 +6,7 @@ import WritingPad, { type PadResult } from '../components/WritingPad';
 import KanaChoices from '../components/KanaChoices';
 import RewardModal from '../components/RewardModal';
 import { kanaExample, exampleSentence } from '../data/kanaInfo';
-import { sayKana, similarTo, BASIC_KANA } from '../lib/kana';
+import { sayKana, similarTo, basicKanaOf, scriptOf } from '../lib/kana';
 import { speak, wait } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { celebrate } from '../lib/confetti';
@@ -24,10 +24,12 @@ type Step = 'intro' | 'word' | 'order' | 'write' | 'find';
 const STEPS: Step[] = ['intro', 'word', 'order', 'write', 'find'];
 
 function makeChoices(kana: string): string[] {
-  const known = [...knownKana(getData())].filter((k) => k !== kana && BASIC_KANA.includes(k));
+  // おなじ しゅるいの もじ (ひらがな / カタカナ) から えらぶ
+  const basic = basicKanaOf(scriptOf(kana));
+  const known = [...knownKana(getData())].filter((k) => k !== kana && basic.includes(k));
   const similar = similarTo(kana).filter((k) => k !== kana);
   const pool = [...new Set([...similar.slice(0, 2), ...sample(known, 3)])].filter((k) => k !== kana);
-  const fill = pool.length >= 2 ? pool : [...pool, ...sample(BASIC_KANA.filter((k) => k !== kana && !pool.includes(k)), 2)];
+  const fill = pool.length >= 2 ? pool : [...pool, ...sample(basic.filter((k) => k !== kana && !pool.includes(k)), 2)];
   return shuffle([kana, ...fill.slice(0, 2)]);
 }
 
@@ -109,7 +111,7 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
     markIntroduced([kana]);
     const total = mistakes + extraMistakes;
     const stars = Math.max(1, 3 - (total > 0 ? 1 : 0) - (writeStars < 2 ? 1 : 0));
-    const result = completeActivity({ nodeId, stars });
+    const result = completeActivity({ nodeId, stars, kind: 'lesson' });
     setReward(result);
   };
 

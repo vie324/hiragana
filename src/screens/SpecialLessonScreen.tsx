@@ -51,7 +51,7 @@ function CardShow({ card }: { card: LessonCard }) {
       ) : (
         <div className="sp-word">
           {[...card.show].map((c, i) => (
-            <span key={i} className={`sp-ch ${'っゃゅょ'.includes(c) ? 'small' : ''} ${c === ' ' ? 'space' : ''}`}>
+            <span key={i} className={`sp-ch ${'っゃゅょッャュョー'.includes(c) ? 'small' : ''} ${c === ' ' ? 'space' : ''}`}>
               {c}
             </span>
           ))}
@@ -114,7 +114,7 @@ export default function SpecialLessonScreen({ lessonId, nodeId }: { lessonId: st
     if (!alive.current) return;
     if (pos + 1 >= nCards + nQuiz) {
       markIntroduced(lesson.kana);
-      setReward(completeActivity({ nodeId, stars: mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1 }));
+      setReward(completeActivity({ nodeId, stars: mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1, kind: 'lesson' }));
     } else {
       setPos((p) => p + 1);
     }

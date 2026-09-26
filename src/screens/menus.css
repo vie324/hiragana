@@ -168,6 +168,15 @@
   box-shadow: 0 5px 0 var(--orange-d);
 }
 
+.chart-tabs {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.chart-tabs .tab {
+  padding: 10px 18px;
+}
+
 .write-name-row {
   display: flex;
   justify-content: center;

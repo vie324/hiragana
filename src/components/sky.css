@@ -1,0 +1,240 @@
+.sky-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  --h1: #b4e7a0;
+  --h2: #8fd875;
+  --h3: #6cc35a;
+  --cloud: #fff;
+  --cloud-o: 0.92;
+}
+
+.sky-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #6ec6ff 0%, #b8e6ff 55%, #e8f8ff 100%);
+}
+
+.phase-morning .sky-gradient {
+  background: linear-gradient(180deg, #8fd3ff 0%, #cdeeff 52%, #ffe8d1 100%);
+}
+
+.phase-evening .sky-gradient {
+  background: linear-gradient(180deg, #7aa2e6 0%, #f4a6bd 50%, #ffd39a 100%);
+}
+
+.phase-night .sky-gradient {
+  background: linear-gradient(180deg, #0f1b4d 0%, #26367a 60%, #4c4b8f 100%);
+}
+
+.phase-morning {
+  --h1: #c4e9a9;
+  --h2: #a2dc87;
+  --h3: #84cd6b;
+}
+
+.phase-evening {
+  --h1: #e9c79d;
+  --h2: #c7d488;
+  --h3: #9ec76b;
+  --cloud: #ffe6ef;
+}
+
+.phase-night {
+  --h1: #3b5870;
+  --h2: #2f5650;
+  --h3: #284a3d;
+  --cloud: #c9d2ff;
+  --cloud-o: 0.28;
+}
+
+/* ---------- おひさま・おつきさま ---------- */
+
+.sun {
+  position: absolute;
+  width: calc(var(--u) * 13);
+  height: calc(var(--u) * 13);
+  right: 21%;
+  top: 7%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 38%, #fffbe0 0%, #ffe066 45%, #ffc21a 100%);
+  box-shadow: 0 0 40px 18px rgba(255, 222, 90, 0.45);
+}
+
+.sun::before {
+  content: '';
+  position: absolute;
+  inset: -55%;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 236, 140, 0.34) 0deg 9deg, transparent 9deg 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 34%, #000 36%, transparent 72%);
+  mask: radial-gradient(circle, transparent 34%, #000 36%, transparent 72%);
+  animation: sun-spin 60s linear infinite;
+}
+
+.phase-morning .sun {
+  right: auto;
+  left: 8%;
+  top: 16%;
+}
+
+.phase-evening .sun {
+  right: 10%;
+  top: 30%;
+  background: radial-gradient(circle at 40% 38%, #fff0d6 0%, #ffb86b 50%, #ff8a4c 100%);
+  box-shadow: 0 0 50px 24px rgba(255, 150, 90, 0.4);
+}
+
+.moon {
+  position: absolute;
+  right: 16%;
+  top: 9%;
+  width: calc(var(--u) * 11);
+  height: calc(var(--u) * 11);
+  border-radius: 50%;
+  box-shadow: inset calc(var(--u) * 2.6) calc(var(--u) * -1) 0 0 #fff3b0;
+  filter: drop-shadow(0 0 18px rgba(255, 240, 170, 0.55));
+  transform: rotate(-18deg);
+}
+
+.sky-stars i {
+  position: absolute;
+  border-radius: 50%;
+  background: #fffbe6;
+  box-shadow: 0 0 6px 1px rgba(255, 250, 220, 0.7);
+  animation: star-twinkle 3.2s ease-in-out infinite;
+}
+
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* ---------- くも ---------- */
+
+.cloud {
+  position: absolute;
+  left: 0;
+  fill: var(--cloud);
+  opacity: var(--cloud-o);
+  filter: drop-shadow(0 6px 0 rgba(120, 170, 220, 0.18));
+  animation: cloud-drift linear infinite;
+  will-change: transform;
+}
+
+.cloud.c1 {
+  top: 8%;
+  width: calc(var(--u) * 16);
+  animation-duration: 85s;
+  animation-delay: -30s;
+}
+
+.cloud.c2 {
+  top: 22%;
+  width: calc(var(--u) * 11);
+  animation-duration: 120s;
+  animation-delay: -80s;
+  opacity: calc(var(--cloud-o) * 0.8);
+}
+
+.cloud.c3 {
+  top: 3%;
+  width: calc(var(--u) * 9);
+  animation-duration: 150s;
+  animation-delay: -20s;
+  opacity: calc(var(--cloud-o) * 0.7);
+}
+
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-30vw);
+  }
+  to {
+    transform: translateX(110vw);
+  }
+}
+
+/* ---------- おか ---------- */
+
+.hills {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 46%;
+}
+
+.hill.h1 {
+  fill: var(--h1);
+}
+
+.hill.h2 {
+  fill: var(--h2);
+}
+
+.hill.h3 {
+  fill: var(--h3);
+}
+
+/* ---------- とんでくる ふうせん ---------- */
+
+.sky-balloon {
+  position: absolute;
+  bottom: -18%;
+  width: calc(var(--u) * 7);
+  height: calc(var(--u) * 8.6);
+  border: none;
+  padding: 0;
+  border-radius: 50% 50% 48% 48% / 55% 55% 45% 45%;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.7) 0 12%, transparent 13%), var(--c);
+  box-shadow: inset -6px -8px 0 rgba(0, 0, 0, 0.1);
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 1;
+  animation: balloon-rise 16s linear forwards;
+}
+
+.sky-balloon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 2px;
+  height: calc(var(--u) * 6);
+  background: rgba(90, 80, 70, 0.45);
+}
+
+@keyframes balloon-rise {
+  0% {
+    transform: translate(0, 0) rotate(-4deg);
+  }
+  25% {
+    transform: translate(calc(var(--u) * 3), -30vh) rotate(4deg);
+  }
+  50% {
+    transform: translate(calc(var(--u) * -2), -62vh) rotate(-3deg);
+  }
+  75% {
+    transform: translate(calc(var(--u) * 3), -95vh) rotate(3deg);
+  }
+  100% {
+    transform: translate(0, -130vh) rotate(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloud,
+  .sun::before,
+  .sky-stars i {
+    animation: none;
+  }
+}

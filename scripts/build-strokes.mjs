@@ -1,4 +1,4 @@
-// KanjiVG (https://kanjivg.tagaini.net) から ひらがなの 書き順データを取得して
+// KanjiVG (https://kanjivg.tagaini.net) から ひらがな・カタカナの 書き順データを取得して
 // src/data/strokes.json を生成するスクリプト。
 //   node scripts/build-strokes.mjs
 // 生成物は KanjiVG と同じ CC BY-SA 3.0 ライセンスです。
@@ -12,9 +12,11 @@ const cacheDir = join(root, 'node_modules', '.cache', 'kanjivg');
 const out = join(root, 'src', 'data', 'strokes.json');
 const BASE = 'https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/';
 
-// ぁ(3041) 〜 ゖ(3096)
+// ぁ(3041) 〜 ゖ(3096)、ァ(30A1) 〜 ヺ(30FA)、ー(30FC)
 const codes = [];
 for (let c = 0x3041; c <= 0x3096; c++) codes.push(c);
+for (let c = 0x30a1; c <= 0x30fa; c++) codes.push(c);
+codes.push(0x30fc);
 
 async function fetchSvg(code) {
   const name = code.toString(16).padStart(5, '0') + '.svg';

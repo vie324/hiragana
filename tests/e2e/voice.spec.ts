@@ -31,6 +31,7 @@ test('どの 画面の セリフも ずんだもんの 声が ある (なまえ 
     { name: 'stickers' },
     { name: 'dressup' },
     { name: 'stamps' },
+    { name: 'tree' },
     { name: 'balloon' },
     { name: 'firstsound' },
     { name: 'wordbuild' },
@@ -46,6 +47,30 @@ test('どの 画面の セリフも ずんだもんの 声が ある (なまえ 
     { name: 'sleep' },
   ];
   for (const r of routes) {
+    await page.evaluate((route) => window.__hiragana!.resetTo(route as never), r);
+    await page.waitForTimeout(500);
+  }
+
+  // カタカナ
+  await page.evaluate(() => window.__hiragana!.update((d) => void (d.settings.script = 'kata')));
+  const kataRoutes = [
+    { name: 'home' },
+    { name: 'map' },
+    { name: 'play' },
+    { name: 'write' },
+    { name: 'chart' },
+    { name: 'tree' },
+    { name: 'balloon', script: 'kata' },
+    { name: 'firstsound', script: 'kata' },
+    { name: 'wordbuild', nodeId: 'k-sa:wordbuild:1' },
+    { name: 'readquiz', nodeId: 'k-sa:readquiz:1' },
+    { name: 'memory', nodeId: 'k-ta:memory:1' },
+    { name: 'lesson', kana: 'カ' },
+    { name: 'special', lessonId: 'k-long' },
+    { name: 'special', lessonId: 'k-tsu' },
+    { name: 'writeKana', kana: 'キ' },
+  ];
+  for (const r of kataRoutes) {
     await page.evaluate((route) => window.__hiragana!.resetTo(route as never), r);
     await page.waitForTimeout(500);
   }

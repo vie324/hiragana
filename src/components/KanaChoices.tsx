@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { sfx } from '../lib/sound';
 import { burstAt } from '../lib/confetti';
+import { badAnswer, goodAnswer } from '../lib/feedback';
 
 interface Props {
   choices: string[];
@@ -31,10 +32,12 @@ export default function KanaChoices({ choices, answer, onCorrect, onWrong, size 
               setRight(true);
               sfx.correct();
               burstAt(e.currentTarget, 36);
+              goodAnswer(e.currentTarget);
               onCorrect();
             } else {
               setWrong(c);
               sfx.wrong();
+              badAnswer();
               setTimeout(() => setWrong(null), 600);
               onWrong(c);
             }

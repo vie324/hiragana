@@ -1,13 +1,22 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Buddy from '../components/Buddy';
 import { Emoji } from '../components/ui';
+import SkyScene, { dayPhase } from '../components/SkyScene';
+import LetterTree from '../components/LetterTree';
+import ScriptSwitch from '../components/ScriptSwitch';
+import { LevelBadge, StreakChip } from '../components/LevelBadge';
+import MissionCard, { ChestOverlay } from '../components/MissionCard';
 import { navigate, type Route } from '../state/router';
-import { useApp, todayKey, callName } from '../state/store';
+import { useApp, todayKey, callName, getData, useScript } from '../state/store';
+import { knownKana, markMissionsSeen, type ChestResult } from '../state/actions';
+import { chestReady, unseenMissions } from '../state/progress';
 import { speak } from '../lib/speech';
 import { speakAfterCurrent } from '../lib/session';
 import { sfx } from '../lib/sound';
-import { ALL_NODES, nextNodeIndex, type MapNode } from '../data/curriculum';
+import { DAKUON, HANDAKUON, K_DAKUON, K_HANDAKUON, seionOf } from '../lib/kana';
+import { nodesOf, nextNodeIndex, stageOfNode, type MapNode } from '../data/curriculum';
 import { findSpecialLesson } from '../data/specialLessons';
+import type { Mission } from '../data/missions';
 import { L } from '../voice/lines';
 import './home.css';
 
@@ -21,17 +30,19 @@ interface MenuItem {
   wide?: boolean;
 }
 
-const MENU: MenuItem[] = [
-  { id: 'map', emoji: '🗺️', label: 'ぼうけん', say: 'ぼうけん', color: 'orange', route: { name: 'map' }, wide: true },
-  { id: 'write', emoji: '✏️', label: 'かく', say: 'もじを かこう', color: 'blue', route: { name: 'write' } },
-  { id: 'play', emoji: '🎈', label: 'あそぶ', say: 'ゲームで あそぼう', color: 'pink', route: { name: 'play' } },
-  { id: 'books', emoji: '📚', label: 'えほん', say: 'えほんを よもう', color: 'green', route: { name: 'books' } },
-  { id: 'chart', emoji: '🔤', label: 'あいうえお', say: 'あいうえお ひょう', color: 'purple', route: { name: 'chart' } },
-  { id: 'stickers', emoji: '⭐', label: 'シール', say: 'シールちょう', color: 'yellow', route: { name: 'stickers' } },
-  { id: 'dressup', emoji: '🎀', label: 'きせかえ', say: 'きせかえ', color: 'pink', route: { name: 'dressup' } },
-];
-
-const WEEK = ['に', 'げ', 'か', 'す', 'も', 'き', 'ど'];
+function menu(kata: boolean): MenuItem[] {
+  return [
+    { id: 'map', emoji: '🗺️', label: 'ぼうけん', say: 'ぼうけん', color: 'orange', route: { name: 'map' }, wide: true },
+    { id: 'write', emoji: '✏️', label: 'かく', say: 'もじを かこう', color: 'blue', route: { name: 'write' } },
+    { id: 'play', emoji: '🎈', label: 'あそぶ', say: 'ゲームで あそぼう', color: 'pink', route: { name: 'play' } },
+    { id: 'books', emoji: '📚', label: 'えほん', say: 'えほんを よもう', color: 'green', route: { name: 'books' } },
+    kata
+      ? { id: 'chart', emoji: '🔤', label: 'アイウエオ', say: 'アイウエオ ひょう', color: 'purple', route: { name: 'chart' } }
+      : { id: 'chart', emoji: '🔤', label: 'あいうえお', say: 'あいうえお ひょう', color: 'purple', route: { name: 'chart' } },
+    { id: 'stickers', emoji: '⭐', label: 'シール', say: 'シールちょう', color: 'yellow', route: { name: 'stickers' } },
+    { id: 'dressup', emoji: '🎀', label: 'きせかえ', say: 'きせかえ', color: 'coral', route: { name: 'dressup' } },
+  ];
+}
 
 const NODE_EMOJI: Record<string, string> = {
   balloon: '🎈',
@@ -50,32 +61,60 @@ function nodeBadge(n: MapNode): { text: string; emoji: boolean } {
   return { text: NODE_EMOJI[n.kind] ?? '⭐', emoji: true };
 }
 
-function weekDays(): { key: string; label: string; today: boolean }[] {
-  const now = new Date();
-  const start = new Date(now);
-  start.setDate(now.getDate() - now.getDay());
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    return { key: todayKey(d), label: WEEK[i], today: todayKey(d) === todayKey(now) };
-  });
+/** ホームで さいしょに いう こと (ミッション > たからばこ > あいさつ) */
+function homeLine(name: string): { text: string; sparkle: boolean } {
+  const d = getData();
+  const unseen = unseenMissions(d.days);
+  if (unseen.length) {
+    markMissionsSeen(unseen);
+    return chestReady(getData().days)
+      ? { text: 'ミッション ぜんぶ クリア! たからばこを あけてね!', sparkle: true }
+      : { text: 'ミッション クリア! すごいね!', sparkle: true };
+  }
+  if (chestReady(d.days)) return { text: 'たからばこを あけてね!', sparkle: false };
+  if (!d.days[todayKey()]?.acts) return { text: 'きょうの ミッションは 3つ! いっしょに がんばろう!', sparkle: false };
+  return { text: L.homeNext(name), sparkle: false };
 }
 
 export default function HomeScreen() {
   const profile = useApp((s) => s.profile);
-  const days = useApp((s) => s.days);
   const nodes = useApp((s) => s.nodes);
-  const next = ALL_NODES[nextNodeIndex((id) => !!nodes[id])];
+  const kana = useApp((s) => s.kana);
+  const treeSeen = useApp((s) => s.treeSeen);
+  const script = useScript();
+  const phase = useMemo(() => dayPhase(), []);
+  const [hint, setHint] = useState<Mission['menu'] | null>(null);
+  const [chest, setChest] = useState<ChestResult | null>(null);
+
+  const list = nodesOf(script);
+  const next: MapNode | undefined = list[nextNodeIndex((id) => !!nodes[id], script)];
+  const stage = next ? stageOfNode(next.id) : undefined;
+  const stageDone = stage ? stage.nodes.filter((n) => nodes[n.id]).length : 0;
+  const nextLabel = next ? nodeBadge(next) : null;
+
+  const known = useMemo(() => knownKana(getData()), [kana]);
+  const treeKana = useMemo(
+    () => [...seionOf(script), ...(script === 'kata' ? [...K_DAKUON, ...K_HANDAKUON] : [...DAKUON, ...HANDAKUON])],
+    [script],
+  );
+  const newFruit = treeKana.some((k) => known.has(k) && !treeSeen.includes(k));
 
   useEffect(() => {
     let here = true;
-    const first = !days[todayKey()]?.acts;
-    void speakAfterCurrent(first ? `きょうは なにして あそぶ?` : L.homeNext(callName(profile)), undefined, 6000, () => here);
+    const line = homeLine(callName(profile));
+    if (line.sparkle) setTimeout(() => here && sfx.sparkle(), 300);
+    void speakAfterCurrent(line.text, undefined, 6000, () => here);
     return () => {
       here = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!hint) return;
+    const t = setTimeout(() => setHint(null), 3600);
+    return () => clearTimeout(t);
+  }, [hint]);
 
   const open = (m: MenuItem) => {
     sfx.tap();
@@ -83,42 +122,91 @@ export default function HomeScreen() {
     navigate(m.route);
   };
 
-  const nextLabel = next ? nodeBadge(next) : null;
-
   return (
-    <div className="screen home-screen">
-      <button className="home-parent" onClick={() => navigate({ name: 'parent' })} aria-label="おうちの方へ">
-        <span className="emoji">⚙️</span>
-      </button>
-      <div className="home-left">
-        <Buddy size="min(38vh, 34vw, 330px)" bubble="top" wave bubbleMax="min(40vw, 460px)" />
-        <button className="week card" onClick={() => navigate({ name: 'stamps' })} aria-label="スタンプ">
-          {weekDays().map((d) => (
-            <div key={d.key} className={`day ${d.today ? 'today' : ''}`}>
-              <span className="label">{d.label}</span>
-              <span className="stamp">{days[d.key]?.stamp ? <Emoji>💮</Emoji> : null}</span>
-            </div>
-          ))}
+    <div className={`screen home-screen phase-${phase}`}>
+      <SkyScene phase={phase} balloons />
+      <div className="home-top">
+        <LevelBadge />
+        <div className="home-top-mid">
+          <ScriptSwitch />
+        </div>
+        <StreakChip />
+        <button className="home-parent" onClick={() => navigate({ name: 'parent' })} aria-label="おうちの方へ">
+          <span className="emoji">⚙️</span>
         </button>
       </div>
-      <div className="home-menu">
-        {MENU.map((m) => (
-          <button
-            key={m.id}
-            className={`menu-tile btn ${m.color} ${m.wide ? 'wide' : ''}`}
-            onClick={() => open(m)}
-            data-testid={`menu-${m.id}`}
-          >
-            <Emoji className="menu-emoji">{m.emoji}</Emoji>
-            <span className="menu-label">{m.label}</span>
-            {m.wide && nextLabel && (
-              <span className="menu-next">
-                つぎは {nextLabel.emoji ? <Emoji>{nextLabel.text}</Emoji> : <b>{nextLabel.text}</b>}
-              </span>
-            )}
-          </button>
-        ))}
+      <div className="home-body">
+        <div className="home-left">
+          <div className="home-stage">
+            <button
+              type="button"
+              className="home-tree"
+              onClick={() => {
+                sfx.tap();
+                void speak('もじの き');
+                navigate({ name: 'tree' });
+              }}
+              aria-label="もじの き"
+              data-testid="home-tree"
+            >
+              <LetterTree script={script} known={known} mini />
+              <span className="tree-sign">もじの き</span>
+              {newFruit && (
+                <span className="tree-new" aria-hidden>
+                  <Emoji>✨</Emoji>
+                </span>
+              )}
+            </button>
+            <div className="home-buddy">
+              <Buddy size="min(30vh, 22vw, 280px)" bubble="top" wave bubbleMax="min(34vw, 400px)" />
+            </div>
+          </div>
+          <MissionCard onHint={setHint} onChest={setChest} />
+        </div>
+        <div className="home-menu">
+          {menu(script === 'kata').map((m, i) => (
+            <button
+              key={m.id}
+              className={`menu-tile btn ${m.color} ${m.wide ? 'wide' : ''} ${hint === m.id ? 'hint' : ''}`}
+              style={{ ['--i' as string]: i }}
+              onClick={() => open(m)}
+              data-testid={`menu-${m.id}`}
+            >
+              <Emoji className="menu-emoji">{m.emoji}</Emoji>
+              {m.wide ? (
+                <span className="menu-main">
+                  <span className="menu-label">{m.label}</span>
+                  {stage && (
+                    <span className="menu-stage" aria-hidden>
+                      <Emoji>{stage.land.deco[0]}</Emoji>
+                      <span className="menu-stage-name">{stage.land.name}</span>
+                      <span className="menu-stage-bar">
+                        <i style={{ width: `${(stageDone / stage.nodes.length) * 100}%` }} />
+                      </span>
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="menu-label">{m.label}</span>
+              )}
+              {m.wide && (
+                <span className="menu-next">
+                  {nextLabel ? (
+                    <>
+                      つぎは {nextLabel.emoji ? <Emoji>{nextLabel.text}</Emoji> : <b>{nextLabel.text}</b>}
+                    </>
+                  ) : (
+                    <>
+                      ぜんぶ クリア! <Emoji>🎉</Emoji>
+                    </>
+                  )}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
+      {chest && <ChestOverlay result={chest} onClose={() => setChest(null)} />}
     </div>
   );
 }

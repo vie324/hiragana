@@ -314,9 +314,58 @@ export const BOOKS: Book[] = [
   },
 ];
 
+/** カタカナの えほん (カタカナの ぼうけんで よむ) */
+export const KATA_BOOKS: Book[] = [
+  {
+    id: 'omise',
+    title: 'カタカナの おみせ',
+    level: 2,
+    cover: { bg: 'town', actors: [A('🏪', 50, 60, 34, 'none'), A('child', 26, 72, 24, 'hop'), A('buddy', 76, 72, 22, 'hop', { d: 0.3 })] },
+    pages: [
+      P('town', '{name}と {buddy}は\nおみせに いきました。', A('child', 34, 64, 32, 'walk'), A('buddy', 60, 66, 28, 'walk', { d: 0.2 }), A('🏪', 84, 56, 24, 'none')),
+      P('kitchen', 'アイス ください。\n「はい、どうぞ!」', A('🍨', 50, 50, 40, 'bob'), A('child', 22, 70, 24, 'none')),
+      P('kitchen', 'ケーキも ください。\n「はい、どうぞ!」', A('🍰', 50, 50, 40, 'bob'), A('buddy', 80, 70, 24, 'none', { mood: 'happy' })),
+      P('kitchen', 'パンと ジュースも!', A('🍞', 36, 54, 32, 'bob'), A('🧃', 64, 54, 30, 'bob', { d: 0.3 })),
+      P('kitchen', 'バナナ、メロン、レモン。\nいっぱい かったね。', A('🍌', 26, 56, 24, 'bob'), A('🍈', 50, 54, 26, 'bob', { d: 0.2 }), A('🍋', 74, 56, 24, 'bob', { d: 0.4 })),
+      P(
+        'party',
+        'おうちで パーティー!\nいただきます!',
+        A('child', 30, 62, 32, 'hop'),
+        A('buddy', 70, 62, 30, 'none', { mood: 'happy' }),
+        A('🍰', 50, 80, 16, 'bob'),
+        A('🎉', 50, 28, 18, 'twinkle'),
+      ),
+    ],
+  },
+  {
+    id: 'robot',
+    title: 'ロボットの ロロ',
+    level: 3,
+    cover: { bg: 'space', actors: [A('🤖', 50, 58, 40, 'bob'), A('⭐', 24, 28, 12, 'twinkle'), A('🚀', 78, 30, 16, 'fly')] },
+    pages: [
+      P('room', 'ロボットの ロロは\nピカピカの ロボット。', A('🤖', 50, 56, 42, 'bob')),
+      P('room', 'ロロは ピアノが だいすき。\nポロン ポロン。', A('🤖', 36, 58, 32, 'sway'), A('🎹', 66, 64, 30, 'none')),
+      P('room', 'ドラムも たたくよ。\nドン ドン!', A('🤖', 36, 58, 32, 'shake'), A('🥁', 66, 64, 30, 'pulse')),
+      P('room', 'ギターも ひくよ。\nジャーン!', A('🤖', 36, 58, 32, 'sway'), A('🎸', 66, 60, 30, 'wiggle')),
+      P(
+        'party',
+        '{name}も {buddy}も\nいっしょに うたおう!',
+        A('child', 24, 64, 28, 'hop'),
+        A('🤖', 50, 58, 30, 'hop', { d: 0.2 }),
+        A('buddy', 76, 64, 26, 'hop', { d: 0.4 }),
+        A('🎤', 50, 26, 14, 'twinkle'),
+      ),
+      P('night', 'みんなで コンサート!\nパチ パチ パチ!', A('⭐', 20, 24, 12, 'twinkle'), A('🤖', 50, 58, 34, 'pulse'), A('⭐', 80, 22, 12, 'twinkle', { d: 0.4 })),
+    ],
+  },
+];
+
 export function findBook(id: string): Book | undefined {
-  return BOOKS.find((b) => b.id === id);
+  return BOOKS.find((b) => b.id === id) ?? KATA_BOOKS.find((b) => b.id === id);
 }
+
+/** ほんだなに ならべる えほん ぜんぶ */
+export const ALL_BOOKS: Book[] = [...BOOKS, ...KATA_BOOKS];
 
 export interface Token {
   /** ひょうじ */

@@ -1,112 +1,192 @@
 .home-screen {
-  flex-direction: row;
-  align-items: stretch;
-  gap: 2.4vw;
-  background: linear-gradient(180deg, #bfe9ff 0%, #f0fbff 58%, #d8f5c4 58%, #bfeaa2 100%);
-  padding-top: calc(var(--safe-t) + 20px);
+  gap: 1.2vh;
+  padding-top: calc(var(--safe-t) + 12px);
+}
+
+.home-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.home-top-mid {
+  flex: 1;
+  display: flex;
+  justify-content: center;
 }
 
 .home-parent {
-  position: absolute;
-  top: calc(var(--safe-t) + 12px);
-  right: calc(var(--safe-r) + 14px);
   width: 54px;
   height: 54px;
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.75);
   font-size: 26px;
-  z-index: 3;
   cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.home-body {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 2.4vw;
+  pointer-events: none;
 }
 
 .home-left {
-  flex: 0 0 38%;
+  flex: 0 0 40%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: flex-end;
-  gap: 2vh;
-  padding-bottom: 1vh;
+  gap: 1.4vh;
+  pointer-events: none;
 }
 
-.home-left .buddy {
-  flex: 1;
-  justify-content: flex-end;
-}
-
-.week {
+.home-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
-  gap: 6px;
-  padding: 10px 14px;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.home-tree {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 46%;
+  max-width: 240px;
   border: none;
+  background: none;
+  padding: 0 0 18px;
   cursor: pointer;
+  pointer-events: auto;
 }
 
-.week .day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: calc(var(--u) * 5.2);
+.home-tree:active {
+  transform: scale(0.96);
 }
 
-.week .label {
-  font-size: calc(var(--u) * 2.2);
-  color: var(--ink-soft);
+.home-tree .letter-tree {
+  width: 100%;
+  height: auto;
 }
 
-.week .today .label {
-  color: var(--orange-d);
+.tree-sign {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) rotate(-2deg);
+  white-space: nowrap;
+  background: linear-gradient(180deg, #c98f59, #a86f3d);
+  color: #fff;
+  font-size: calc(var(--u) * 2.1);
   font-weight: 700;
+  padding: 3px 12px 4px;
+  border-radius: 10px;
+  box-shadow: 0 3px 0 #7d5028;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
-.week .stamp {
-  width: calc(var(--u) * 5);
-  height: calc(var(--u) * 5);
-  border-radius: 50%;
-  background: #f7efe4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(var(--u) * 3.6);
+.tree-new {
+  position: absolute;
+  right: 6%;
+  top: 4%;
+  font-size: calc(var(--u) * 4.4);
+  animation: pulse 1.2s ease-in-out infinite;
 }
 
-.week .today .stamp {
-  box-shadow: 0 0 0 3px var(--orange) inset;
+.home-buddy {
+  position: relative;
+  margin-right: 2%;
 }
+
+/* ふきだしの よこの すきまは したの もじの きを おせるように */
+.home-buddy,
+.home-buddy .buddy {
+  pointer-events: none;
+}
+
+.home-buddy .mascot,
+.home-buddy .bubble {
+  pointer-events: auto;
+}
+
+.home-buddy .buddy {
+  align-items: flex-end;
+}
+
+.home-left .mission-card {
+  flex: 0 0 auto;
+}
+
+/* ---------- メニュー ---------- */
 
 .home-menu {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: 1fr;
-  gap: 2.2vh 1.6vw;
-  padding: 3vh 2vw 2vh 0;
-  align-content: center;
+  grid-template-rows: 1.15fr 1fr 1fr;
+  gap: 2vh 1.6vw;
+  padding: 0.6vh 0.4vw 1.2vh 0;
+  pointer-events: auto;
+}
+
+.btn.coral {
+  --c: #ff8a7a;
+  --cd: #e0604f;
 }
 
 .menu-tile {
   flex-direction: column;
-  border-radius: 34px;
-  padding: 1.4vh 1vw;
+  border-radius: 30px;
+  padding: 1.2vh 1vw;
   min-height: 0;
-  gap: 0.6vh;
+  gap: 0.4vh;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--c);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 62%, #fff) 0%, var(--c) 58%);
 }
 
-.menu-tile.wide {
-  grid-column: span 3;
-  flex-direction: row;
-  gap: 2vw;
+.menu-tile::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 9%;
+  right: 9%;
+  top: 5px;
+  height: 30%;
+  border-radius: 22px 22px 50% 50% / 22px 22px 100% 100%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0));
+  pointer-events: none;
 }
 
-.menu-emoji {
-  font-size: calc(var(--u) * 7.2);
-  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.12));
+.btn.menu-tile .menu-emoji {
+  font-size: calc(var(--u) * 6);
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.12));
+  animation: tile-bob 3.4s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.45s);
 }
 
-.menu-tile.wide .menu-emoji {
-  font-size: calc(var(--u) * 9);
+@keyframes tile-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-6px) rotate(-4deg);
+  }
 }
 
 .menu-label {
@@ -114,57 +194,176 @@
   white-space: nowrap;
 }
 
+.menu-tile.hint {
+  animation: tile-hint 0.9s ease-in-out infinite;
+  box-shadow: 0 7px 0 var(--cd), 0 0 0 6px #fff, 0 0 28px 12px rgba(255, 226, 110, 0.95);
+}
+
+@keyframes tile-hint {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* ---------- ぼうけん (おおきい タイル) ---------- */
+
+.menu-tile.wide {
+  grid-column: span 3;
+  flex-direction: row;
+  gap: 1.6vw;
+  padding: 1vh 1.6vw;
+}
+
+.menu-tile.wide::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -10%;
+  bottom: -10%;
+  width: 22%;
+  left: 0;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: translateX(-140%) skewX(-18deg);
+  animation: shine-sweep 5s ease-in-out infinite 1s;
+  pointer-events: none;
+  will-change: transform;
+}
+
+@keyframes shine-sweep {
+  0%,
+  60% {
+    transform: translateX(-140%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(560%) skewX(-18deg);
+  }
+}
+
+.btn.menu-tile.wide .menu-emoji {
+  font-size: calc(var(--u) * 9);
+}
+
+.menu-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6vh;
+  min-width: 0;
+}
+
 .menu-tile.wide .menu-label {
-  font-size: calc(var(--u) * 5.6);
+  font-size: calc(var(--u) * 5.4);
+}
+
+.menu-stage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: calc(var(--u) * 2.3);
+  background: rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  padding: 3px 12px 3px 8px;
+  text-shadow: none;
+  white-space: nowrap;
+}
+
+.menu-stage-bar {
+  width: calc(var(--u) * 11);
+  min-width: 70px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+}
+
+.menu-stage-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #fff;
 }
 
 .menu-next {
+  margin-left: auto;
   white-space: nowrap;
   font-size: calc(var(--u) * 3);
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   color: var(--orange-d);
   border-radius: 999px;
-  padding: 0.2em 0.7em;
+  padding: 0.25em 0.8em;
   text-shadow: none;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.08);
 }
 
 .menu-next b {
-  font-size: 1.4em;
+  font-size: 1.45em;
 }
 
+/* ---------- そら: おひさまは あいている ところ (ひだりうえ) に ---------- */
+
+.home-screen .sun,
+.home-screen .moon {
+  left: 27%;
+  right: auto;
+  top: 12%;
+}
+
+.home-screen .phase-morning .sun {
+  left: 23%;
+  top: 14%;
+}
+
+.home-screen .phase-evening .sun {
+  left: 25%;
+  top: 15%;
+}
+
+/* ---------- よる ---------- */
+
+.home-screen.phase-night .home-parent {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* ---------- たて ---------- */
+
 @media (orientation: portrait) {
-  .home-screen {
+  .home-top {
+    flex-wrap: wrap;
+  }
+  .home-body {
     flex-direction: column;
-    gap: 1vh;
+    gap: 1.2vh;
   }
   .home-left {
     flex: 0 0 auto;
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-end;
   }
-  .home-left .buddy {
-    flex: 0 1 auto;
+  .home-stage {
+    flex: 0 0 auto;
+    height: 27vh;
+  }
+  .home-tree {
+    width: 40%;
   }
   .home-menu {
     padding: 0 0 1vh;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1.1fr 1fr 1fr;
   }
-  .menu-tile.wide {
-    grid-column: span 2;
-  }
-  .menu-emoji {
-    font-size: calc(var(--u) * 10);
+  .btn.menu-tile .menu-emoji {
+    font-size: calc(var(--u) * 7.5);
   }
   .menu-label {
-    font-size: calc(var(--u) * 4.6);
+    font-size: calc(var(--u) * 4.2);
   }
-  .week {
-    flex-direction: column;
-    gap: 2px;
-  }
-  .week .day {
-    flex-direction: row;
-    width: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn.menu-tile .menu-emoji,
+  .menu-tile.wide::after,
+  .tree-new {
+    animation: none;
   }
 }

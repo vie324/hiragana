@@ -1,7 +1,8 @@
 /**
  * ぼうけんマップ (がくしゅうの すすめかた)。
- * 50音の 行ごとに「くに」を たびする。
+ * 50音の 行ごとに「くに」を たびする。ひらがな と カタカナ で べつの マップ。
  */
+import type { Script } from '../lib/kana';
 
 export type NodeKind =
   | 'lesson'
@@ -258,15 +259,174 @@ export const STAGES: Stage[] = [
   },
 ];
 
-export const ALL_NODES: MapNode[] = STAGES.flatMap((s) => s.nodes);
+/* ---------- カタカナの ぼうけん (まちの くに) ---------- */
 
-const nodeIndex = new Map(ALL_NODES.map((n, i) => [n.id, i]));
-const nodeStage = new Map(STAGES.flatMap((s) => s.nodes.map((n) => [n.id, s] as const)));
+const land = (name: string, sky: [string, string], ground: string, deco: string[]): Land => ({ name, sky, ground, deco });
+
+export const KATA_STAGES: Stage[] = [
+  rowStage('k-a', 'ア', land('おみせ', ['#ffe9f1', '#fff7e6'], '#ffd6e5', ['🍦', '🧁', '🛒', '🎈', '🏪']), ['ア', 'イ', 'ウ', 'エ', 'オ'], {
+    outfit: 'headphones',
+    book: 'omise',
+  }),
+  rowStage('k-ka', 'カ', land('まち', ['#dcecff', '#f4f9ff'], '#c9d6df', ['🚗', '🏢', '🚦', '🚌', '🏫']), ['カ', 'キ', 'ク', 'ケ', 'コ'], {
+    words: true,
+    memory: true,
+    outfit: 'sunflower',
+  }),
+  rowStage('k-sa', 'サ', land('ゆうえんち', ['#fff0c9', '#fff9ea'], '#ffd79a', ['🎡', '🎠', '🎢', '🎪', '🎈']), ['サ', 'シ', 'ス', 'セ', 'ソ'], {
+    words: true,
+    read: true,
+    outfit: 'lollipop',
+  }),
+  rowStage('k-ta', 'タ', land('えき', ['#d7f1e6', '#f3fbf7'], '#b9dcc8', ['🚃', '🚉', '🎫', '🚅', '🗺️']), ['タ', 'チ', 'ツ', 'テ', 'ト'], {
+    words: true,
+    read: true,
+    memory: true,
+    outfit: 'medal',
+  }),
+  rowStage('k-na', 'ナ', land('スーパー', ['#e6f7d9', '#fbfff4'], '#cde8b0', ['🛒', '🥕', '🍞', '🥛', '🧃']), ['ナ', 'ニ', 'ヌ', 'ネ', 'ノ'], {
+    words: true,
+    read: true,
+    outfit: 'helmet',
+  }),
+  rowStage('k-ha', 'ハ', land('くうこう', ['#cfe8ff', '#eef7ff'], '#b8cde0', ['✈️', '🛫', '🧳', '🌍', '☁️']), ['ハ', 'ヒ', 'フ', 'ヘ', 'ホ'], {
+    words: true,
+    read: true,
+    memory: true,
+    outfit: 'heart',
+  }),
+  rowStage('k-ma', 'マ', land('どうぶつえん', ['#e3f6d0', '#fdf8e4'], '#bde39a', ['🦁', '🐼', '🦒', '🐧', '🦓']), ['マ', 'ミ', 'ム', 'メ', 'モ'], {
+    words: true,
+    read: true,
+    outfit: 'icecream',
+  }),
+  {
+    id: 'k-ya',
+    title: 'ヤ',
+    land: land('キャンプじょう', ['#1f3b5a', '#46688a'], '#4c6b4f', ['⛺', '🔥', '🌲', '🔦', '🌌']),
+    kana: ['ヤ', 'ユ', 'ヨ'],
+    nodes: [
+      L('k-ya', 'ヤ'),
+      L('k-ya', 'ユ'),
+      L('k-ya', 'ヨ'),
+      G('k-ya', 'balloon', 1, ['ヤ', 'ユ', 'ヨ']),
+      G('k-ya', 'firstsound', 1, ['ヤ', 'ユ', 'ヨ']),
+      G('k-ya', 'wordbuild', 1),
+      G('k-ya', 'readquiz', 1),
+      T('k-ya', 'mushroom'),
+    ],
+  },
+  rowStage('k-ra', 'ラ', land('ロボットこうじょう', ['#e0e6ff', '#f5f7ff'], '#c3c9e6', ['🤖', '⚙️', '🔧', '🔩', '💡']), ['ラ', 'リ', 'ル', 'レ', 'ロ'], {
+    words: true,
+    read: true,
+    memory: true,
+    outfit: 'mic',
+    book: 'robot',
+  }),
+  {
+    id: 'k-wa',
+    title: 'ワ',
+    land: land('ステージ', ['#3a1f5c', '#7a4bb0'], '#b58be0', ['🎤', '🎸', '🥁', '🎹', '🎶']),
+    kana: ['ワ', 'ン'],
+    nodes: [L('k-wa', 'ワ'), L('k-wa', 'ン'), G('k-wa', 'balloon', 1, ['ワ', 'ン', 'ロ', 'レ']), G('k-wa', 'memory', 1), G('k-wa', 'wordbuild', 1), T('k-wa', 'guitar')],
+  },
+  {
+    id: 'k-long',
+    title: 'ー',
+    land: land('うちゅうステーション', ['#10183a', '#2d3a7a'], '#6f7fd6', ['🚀', '🛰️', '🌍', '🌟', '🪐']),
+    kana: ['ー'],
+    nodes: [S('k-long', 'k-long'), G('k-long', 'readquiz', 1), G('k-long', 'wordbuild', 1), T('k-long', 'sparkles')],
+  },
+  {
+    id: 'k-ga',
+    title: 'ガ',
+    land: land('おもちゃの くに', ['#fff1d6', '#fffaf0'], '#ffd8a8', ['🧸', '🪀', '🧩', '🎲', '🪁']),
+    kana: ['ガ', 'ギ', 'グ', 'ゲ', 'ゴ', 'ザ', 'ジ', 'ズ', 'ゼ', 'ゾ'],
+    nodes: [
+      S('k-ga', 'k-tenten'),
+      L('k-ga', 'ガ'),
+      L('k-ga', 'ゴ'),
+      G('k-ga', 'balloon', 1, ['ガ', 'ギ', 'グ', 'ゲ', 'ゴ']),
+      L('k-ga', 'ジ'),
+      L('k-ga', 'ズ'),
+      G('k-ga', 'balloon', 2, ['ザ', 'ジ', 'ズ', 'ゼ', 'ゾ']),
+      G('k-ga', 'wordbuild', 1),
+      G('k-ga', 'readquiz', 1),
+      T('k-ga', 'rose'),
+    ],
+  },
+  {
+    id: 'k-da',
+    title: 'ダ',
+    land: land('スタジアム', ['#d9f5ff', '#f5fcff'], '#8fd18f', ['⚽', '🏀', '🏟️', '🎾', '🏆']),
+    kana: ['ダ', 'デ', 'ド', 'バ', 'ビ', 'ブ', 'ベ', 'ボ'],
+    nodes: [
+      L('k-da', 'ダ'),
+      L('k-da', 'ド'),
+      G('k-da', 'balloon', 1, ['ダ', 'デ', 'ド']),
+      L('k-da', 'バ'),
+      L('k-da', 'ブ'),
+      G('k-da', 'balloon', 2, ['バ', 'ビ', 'ブ', 'ベ', 'ボ']),
+      G('k-da', 'memory', 1),
+      G('k-da', 'readquiz', 1),
+      T('k-da', 'rocket'),
+    ],
+  },
+  {
+    id: 'k-pa',
+    title: 'パ',
+    land: land('パンやさん', ['#fff0dc', '#fff9f0'], '#f3d1a5', ['🥐', '🍞', '🥖', '🥯', '🧁']),
+    kana: ['パ', 'ピ', 'プ', 'ペ', 'ポ'],
+    nodes: [
+      S('k-pa', 'k-maru', ['パ', 'ピ', 'プ', 'ペ', 'ポ']),
+      L('k-pa', 'ポ'),
+      G('k-pa', 'balloon', 1, ['パ', 'ピ', 'プ', 'ペ', 'ポ']),
+      G('k-pa', 'wordbuild', 1),
+      G('k-pa', 'readquiz', 1),
+      T('k-pa', 'bell'),
+    ],
+  },
+  {
+    id: 'k-kya',
+    title: 'ャ',
+    land: land('おまつり', ['#2a1a4a', '#5a2d6e'], '#8a5bb0', ['🏮', '🎆', '🍡', '🎐', '🎇']),
+    kana: ['ャ', 'ュ', 'ョ'],
+    nodes: [S('k-kya', 'k-small'), G('k-kya', 'readquiz', 1), G('k-kya', 'wordbuild', 1), T('k-kya', 'windchime')],
+  },
+  {
+    id: 'k-tsu',
+    title: 'ッ',
+    land: land('パーティー', ['#ffe6f5', '#fff6e6'], '#ffc9e6', ['🎉', '🎂', '🎁', '🎈', '🥳']),
+    kana: ['ッ'],
+    nodes: [S('k-tsu', 'k-tsu'), G('k-tsu', 'readquiz', 1), G('k-tsu', 'wordbuild', 1), G('k-tsu', 'memory', 1), T('k-tsu', 'party')],
+  },
+];
+
+/** ひらがなの ぼうけんの ノード (じゅんばん) */
+export const ALL_NODES: MapNode[] = STAGES.flatMap((s) => s.nodes);
+/** カタカナの ぼうけんの ノード */
+export const KATA_NODES: MapNode[] = KATA_STAGES.flatMap((s) => s.nodes);
+
+export function stagesOf(script: Script): Stage[] {
+  return script === 'kata' ? KATA_STAGES : STAGES;
+}
+
+export function nodesOf(script: Script): MapNode[] {
+  return script === 'kata' ? KATA_NODES : ALL_NODES;
+}
+
+/** カタカナの ぼうけんの ノードか */
+export function scriptOfNode(id: string): Script {
+  return id.startsWith('k-') ? 'kata' : 'hira';
+}
+
+const nodeIndex = new Map([...ALL_NODES.map((n, i) => [n.id, i] as const), ...KATA_NODES.map((n, i) => [n.id, i] as const)]);
+const nodeStage = new Map([...STAGES, ...KATA_STAGES].flatMap((s) => s.nodes.map((n) => [n.id, s] as const)));
 
 export function findNode(id: string | undefined): MapNode | undefined {
   if (!id) return undefined;
   const i = nodeIndex.get(id);
-  return i === undefined ? undefined : ALL_NODES[i];
+  return i === undefined ? undefined : nodesOf(scriptOfNode(id))[i];
 }
 
 export function stageOfNode(id: string): Stage | undefined {
@@ -275,10 +435,11 @@ export function stageOfNode(id: string): Stage | undefined {
 
 /** ここまでに ならう もじ (このノードの まえまで) */
 export function kanaIntroducedBefore(nodeId: string): string[] {
+  const nodes = nodesOf(scriptOfNode(nodeId));
   const idx = nodeIndex.get(nodeId) ?? 0;
   const set = new Set<string>();
   for (let i = 0; i < idx; i++) {
-    const n = ALL_NODES[i];
+    const n = nodes[i];
     if (n.kind === 'lesson' && n.kana) n.kana.forEach((k) => set.add(k));
   }
   return [...set];
@@ -287,7 +448,7 @@ export function kanaIntroducedBefore(nodeId: string): string[] {
 /** このステージまでに でてくる もじ (ゲームで つかう) */
 export function kanaUpToStage(stageId: string): string[] {
   const out: string[] = [];
-  for (const s of STAGES) {
+  for (const s of stagesOf(stageId.startsWith('k-') ? 'kata' : 'hira')) {
     out.push(...s.kana);
     if (s.id === stageId) break;
   }
@@ -295,11 +456,13 @@ export function kanaUpToStage(stageId: string): string[] {
 }
 
 /** つぎに やる ノード (まだ おわっていない さいしょの もの) */
-export function nextNodeIndex(done: (id: string) => boolean): number {
-  const i = ALL_NODES.findIndex((n) => !done(n.id));
-  return i === -1 ? ALL_NODES.length : i;
+export function nextNodeIndex(done: (id: string) => boolean, script: Script = 'hira'): number {
+  const nodes = nodesOf(script);
+  const i = nodes.findIndex((n) => !done(n.id));
+  return i === -1 ? nodes.length : i;
 }
 
+/** そのマップの なかでの じゅんばん */
 export function nodeIndexOf(id: string): number {
   return nodeIndex.get(id) ?? -1;
 }

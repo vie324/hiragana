@@ -28,19 +28,24 @@
 }
 
 .dressup-closet {
-  flex: 0 0 44%;
+  flex: 0 0 46%;
+  align-self: stretch;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.6vh 1.2vw;
-  align-content: center;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.4vh 1vw;
+  align-content: start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding: 1vh 0.6vw 2vh;
 }
 
 .closet-item {
   aspect-ratio: 1;
   border: 5px solid #fff;
-  border-radius: 24px;
+  border-radius: 22px;
   background: #fff;
-  font-size: min(8vh, 6vw);
+  font-size: min(6vh, 4.4vw);
   box-shadow: 0 6px 0 var(--line);
   cursor: pointer;
 }
@@ -57,7 +62,7 @@
 }
 
 .closet-faces {
-  grid-column: span 4;
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 1.6vh 1.2vw;
@@ -72,7 +77,7 @@
 }
 
 .change-buddy {
-  grid-column: span 4;
+  grid-column: 1 / -1;
   font-size: calc(var(--u) * 2.8);
   margin-top: 1vh;
 }
@@ -81,8 +86,16 @@
   .dressup-body {
     flex-direction: column;
   }
-  .dressup-closet {
+  .dressup-stage {
     flex: 0 0 auto;
+  }
+  .dressup-closet {
+    flex: 1 1 auto;
+    min-height: 0;
     width: 100%;
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .closet-item {
+    font-size: min(5vh, 7vw);
   }
 }

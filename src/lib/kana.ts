@@ -55,7 +55,7 @@ export const SMALL_KANA = ['ゃ', 'ゅ', 'ょ', 'っ', 'ぁ', 'ぃ', 'ぅ', 'ぇ
 /** 書く れんしゅうが できる もじ */
 export const WRITABLE_KANA = [...BASIC_KANA, ...SMALL_KANA];
 
-const SMALL_JOIN = new Set(['ゃ', 'ゅ', 'ょ', 'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'ゎ']);
+const SMALL_JOIN = new Set(['ゃ', 'ゅ', 'ょ', 'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'ゎ', 'ャ', 'ュ', 'ョ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ヮ']);
 
 export function isHiragana(ch: string): boolean {
   const c = ch.codePointAt(0) ?? 0;
@@ -75,9 +75,9 @@ export function splitUnits(word: string): string[] {
   return out;
 }
 
-/** ことばに ふくまれる ひらがな 1もじずつ (記号・空白を のぞく) */
+/** ことばに ふくまれる かな 1もじずつ (ひらがな・カタカナ。記号・空白を のぞく) */
 export function kanaChars(text: string): string[] {
-  return [...text].filter(isHiragana);
+  return [...text].filter(isKana);
 }
 
 /** 濁点・半濁点を とった もとの もじ (が → か) */
@@ -96,6 +96,16 @@ const SMALL_NAMES: Record<string, string> = {
   ぅ: 'ちいさい う',
   ぇ: 'ちいさい え',
   ぉ: 'ちいさい お',
+  ャ: 'ちいさい ヤ',
+  ュ: 'ちいさい ユ',
+  ョ: 'ちいさい ヨ',
+  ッ: 'ちいさい ツ',
+  ァ: 'ちいさい ア',
+  ィ: 'ちいさい イ',
+  ゥ: 'ちいさい ウ',
+  ェ: 'ちいさい エ',
+  ォ: 'ちいさい オ',
+  ー: 'のばす ぼう',
 };
 
 /** 1もじ(または 拗音)を よみあげる ときの テキスト */
@@ -154,15 +164,124 @@ export const SIMILAR: Record<string, string[]> = {
   ん: ['し', 'く', 'え'],
 };
 
+/** かたちが にていて まちがえやすい カタカナ */
+export const K_SIMILAR: Record<string, string[]> = {
+  ア: ['マ', 'ヤ', 'フ'],
+  イ: ['ト', 'レ', 'ノ'],
+  ウ: ['ワ', 'フ', 'ラ'],
+  エ: ['ユ', 'コ', 'ニ'],
+  オ: ['ホ', 'キ', 'ヤ'],
+  カ: ['ヤ', 'ク', 'タ'],
+  キ: ['モ', 'チ', 'オ'],
+  ク: ['ケ', 'タ', 'ワ'],
+  ケ: ['ク', 'タ', 'ナ'],
+  コ: ['ユ', 'ロ', 'エ'],
+  サ: ['セ', 'ナ', 'チ'],
+  シ: ['ツ', 'ミ', 'ン'],
+  ス: ['ヌ', 'ヲ', 'フ'],
+  セ: ['サ', 'ヤ', 'モ'],
+  ソ: ['ン', 'リ', 'ツ'],
+  タ: ['ク', 'ケ', 'ヌ'],
+  チ: ['テ', 'モ', 'キ'],
+  ツ: ['シ', 'ソ', 'ン'],
+  テ: ['チ', 'ラ', 'モ'],
+  ト: ['イ', 'ホ', 'ヤ'],
+  ナ: ['メ', 'サ', 'ケ'],
+  ニ: ['コ', 'エ', 'ミ'],
+  ヌ: ['ス', 'メ', 'ヲ'],
+  ネ: ['ホ', 'ス', 'オ'],
+  ノ: ['メ', 'ソ', 'イ'],
+  ハ: ['ル', 'ヘ', 'ソ'],
+  ヒ: ['ト', 'レ', 'セ'],
+  フ: ['ワ', 'ウ', 'ヲ'],
+  ヘ: ['ハ', 'ク', 'ノ'],
+  ホ: ['オ', 'ネ', 'キ'],
+  マ: ['ア', 'ム', 'ヤ'],
+  ミ: ['シ', 'ニ', 'ツ'],
+  ム: ['マ', 'ス', 'ヌ'],
+  メ: ['ナ', 'ノ', 'ヌ'],
+  モ: ['キ', 'チ', 'セ'],
+  ヤ: ['セ', 'カ', 'マ'],
+  ユ: ['コ', 'エ', 'ヨ'],
+  ヨ: ['ユ', 'コ', 'ヲ'],
+  ラ: ['ウ', 'フ', 'テ'],
+  リ: ['ソ', 'ル', 'ハ'],
+  ル: ['レ', 'ハ', 'リ'],
+  レ: ['ル', 'イ', 'ヒ'],
+  ロ: ['コ', 'ユ', 'ヨ'],
+  ワ: ['ウ', 'フ', 'ク'],
+  ヲ: ['ヨ', 'フ', 'ス'],
+  ン: ['ソ', 'シ', 'ツ'],
+};
+
 export function similarTo(k: string): string[] {
-  const direct = SIMILAR[k];
+  const direct = SIMILAR[k] ?? K_SIMILAR[k];
   if (direct) return direct.filter((c) => c !== k);
   const base = baseKana(k);
   if (base !== k) {
-    // が → か/ぎ/ぐ など
-    const row = [...DAKUON_ROWS].find((r) => r.cells.includes(k));
+    // が → か/ぎ/ぐ、ガ → カ/ギ/グ など
+    const row = [...DAKUON_ROWS, ...K_DAKUON_ROWS].find((r) => r.cells.includes(k));
     const siblings = row ? row.cells.filter((c): c is string => !!c && c !== k) : [];
     return [base, ...siblings.slice(0, 2)];
   }
   return [];
+}
+
+/* ---------- カタカナ ---------- */
+
+export type Script = 'hira' | 'kata';
+
+/** のばす ぼう */
+export const CHOUON = 'ー';
+
+/** ひらがな → カタカナ */
+export function toKata(s: string): string {
+  return s.replace(/[\u3041-\u3096]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
+}
+
+/** カタカナ → ひらがな (ー は そのまま) */
+export function toHira(s: string): string {
+  return s.replace(/[\u30a1-\u30f6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+}
+
+export function isKatakana(ch: string): boolean {
+  const c = ch.codePointAt(0) ?? 0;
+  return (c >= 0x30a1 && c <= 0x30fa) || c === 0x30fc;
+}
+
+export function isKana(ch: string): boolean {
+  return isHiragana(ch) || isKatakana(ch);
+}
+
+/** カタカナが ひとつでも あれば カタカナの ことば */
+export function scriptOf(text: string): Script {
+  return [...text].some((c) => c !== CHOUON && isKatakana(c)) ? 'kata' : 'hira';
+}
+
+const kataRows = (rows: KanaRow[]): KanaRow[] =>
+  rows.map((r) => ({ id: `k${r.id}`, name: toKata(r.name), cells: r.cells.map((c) => (c ? toKata(c) : null)) }));
+
+export const K_SEION_ROWS = kataRows(SEION_ROWS);
+export const K_DAKUON_ROWS = kataRows(DAKUON_ROWS);
+export const K_YOUON_ROWS = kataRows(YOUON_ROWS);
+export const K_SEION = cellsOf(K_SEION_ROWS);
+export const K_DAKUON = cellsOf(K_DAKUON_ROWS.slice(0, 4));
+export const K_HANDAKUON = cellsOf(K_DAKUON_ROWS.slice(4));
+/** 1もじで かく カタカナ ぜんぶ (清音・濁音・半濁音) */
+export const K_BASIC_KANA = [...K_SEION, ...K_DAKUON, ...K_HANDAKUON];
+export const K_SMALL_KANA = SMALL_KANA.map(toKata);
+/** 書く れんしゅうが できる カタカナ (ー も) */
+export const K_WRITABLE_KANA = [...K_BASIC_KANA, ...K_SMALL_KANA, CHOUON];
+
+export const ROWS: Record<Script, { seion: KanaRow[]; dakuon: KanaRow[]; youon: KanaRow[] }> = {
+  hira: { seion: SEION_ROWS, dakuon: DAKUON_ROWS, youon: YOUON_ROWS },
+  kata: { seion: K_SEION_ROWS, dakuon: K_DAKUON_ROWS, youon: K_YOUON_ROWS },
+};
+
+export function basicKanaOf(script: Script): string[] {
+  return script === 'kata' ? K_BASIC_KANA : BASIC_KANA;
+}
+
+export function seionOf(script: Script): string[] {
+  return script === 'kata' ? K_SEION : SEION;
 }

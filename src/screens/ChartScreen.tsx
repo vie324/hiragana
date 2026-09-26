@@ -2,27 +2,34 @@ import { useEffect, useState } from 'react';
 import { Btn, Emoji, Stars, TopBar } from '../components/ui';
 import KanaGrid from '../components/KanaGrid';
 import StrokeOrder from '../components/StrokeOrder';
-import { SEION_ROWS, DAKUON_ROWS, YOUON_ROWS, sayKana } from '../lib/kana';
+import { ROWS, sayKana, type Script } from '../lib/kana';
+import ScriptSwitch from '../components/ScriptSwitch';
 import { kanaExample, exampleSentence } from '../data/kanaInfo';
 import { masteryStars } from '../lib/srs';
 import { hasStrokes } from '../lib/strokes';
-import { useApp } from '../state/store';
+import { useApp, useScript } from '../state/store';
 import { navigate } from '../state/router';
 import { speak } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import './menus.css';
+
+const TAB_LABEL: Record<Script, [string, string, string]> = {
+  hira: ['あいうえお', 'がざだばぱ', 'きゃきゅきょ'],
+  kata: ['アイウエオ', 'ガザダバパ', 'キャキュキョ'],
+};
 
 export default function ChartScreen() {
   const [tab, setTab] = useState<'seion' | 'daku' | 'youon'>('seion');
   const [detail, setDetail] = useState<string | null>(null);
   const [play, setPlay] = useState(0);
   const progress = useApp((s) => s.kana);
+  const script = useScript();
 
   useEffect(() => {
     void speak('もじを タッチすると よむよ。');
   }, []);
 
-  const rows = tab === 'seion' ? SEION_ROWS : tab === 'daku' ? DAKUON_ROWS : YOUON_ROWS;
+  const rows = tab === 'seion' ? ROWS[script].seion : tab === 'daku' ? ROWS[script].dakuon : ROWS[script].youon;
   const ex = detail ? kanaExample(detail) : null;
 
   const open = (k: string) => {
@@ -34,23 +41,17 @@ export default function ChartScreen() {
 
   return (
     <div className="screen menu-screen chart-screen">
-      <TopBar
-        nav="home"
-        title={
-          <>
-            <Emoji>🔤</Emoji>
-          </>
-        }
-      >
-        <div className="tabs">
+      <TopBar nav="home">
+        <div className="tabs chart-tabs">
+          <ScriptSwitch />
           <button className={`tab ${tab === 'seion' ? 'on' : ''}`} onClick={() => setTab('seion')}>
-            あいうえお
+            {TAB_LABEL[script][0]}
           </button>
           <button className={`tab ${tab === 'daku' ? 'on' : ''}`} onClick={() => setTab('daku')}>
-            が ざ だ ば ぱ
+            {TAB_LABEL[script][1]}
           </button>
           <button className={`tab ${tab === 'youon' ? 'on' : ''}`} onClick={() => setTab('youon')}>
-            きゃ きゅ きょ
+            {TAB_LABEL[script][2]}
           </button>
         </div>
       </TopBar>

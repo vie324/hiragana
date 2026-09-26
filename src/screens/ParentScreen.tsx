@@ -15,6 +15,7 @@ import {
   type FingerMode,
 } from '../state/store';
 import { grantExtraMinutes, remainingSeconds } from '../state/actions';
+import { levelInfo, streakDays } from '../state/progress';
 import { clearGallery, galleryKanaList, getNameSamples, getSamples } from '../state/gallery';
 import {
   applyUndo,
@@ -33,9 +34,9 @@ import {
   undoInfo,
 } from '../state/backup';
 import { hasGallery, renderGalleryImage } from '../state/galleryImage';
-import { ALL_NODES } from '../data/curriculum';
-import { BOOKS } from '../data/books';
-import { SEION, SEION_ROWS, DAKUON_ROWS } from '../lib/kana';
+import { ALL_NODES, KATA_NODES } from '../data/curriculum';
+import { ALL_BOOKS as BOOKS } from '../data/books';
+import { K_SEION, ROWS, SEION, type Script } from '../lib/kana';
 import { masteryStars, isKnown } from '../lib/srs';
 import { jaVoices, speak } from '../lib/speech';
 import { greeting } from '../lib/session';
@@ -47,17 +48,6 @@ import './parent.css';
 type Tab = 'progress' | 'settings' | 'gallery' | 'data';
 
 const HIRAGANA_RE = /^[ぁ-ゖー]*$/;
-
-function streak(days: AppData['days']): number {
-  let n = 0;
-  const d = new Date();
-  if (!days[todayKey(d)]?.acts) d.setDate(d.getDate() - 1);
-  while (days[todayKey(d)]?.acts) {
-    n++;
-    d.setDate(d.getDate() - 1);
-  }
-  return n;
-}
 
 function Ink({ strokes, size = 64 }: { strokes: [number, number][][]; size?: number }) {
   return (
@@ -83,10 +73,13 @@ function Ink({ strokes, size = 64 }: { strokes: [number, number][][]; size?: num
 function ProgressTab() {
   const d = useApp((s) => s);
   const [sel, setSel] = useState<string | null>(null);
+  const [table, setTable] = useState<Script>('hira');
   const today = d.days[todayKey()];
   const knownSeion = SEION.filter((k) => isKnown(d.kana[k])).length;
   const introduced = SEION.filter((k) => d.kana[k]?.intro).length;
+  const knownKata = K_SEION.filter((k) => isKnown(d.kana[k])).length;
   const nodesDone = ALL_NODES.filter((n) => d.nodes[n.id]).length;
+  const kataDone = KATA_NODES.filter((n) => d.nodes[n.id]).length;
   const bookReads = Object.values(d.books).reduce((a, b) => a + b.reads, 0);
   const weak = Object.entries(d.kana)
     .filter(([, p]) => p.ng >= 2 && p.ng >= p.ok * 0.5)
@@ -105,7 +98,11 @@ function ProgressTab() {
           </div>
           <div className="stat">
             <span className="stat-label">連続</span>
-            <span className="stat-value">{streak(d.days)}日</span>
+            <span className="stat-value">{streakDays(d.days)}日</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">レベル</span>
+            <span className="stat-value">{levelInfo(d.xp).level}</span>
           </div>
           <div className="stat">
             <span className="stat-label">読める文字(清音)</span>
@@ -129,6 +126,20 @@ function ProgressTab() {
             </span>
           </div>
           <div className="stat">
+            <span className="stat-label">読めるカタカナ</span>
+            <span className="stat-value">
+              {knownKata}
+              <small>/46</small>
+            </span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">カタカナの冒険</span>
+            <span className="stat-value">
+              {kataDone}
+              <small>/{KATA_NODES.length}</small>
+            </span>
+          </div>
+          <div className="stat">
             <span className="stat-label">絵本を読んだ回数</span>
             <span className="stat-value">{bookReads}回</span>
           </div>
@@ -141,11 +152,19 @@ function ProgressTab() {
 
       <div className="parent-card">
         <h2>文字ごとの習熟度</h2>
+        <div className="seg">
+          <button className={table === 'hira' ? 'on' : ''} onClick={() => setTable('hira')} data-testid="mastery-hira">
+            ひらがな
+          </button>
+          <button className={table === 'kata' ? 'on' : ''} onClick={() => setTable('kata')} data-testid="mastery-kata">
+            カタカナ
+          </button>
+        </div>
         <p className="note">
           ★1: ならった ／ ★2: 何度か正解 ／ ★3: 日をまたいで覚えていて、書く練習もした。文字をタップすると詳しい記録が見られます。
         </p>
         <div className="mastery-grid">
-          {[...SEION_ROWS, ...DAKUON_ROWS].map((row) => (
+          {[...ROWS[table].seion, ...ROWS[table].dakuon].map((row) => (
             <div className="mastery-col" key={row.id}>
               {row.cells.map((k, i) =>
                 k ? (
@@ -498,6 +517,22 @@ function SettingsTab() {
             </button>
           </div>
           <small>すでに読める文字が多い場合は「すべて開く」にすると、好きなところから始められます。</small>
+        </div>
+      </div>
+
+      <div className="parent-card">
+        <h2>カタカナ</h2>
+        <div className="field">
+          <span>ホームなどに「ひらがな/カタカナ」の切り替えを出す</span>
+          <div className="seg">
+            <button className={settings.kata ? 'on' : ''} onClick={() => set((d) => void (d.settings.kata = true))} data-testid="kata-on">
+              出す
+            </button>
+            <button className={!settings.kata ? 'on' : ''} onClick={() => set((d) => void (d.settings.kata = false))} data-testid="kata-off">
+              出さない(ひらがなだけ)
+            </button>
+          </div>
+          <small>カタカナにも、ひらがなと同じように冒険マップ・レッスン・書き順・ゲーム・絵本があります。ひらがなに慣れてから始めるのがおすすめです。</small>
         </div>
       </div>
     </>

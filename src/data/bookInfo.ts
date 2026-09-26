@@ -1,4 +1,4 @@
-import { BOOKS, type Book } from './books';
+import { ALL_BOOKS, type Book } from './books';
 import { isHiragana } from '../lib/kana';
 
 /** えほんに でてくる ひらがな (なまえの ぶぶんは のぞく) */
@@ -18,4 +18,4 @@ export function readability(b: Book, known: (k: string) => boolean): number {
   return ks.filter(known).length / ks.length;
 }
 
-export const BOOK_ORDER = BOOKS.slice().sort((a, b) => a.level - b.level);
+export const BOOK_ORDER = ALL_BOOKS.slice().sort((a, b) => a.level - b.level);
