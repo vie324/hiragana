@@ -17,6 +17,7 @@ import { back } from '../state/router';
 import { completeActivity, knownKana, markIntroduced, recordAnswer, recordWriting, type RewardResult } from '../state/actions';
 import { addSample, round } from '../state/gallery';
 import { hasStrokes } from '../lib/strokes';
+import { L } from '../voice/lines';
 import './lesson.css';
 
 type Step = 'intro' | 'word' | 'order' | 'write' | 'find';
@@ -64,7 +65,7 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
       switch (step) {
         case 'intro':
           // カードを タッチして よみあげが とぎれても、おなじ ステップなら つづける
-          await say(`これは、「${sayKana(kana)}」。いっしょに いってみよう。`);
+          await say(L.lessonIntro(kana));
           if (!live()) return;
           await wait(250);
           if (!live()) return;
@@ -84,7 +85,7 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
           await say(settings.finger === 'pen' ? 'ペンで なぞって みよう。' : 'ゆびか ペンで、なぞって みよう。');
           return;
         case 'find':
-          await say(`「${sayKana(kana)}」は どれかな?`);
+          await say(L.whichIs(kana));
           return;
       }
       if (live()) setReady(true);
@@ -119,18 +120,18 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
     setMood('happy');
     celebrate();
     sfx.correct();
-    await say(r.stars === 3 ? `じょうず! 「${sayKana(kana)}」が かけたね!` : `「${sayKana(kana)}」が かけたね!`);
+    await say(r.stars === 3 ? L.wroteGreat(kana) : L.wrote(kana));
     if (alive.current) next();
   };
 
   const onFindCorrect = async () => {
     recordAnswer(kana, mistakes === 0);
     setMood('happy');
-    await say(`せいかい! 「${sayKana(kana)}」!`);
+    await say(L.correctKana(kana));
     if (!alive.current) return;
     if (findRound === 0) {
       setFindRound(1);
-      await say(`もう いっかい。「${sayKana(kana)}」は どれかな?`);
+      await say(L.onceMore(kana));
     } else {
       await finish();
     }
@@ -139,7 +140,7 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
   const onFindWrong = (picked: string) => {
     setMistakes((m) => m + 1);
     setMood('think');
-    void say(`これは「${sayKana(picked)}」。「${sayKana(kana)}」を さがしてね。`);
+    void say(L.findOther(picked, kana));
   };
 
   const replay = () => {
@@ -158,7 +159,7 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
         void say('いろの ついた ところを、みどりの まるから なぞってね。');
         break;
       case 'find':
-        void say(`「${sayKana(kana)}」は どれかな?`);
+        void say(L.whichIs(kana));
         break;
     }
   };

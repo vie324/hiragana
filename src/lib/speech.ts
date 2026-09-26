@@ -1,5 +1,6 @@
 /**
- * よみあげ (Web Speech API)。
+ * よみあげ。まえもって つくった 声 (src/voice/bank.ts) が あれば それを ならし、
+ * ない ぶん (こどもの なまえ など) は Web Speech API で よむ。
  * iPad Safari の くせ に 対応している:
  *  - さいしょの よみあげは タップの 中で よぶ必要がある
  *  - onend が こないことが あるので タイマーで ほけんを かける
@@ -11,6 +12,8 @@ export interface VoicePrefs {
   rate: number;
   pitch: number;
 }
+
+import { planVoice, playClip, prepareClips, type Part } from '../voice/bank';
 
 type Listener = (speaking: boolean) => void;
 
@@ -28,6 +31,58 @@ let cancelCurrent: (() => void) | null = null;
 let caption: string | null = null;
 const KANJI = /[\u3400-\u4dbf\u4e00-\u9fff]/;
 let captionTimer: ReturnType<typeof setTimeout> | undefined;
+/** iPad で よみあげを つかえるように する ための むおんの よみあげ中 */
+let unlocking = false;
+let unlockState: 'no' | 'trying' | 'yes' = 'no';
+
+/**
+ * タップ (click) の なかで むおんの よみあげを して、iPad の よみあげを つかえるように する。
+ * まえもって つくった 声の あとに なまえだけ よむ ときも、タップの そとで よめるように なる。
+ * iPad が ほんとうに よんだ (onstart/onend が きた) ときだけ おわりに して、だめなら つぎの タップで もういちど。
+ */
+export function unlockSpeech(): void {
+  if (unlockState !== 'no' || !synth) return;
+  // もう なにか よんでいるなら つかえる
+  if (synth.speaking || synth.pending) {
+    unlockState = 'yes';
+    return;
+  }
+  try {
+    const u = new SpeechSynthesisUtterance(' ');
+    u.lang = 'ja-JP';
+    u.volume = 0;
+    const ok = () => {
+      unlockState = 'yes';
+      unlocking = false;
+      keep.delete(u);
+    };
+    u.onstart = ok;
+    u.onend = ok;
+    u.onerror = () => {
+      unlocking = false;
+      keep.delete(u);
+      if (unlockState === 'trying') unlockState = 'no';
+    };
+    keep.add(u);
+    unlockState = 'trying';
+    unlocking = true;
+    synth.speak(u);
+    setTimeout(() => {
+      unlocking = false;
+      if (unlockState === 'trying') unlockState = 'no';
+    }, 1500);
+  } catch {
+    unlocking = false;
+    unlockState = 'no';
+  }
+}
+
+/** まえもって つくれない なまえ (こどもの よびかた・あいぼうの なまえ) */
+let dynamicNames: string[] = [];
+
+export function setSpeechNames(names: readonly string[]): void {
+  dynamicNames = names.filter(Boolean);
+}
 
 function setSpeaking(v: boolean) {
   if (speaking === v) return;
@@ -142,13 +197,18 @@ export function speak(text: string, opts: SpeakOptions = {}): Promise<boolean> {
     window.__HIRAGANA_SPOKEN__?.push(text);
   }
 
+  const plan = planVoice(text, dynamicNames, !(typeof window !== 'undefined' && window.__HIRAGANA_FAST_SPEECH__));
+  if (typeof window !== 'undefined' && window.__HIRAGANA_VOICE_MISSES__ && !plan) window.__HIRAGANA_VOICE_MISSES__.push(text);
+
   return new Promise<boolean>((resolve) => {
     let done = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let stopPart: (() => void) | null = null;
     const finish = (completed: boolean) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
+      if (!completed) stopPart?.();
       if (id === currentId) {
         cancelCurrent = null;
         setSpeaking(false);
@@ -165,13 +225,76 @@ export function speak(text: string, opts: SpeakOptions = {}): Promise<boolean> {
     setCaption(shown ?? null);
 
     const fast = typeof window !== 'undefined' && window.__HIRAGANA_FAST_SPEECH__;
+    if (fast) {
+      timer = setTimeout(() => finish(true), 20);
+      return;
+    }
+    if (plan) {
+      void playParts(plan, rate, pitch, () => done, (stop) => (stopPart = stop)).then((ok) => finish(ok));
+      return;
+    }
+    void ttsSpeak(text, rate, pitch, (stop) => (stopPart = stop)).then((ok) => finish(ok));
+  });
+}
+
+const NAME_PITCH = 1.35;
+
+/** まえもって つくった 声と (なまえだけ) iPad の 声を じゅんばんに ならす */
+async function playParts(
+  parts: readonly Part[],
+  rate: number,
+  pitch: number,
+  cancelled: () => boolean,
+  setStop: (stop: () => void) => void,
+): Promise<boolean> {
+  prepareClips(parts);
+  for (let i = 0; i < parts.length; i++) {
+    if (cancelled()) return false;
+    const p = parts[i];
+    let ok: boolean;
+    if ('clip' in p) {
+      const c = playClip(p.clip);
+      setStop(c.stop);
+      const r = await c.done;
+      // ならせなかった ときは iPad の 声で よむ
+      ok = r === 'failed' ? !cancelled() && (await ttsSpeak(p.clip, rate, pitch, setStop)) : r === 'ok';
+    } else {
+      // なまえは ずんだもんの 声に ちかづけるため たかめに よむ
+      ok = await ttsSpeak(p.tts, rate, Math.max(pitch, NAME_PITCH), setStop);
+    }
+    if (!ok || cancelled()) return false;
+    if (i < parts.length - 1) await wait(70);
+  }
+  return true;
+}
+
+/** Web Speech API で よむ。setStop に とめる ための かんすうを わたす */
+function ttsSpeak(text: string, rate: number, pitch: number, setStop: (stop: () => void) => void): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    let done = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const finish = (completed: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(completed);
+    };
+    setStop(() => {
+      finish(false);
+      try {
+        synth?.cancel();
+      } catch {
+        /* noop */
+      }
+    });
+
     if (synth && !voices.length) loadVoices();
     const voice = pickVoice();
     // こえの リストが まだ よみこまれていない (iPad の きどうちょくご) ときは
     // lang だけ しめして よむ。日本語の こえが ない 環境では じかんだけ まつ。
     const noJapanese = voices.length > 0 && !voice;
-    if (fast || !synth || noJapanese) {
-      timer = setTimeout(() => finish(true), fast ? 20 : estimateMs(text, rate));
+    if (!synth || noJapanese) {
+      timer = setTimeout(() => finish(true), estimateMs(text, rate));
       return;
     }
 
@@ -205,7 +328,8 @@ export function speak(text: string, opts: SpeakOptions = {}): Promise<boolean> {
         finish(false);
       }
     };
-    if (synth.speaking || synth.pending) {
+    // むおんの よみあげ (unlockSpeech) の あとは とめずに つづけて よむ
+    if ((synth.speaking || synth.pending) && !unlocking) {
       synth.cancel();
       setTimeout(run, 80);
     } else {

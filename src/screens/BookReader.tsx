@@ -3,7 +3,7 @@ import { Btn, Emoji } from '../components/ui';
 import Scene from '../components/Scene';
 import RewardModal from '../components/RewardModal';
 import { findBook, fillTitle, tokenize, type Token } from '../data/books';
-import { useApp, callName } from '../state/store';
+import { useApp, callName, useBuddyFace } from '../state/store';
 import { back } from '../state/router';
 import { speak, stopSpeaking, wait } from '../lib/speech';
 import { sfx } from '../lib/sound';
@@ -21,6 +21,7 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
   const alive = useAlive();
   const profile = useApp((s) => s.profile);
   const wear = useApp((s) => s.wear);
+  const face = useBuddyFace();
   const vars = { name: callName(profile), buddy: profile.buddyName };
   // -1 = ひょうし, pages.length = おしまい
   const [page, setPage] = useState(-1);
@@ -291,7 +292,7 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
         <div className="reader-end">
           <div className="end-card card pop-in">
             <div className="end-title">おしまい</div>
-            <Mascot kind={profile.buddy} outfit={wear} mood="cheer" size="min(30vh, 240px)" />
+            <Mascot kind={profile.buddy} outfit={wear} face={face} mood="cheer" size="min(30vh, 240px)" />
             <div className="cover-buttons">
               <Btn color="orange" onClick={() => { setDir('next'); setPage(-1); }}>
                 <Emoji>🔁</Emoji> もういちど

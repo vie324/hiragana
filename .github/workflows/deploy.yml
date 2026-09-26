@@ -1,8 +1,9 @@
 name: テストして GitHub Pages に公開
 
+# プルリクエストでは テストだけ、main に マージされたら 公開する
 on:
   push:
-    branches: [main, 'claude/**']
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -39,8 +40,8 @@ jobs:
           retention-days: 7
 
   deploy:
-    # リポジトリの デフォルトブランチ への push だけ 公開する
-    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+    # main への push (プルリクエストの マージ) だけ 公開する
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
     permissions:

@@ -1,9 +1,10 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Mascot, { type Mood } from './Mascot';
-import { useApp } from '../state/store';
+import { useApp, useBuddyFace } from '../state/store';
 import { getCaption, onCaptionChange, speak } from '../lib/speech';
 import { pick } from '../lib/random';
 import { callName } from '../state/store';
+import { L } from '../voice/lines';
 
 export function useCaption(): string | null {
   const [c, setC] = useState(getCaption());
@@ -29,6 +30,7 @@ const POKES = ['えへへ。', 'くすぐったいよ。', 'がんばろうね!'
 export default function Buddy({ mood = 'normal', size = 180, bubble = 'right', onTap, wave, className = '', style, bubbleMax }: Props) {
   const kind = useApp((s) => s.profile.buddy);
   const outfit = useApp((s) => s.wear);
+  const face = useBuddyFace();
   const showCaption = useApp((s) => s.settings.caption);
   const name = useApp((s) => callName(s.profile));
   const caption = useCaption();
@@ -38,14 +40,14 @@ export default function Buddy({ mood = 'normal', size = 180, bubble = 'right', o
     onTap ??
     (() => {
       setPokeMood('happy');
-      const line = pick([...POKES, `${name}、だいすき!`]);
+      const line = pick([...POKES, L.love(name)]);
       void speak(line).then(() => setPokeMood(null));
     });
 
   const text = showCaption && bubble !== 'none' ? caption : null;
   return (
     <div className={`buddy buddy-${bubble} ${className}`} style={style}>
-      <Mascot kind={kind} outfit={outfit} mood={pokeMood ?? mood} size={size} onTap={tap} wave={wave} />
+      <Mascot kind={kind} outfit={outfit} face={face} mood={pokeMood ?? mood} size={size} onTap={tap} wave={wave} />
       {text && (
         <div className={`bubble ${bubble === 'top' ? 'tail-bottom' : 'tail-left'}`} style={{ maxWidth: bubbleMax }} key={text}>
           {text}

@@ -1,11 +1,12 @@
 /**
- * 効果音と BGM (Web Audio API で その場で つくるので 音声ファイルは いらない)
+ * 効果音と BGM (Web Audio API で その場で つくるので 音声ファイルは いらない)。
+ * まえもって つくった 声 (src/voice/bank.ts) も ここの AudioContext で ならす。
  */
-import { onSpeakingChange } from './speech';
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let musicBus: GainNode | null = null;
+let voiceBus: GainNode | null = null;
 let sfxEnabled = true;
 let bgmEnabled = true;
 let volume = 0.8;
@@ -29,10 +30,61 @@ function ensure(): AudioContext | null {
   musicBus = ctx.createGain();
   musicBus.gain.value = 0.55;
   musicBus.connect(master);
+  // 声は 効果音の 音量に かかわらず はっきり きこえるように する
+  voiceBus = ctx.createGain();
+  voiceBus.gain.value = 1;
+  voiceBus.connect(ctx.destination);
   ctx.addEventListener('statechange', () => {
     if (ctx?.state === 'running' && bgmWanted && bgmEnabled && !bgmTimer) startBgm();
   });
   return ctx;
+}
+
+let keepAlive: HTMLAudioElement | null = null;
+
+/** むおんの wav (Blob URL) */
+function silentWavUrl(): string {
+  const rate = 8000;
+  const n = rate; // 1びょう
+  const buf = new ArrayBuffer(44 + n * 2);
+  const v = new DataView(buf);
+  const str = (o: number, t: string) => [...t].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)));
+  str(0, 'RIFF');
+  v.setUint32(4, 36 + n * 2, true);
+  str(8, 'WAVE');
+  str(12, 'fmt ');
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  str(36, 'data');
+  v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+
+/**
+ * ふるい iPad (audioSession が ない) では、Web Audio の 音が 消音モードで きこえなくなる。
+ * むおんの audio を ながしておくと 「さいせい」あつかいに なって、消音モードでも 声が きこえる。
+ */
+function keepPlaybackSession(): void {
+  if (keepAlive || typeof Audio === 'undefined') return;
+  try {
+    const a = new Audio(silentWavUrl());
+    a.loop = true;
+    a.setAttribute('playsinline', '');
+    keepAlive = a;
+    void a.play().catch(() => (keepAlive = null));
+    document.addEventListener('visibilitychange', () => {
+      if (!keepAlive) return;
+      if (document.hidden) keepAlive.pause();
+      else void keepAlive.play().catch(() => undefined);
+    });
+  } catch {
+    keepAlive = null;
+  }
 }
 
 /** タップの 中で よぶ (iPad では これが ないと 音が でない) */
@@ -40,6 +92,7 @@ export function unlockAudio(): void {
   try {
     const nav = navigator as AudioSessionNavigator;
     if (nav.audioSession) nav.audioSession.type = 'playback';
+    else if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document) keepPlaybackSession();
   } catch {
     /* noop */
   }
@@ -80,6 +133,12 @@ export async function playAudioData(data: ArrayBuffer): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** 声を ならす ための AudioContext と 出口 */
+export function getAudioOut(): { ctx: AudioContext; voice: GainNode } | null {
+  const c = ensure();
+  return c && voiceBus ? { ctx: c, voice: voiceBus } : null;
 }
 
 /** iPad で バックグラウンドから もどったとき など、とまった 音を うごかす */
@@ -294,8 +353,8 @@ export function wantBgm(on: boolean): void {
   else stopBgm();
 }
 
-// よみあげ中は BGM を ちいさく する
-onSpeakingChange((s) => {
+/** よみあげ中は BGM を ちいさく する (main.tsx で よみあげと つなぐ) */
+export function duckBgm(speaking: boolean): void {
   if (!ctx || !musicBus) return;
-  musicBus.gain.setTargetAtTime(s ? 0.15 : 0.55, ctx.currentTime, 0.12);
-});
+  musicBus.gain.setTargetAtTime(speaking ? 0.15 : 0.55, ctx.currentTime, 0.12);
+}

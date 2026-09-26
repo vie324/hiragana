@@ -12,6 +12,7 @@ import { back } from '../../state/router';
 import { completeActivity, recordAnswer, recordWord, type RewardResult } from '../../state/actions';
 import { sayWord, type Word } from '../../data/words';
 import { distractors, pickWords, starsFromMistakes, wordKanaSet } from './pools';
+import { L } from '../../voice/lines';
 import './games.css';
 
 const ROUNDS = 4;
@@ -47,7 +48,7 @@ export default function WordBuildGame({ nodeId }: { nodeId?: string }) {
   const picRef = useRef<HTMLButtonElement>(null);
 
   // ふきだしに こたえが でないように する
-  const prompt = () => (word ? speak(`${sayWord(word)}。 ${sayWord(word)}を つくろう!`, { caption: 'ことばを つくろう!' }) : Promise.resolve(true));
+  const prompt = () => (word ? speak(L.buildAsk(word), { caption: 'ことばを つくろう!' }) : Promise.resolve(true));
 
   useEffect(() => {
     if (!word) return;
@@ -64,7 +65,7 @@ export default function WordBuildGame({ nodeId }: { nodeId?: string }) {
   useIdle(10000, () => {
     if (!word || done) return;
     const next = units[filled.length];
-    void speak(`つぎは「${sayKana(next)}」だよ。`);
+    void speak(L.buildNext(next));
   }, [round, filled.length], !done && !reward);
 
   if (!word) return null;
@@ -90,7 +91,7 @@ export default function WordBuildGame({ nodeId }: { nodeId?: string }) {
         setLit(99);
         celebrate();
         sfx.correct();
-        await speak(`${sayWord(word)}! できたね!`, { caption: `${word.w}! できたね!` });
+        await speak(L.buildDone(word), { caption: `${word.w}! できたね!` });
         await wait(300);
         if (!alive.current) return;
         if (round + 1 >= words.length) setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, words.length * 2) }));
@@ -105,7 +106,7 @@ export default function WordBuildGame({ nodeId }: { nodeId?: string }) {
       setMistakes((m) => m + 1);
       setRoundMiss((m) => m + 1);
       setMood('think');
-      await speak(`それは「${sayKana(t.unit)}」。 ${filled.length === 0 ? 'はじめの' : 'つぎの'} おとは なにかな?`);
+      await speak(L.buildMiss(t.unit, filled.length === 0));
     }
   };
 

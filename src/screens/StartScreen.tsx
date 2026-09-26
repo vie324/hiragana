@@ -1,10 +1,12 @@
-import { useApp, callName } from '../state/store';
+import { useApp, callName, useBuddyFace } from '../state/store';
 import { navigate, replace } from '../state/router';
-import { speak } from '../lib/speech';
+import { speak, unlockSpeech } from '../lib/speech';
 import { startBgm, unlockAudio, sfx } from '../lib/sound';
 import { greeting } from '../lib/session';
 import Mascot from '../components/Mascot';
 import { Emoji } from '../components/ui';
+import { L } from '../voice/lines';
+import { VOICES } from '../voice/bank';
 import './start.css';
 
 const TITLE = ['ひ', 'ら', 'が', 'な'];
@@ -13,13 +15,16 @@ const COLORS = ['#ff6b8b', '#ff9f43', '#ffc21a', '#4cc76f', '#4db4ff', '#a78bff'
 
 export default function StartScreen() {
   const profile = useApp((s) => s.profile);
+  const face = useBuddyFace();
+  const voice = useApp((s) => VOICES.find((v) => v.slug === s.settings.voice));
 
   const start = () => {
     unlockAudio();
+    unlockSpeech();
     sfx.open();
     // iPad では タップの なかで よみあげを はじめる ひつようが ある
     if (profile.setup) {
-      void speak(`${callName(profile)}、${greeting()}!`);
+      void speak(L.hello(callName(profile), greeting()));
       replace({ name: 'home' });
     } else {
       void speak('ひらがな ぼうけんへ ようこそ!');
@@ -53,7 +58,7 @@ export default function StartScreen() {
         </span>
       </h1>
       <div className="start-buddy">
-        <Mascot kind={profile.setup ? profile.buddy : 'usagi'} mood="normal" wave size="min(34vh, 300px)" talking={false} />
+        <Mascot kind={profile.setup ? profile.buddy : 'usagi'} face={profile.setup ? face : null} mood="normal" wave size="min(34vh, 300px)" talking={false} />
       </div>
       <button className="btn green start-btn pulse" data-testid="start-button" aria-label="はじめる">
         <Emoji>▶️</Emoji> はじめる
@@ -63,11 +68,13 @@ export default function StartScreen() {
         onClick={(e) => {
           e.stopPropagation();
           unlockAudio();
+          unlockSpeech();
           navigate({ name: 'parent' });
         }}
       >
         おうちの方へ
       </button>
+      {voice && <div className="start-credit ui">こえ: {voice.credit}</div>}
     </div>
   );
 }

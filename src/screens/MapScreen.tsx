@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ALL_NODES, STAGES, nextNodeIndex, type MapNode } from '../data/curriculum';
-import { useApp, getData } from '../state/store';
+import { useApp, getData, useBuddyFace } from '../state/store';
 import { navigate, type Route } from '../state/router';
 import { isNodeUnlocked, completeActivity, type RewardResult } from '../state/actions';
 import { TopBar, Emoji, Stars, Btn } from '../components/ui';
@@ -11,6 +11,7 @@ import { sfx } from '../lib/sound';
 import { findSpecialLesson } from '../data/specialLessons';
 import { findBook, fillTitle } from '../data/books';
 import { callName } from '../state/store';
+import { L } from '../voice/lines';
 import './map.css';
 
 const HEADER_H = 150;
@@ -56,9 +57,9 @@ export function nodeRoute(n: MapNode): Route | null {
 function nodeSay(n: MapNode, vars: { name: string; buddy: string }): string {
   switch (n.kind) {
     case 'lesson':
-      return `「${n.kana![0]}」を おぼえよう!`;
+      return L.learnKana(n.kana![0]);
     case 'special':
-      return `${findSpecialLesson(n.lessonId!)?.title ?? ''}の おべんきょう!`;
+      return L.specialLesson(findSpecialLesson(n.lessonId!)?.title ?? '');
     case 'balloon':
       return 'ふうせん わり!';
     case 'firstsound':
@@ -72,7 +73,7 @@ function nodeSay(n: MapNode, vars: { name: string; buddy: string }): string {
     case 'treasure':
       return 'たからばこ!';
     case 'book':
-      return `えほん、${fillTitle(findBook(n.bookId!)?.title ?? '', vars)}!`;
+      return L.bookNode(fillTitle(findBook(n.bookId!)?.title ?? '', vars));
   }
 }
 
@@ -86,6 +87,7 @@ export default function MapScreen({ focus }: { focus?: string }) {
   const nodes = data.nodes;
   const buddy = useApp((s) => s.profile.buddy);
   const wear = useApp((s) => s.wear);
+  const face = useBuddyFace();
   const profile = useApp((s) => s.profile);
   const scroller = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(800);
@@ -289,7 +291,7 @@ export default function MapScreen({ focus }: { focus?: string }) {
           })}
           {buddyPos && (
             <div className="map-buddy" style={{ transform: `translate(${buddyPos.x - 118}px, ${buddyPos.y - 92}px)` }}>
-              <Mascot kind={buddy} outfit={wear} size={84} talking={false} mood={buddyAt === current ? 'normal' : 'happy'} />
+              <Mascot kind={buddy} outfit={wear} face={face} size={84} talking={false} mood={buddyAt === current ? 'normal' : 'happy'} />
             </div>
           )}
         </div>

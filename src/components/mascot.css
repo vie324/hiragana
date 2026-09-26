@@ -23,6 +23,7 @@
 
 .mascot-svg,
 .m-eyes-open,
+.m-face,
 .m-ear,
 .m-arm,
 .m-open,
@@ -307,5 +308,50 @@
   }
   to {
     transform: scale(1) rotate(0);
+  }
+}
+
+/* かおしゃしんの あいぼう: しゃべると かおが ぴょこぴょこ うごく */
+.m-face {
+  transform-origin: 50% 60%;
+}
+
+.mascot.talking .m-face {
+  animation: m-face-talk 0.28s ease-in-out infinite alternate;
+}
+
+.mascot.mood-sad .m-photo {
+  filter: saturate(0.55) brightness(0.95);
+}
+
+.mascot.mood-wow .m-face {
+  animation: m-face-wow 0.5s ease-out;
+}
+
+@keyframes m-face-talk {
+  from {
+    transform: scale(1) rotate(-1.5deg);
+  }
+  to {
+    transform: scale(1.045, 1.03) rotate(1.5deg);
+  }
+}
+
+@keyframes m-face-wow {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot.talking .m-face,
+  .mascot.mood-wow .m-face {
+    animation: none;
   }
 }

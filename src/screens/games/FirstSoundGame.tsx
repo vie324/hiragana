@@ -9,8 +9,9 @@ import { useAlive, useIdle } from '../../lib/hooks';
 import { shuffle, pick, sample } from '../../lib/random';
 import { back } from '../../state/router';
 import { completeActivity, recordAnswer, type RewardResult } from '../../state/actions';
-import { WORDS, sayWord, wordsStartingWith, type Word } from '../../data/words';
+import { WORDS, wordsStartingWith, type Word } from '../../data/words';
 import { starsFromMistakes, targetKana } from './pools';
+import { L } from '../../voice/lines';
 import './games.css';
 
 const ROUNDS = 5;
@@ -51,7 +52,7 @@ export default function FirstSoundGame({ kana, nodeId }: { kana?: string[]; node
   const [reward, setReward] = useState<RewardResult | null>(null);
   const q = questions[round];
 
-  const prompt = () => (q ? speak(`「${sayKana(q.kana)}」から はじまる もの、どれかな?`) : Promise.resolve(true));
+  const prompt = () => (q ? speak(L.firstAsk(q.kana)) : Promise.resolve(true));
 
   useEffect(() => {
     setRoundMiss(0);
@@ -68,7 +69,7 @@ export default function FirstSoundGame({ kana, nodeId }: { kana?: string[]; node
   const correct = async () => {
     if (roundMiss === 0) recordAnswer(q.kana, true);
     setMood('happy');
-    await speak(`${sayWord(q.answer)}! 「${sayKana(q.kana)}」から はじまるね!`, { caption: `${q.answer.w}!` });
+    await speak(L.firstHit(q.answer, q.kana), { caption: `${q.answer.w}!` });
     await wait(200);
     if (!alive.current) return;
     if (round + 1 >= total) setReward(completeActivity({ nodeId, stars: starsFromMistakes(mistakes, total) }));
@@ -81,7 +82,7 @@ export default function FirstSoundGame({ kana, nodeId }: { kana?: string[]; node
     if (roundMiss === 0) recordAnswer(q.kana, false);
     setMood('think');
     const first = splitUnits(w.w)[0];
-    void speak(`${sayWord(w)}は、「${sayKana(first)}」から はじまるよ。`, { caption: `${w.w} は「${first}」から` });
+    void speak(L.firstMiss(w, first), { caption: `${w.w} は「${first}」から` });
   };
 
   return (

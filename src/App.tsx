@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useRoute, resetTo, type Route } from './state/router';
 import { useApp, getData } from './state/store';
 import { setVoicePrefs } from './lib/speech';
+import { loadVoice } from './voice/bank';
 import { setSoundPrefs, wantBgm } from './lib/sound';
 import { attachConfetti } from './lib/confetti';
 import { addPlaySeconds, remainingSeconds } from './state/actions';
@@ -134,6 +135,12 @@ export default function App() {
     setVoicePrefs({ voiceURI: settings.voiceURI, rate: settings.rate, pitch: settings.pitch });
     setSoundPrefs({ sfx: settings.sfx, bgm: settings.bgm, volume: settings.volume });
   }, [settings]);
+
+  useEffect(() => {
+    // テストでは パックを よみこまない (声の ファイルが あるかだけ しらべる)
+    void loadVoice(settings.voice === 'tts' ? null : settings.voice, { packs: !window.__HIRAGANA_FAST_SPEECH__ });
+  }, [settings.voice]);
+
 
   useEffect(() => {
     wantBgm(BGM_SCREENS.has(route.name));

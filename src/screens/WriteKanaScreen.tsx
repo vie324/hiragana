@@ -4,7 +4,6 @@ import { Btn, Emoji, Stars, TopBar } from '../components/ui';
 import WritingPad, { type PadMode, type PadResult } from '../components/WritingPad';
 import StrokeOrder from '../components/StrokeOrder';
 import RewardModal from '../components/RewardModal';
-import { sayKana } from '../lib/kana';
 import { speak } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { celebrate } from '../lib/confetti';
@@ -13,12 +12,13 @@ import { useApp } from '../state/store';
 import { replace } from '../state/router';
 import { completeActivity, recordWriting, type RewardResult } from '../state/actions';
 import { addSample, round } from '../state/gallery';
+import { L, WRITE_MODE_SAY } from '../voice/lines';
 import './write.css';
 
 const MODES: { mode: PadMode; emoji: string; label: string; say: string }[] = [
-  { mode: 'trace', emoji: '🐾', label: 'なぞる', say: 'なぞって かこう' },
-  { mode: 'faint', emoji: '👻', label: 'うすい', say: 'うすい もじを なぞって かこう' },
-  { mode: 'blank', emoji: '✨', label: 'みないで', say: 'おてほんを みないで かいて みよう' },
+  { mode: 'trace', emoji: '🐾', label: 'なぞる', say: WRITE_MODE_SAY.trace },
+  { mode: 'faint', emoji: '👻', label: 'うすい', say: WRITE_MODE_SAY.faint },
+  { mode: 'blank', emoji: '✨', label: 'みないで', say: WRITE_MODE_SAY.blank },
 ];
 
 export default function WriteKanaScreen({ kana, list, nodeId }: { kana: string; list?: string[]; nodeId?: string }) {
@@ -39,7 +39,7 @@ export default function WriteKanaScreen({ kana, list, nodeId }: { kana: string; 
   const prevKana = list && idx > 0 ? list[idx - 1] : null;
 
   useEffect(() => {
-    void speak(`「${sayKana(kana)}」を かこう。 ${MODES.find((m) => m.mode === mode)!.say}。`);
+    void speak(L.writeKana(kana, MODES.find((m) => m.mode === mode)!.say));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -4,7 +4,6 @@ import { Btn, Emoji, TopBar } from '../components/ui';
 import WritingPad, { type PadResult } from '../components/WritingPad';
 import RewardModal from '../components/RewardModal';
 import { hasStrokes } from '../lib/strokes';
-import { sayKana } from '../lib/kana';
 import { speak } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { celebrate } from '../lib/confetti';
@@ -14,6 +13,7 @@ import { navigate } from '../state/router';
 import { completeActivity, recordWriting, type RewardResult } from '../state/actions';
 import { addNameSample, addSample, round } from '../state/gallery';
 import type { Pt } from '../lib/stroke';
+import { L } from '../voice/lines';
 import './write.css';
 
 function InkChar({ strokes, size }: { strokes: Pt[][]; size: string }) {
@@ -44,7 +44,7 @@ export default function NameWriteScreen() {
       void speak('おうちの ひとに、なまえを いれて もらってね。');
       return;
     }
-    void speak(`${callName(profile)}の なまえを かこう! はじめは「${sayKana(chars[0])}」。`);
+    void speak(L.nameStart(callName(profile), chars[0]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -60,10 +60,10 @@ export default function NameWriteScreen() {
       celebrate();
       sfx.fanfare();
       addNameSample({ at: Date.now(), name: profile.name, chars: chars.map((c, j) => ({ kana: c, strokes: round(next[j]) })) });
-      await speak(`やったあ! ${callName(profile)}の なまえが かけたね! すごい!`);
+      await speak(L.nameDone(callName(profile)));
       if (alive.current) setTimeout(() => alive.current && setReward(completeActivity({ stars: 3 })), 1500);
     } else {
-      await speak(`じょうず! つぎは「${sayKana(chars[i + 1])}」。`);
+      await speak(L.nameNext(chars[i + 1]));
       if (alive.current) setI(i + 1);
     }
   };

@@ -10,6 +10,8 @@ export type BuddyKind = 'usagi' | 'kuma' | 'neko' | 'hiyoko';
 export type FingerMode = 'auto' | 'allow' | 'pen';
 
 export interface Settings {
+  /** よみあげの 声: public/voice/<slug> (VOICEVOX) か 'tts' (iPad の 声) */
+  voice: string;
   voiceURI: string | null;
   rate: number;
   pitch: number;
@@ -28,10 +30,12 @@ export interface Settings {
 export interface Profile {
   name: string;
   suffix: string;
-  /** えほんに でてくる こどもの え */
+  /** えほんに でてくる こどもの え (えもじ か 'face:<id>') */
   avatar: string;
   buddy: BuddyKind;
   buddyName: string;
+  /** あいぼうの かおに する しゃしん (faces の id)。null なら どうぶつの かお */
+  buddyFace: string | null;
   setup: boolean;
   created: number;
 }
@@ -50,6 +54,16 @@ export interface PlacedSticker {
   r: number;
   scale: number;
 }
+
+/** かおしゃしん (この iPad の なかだけに ほぞん) */
+export interface Face {
+  id: string;
+  /** まるく きりとる まえの しかくい JPEG (data URL) */
+  img: string;
+  at: number;
+}
+
+export const MAX_FACES = 4;
 
 export interface DayRecord {
   sec: number;
@@ -70,6 +84,7 @@ export interface AppData {
   placed: Record<string, PlacedSticker[]>;
   outfits: string[];
   wear: string | null;
+  faces: Face[];
   days: Record<string, DayRecord>;
   /** おうちのひとが のばした ふん (日付ごと) */
   extra: Record<string, number>;
@@ -85,11 +100,20 @@ export const BUDDY_DEFAULT_NAMES: Record<BuddyKind, string> = {
   hiyoko: 'ぴよ',
 };
 
+/** 「うさぎの もこ だよ」の 「うさぎの」 */
+export const BUDDY_KIND_SAY: Record<BuddyKind, string> = {
+  usagi: 'うさぎの',
+  kuma: 'くまの',
+  neko: 'ねこの',
+  hiyoko: 'ひよこの',
+};
+
 export function defaultData(): AppData {
   return {
     v: DATA_VERSION,
-    profile: { name: '', suffix: 'ちゃん', avatar: '🧒', buddy: 'usagi', buddyName: 'もこ', setup: false, created: Date.now() },
+    profile: { name: '', suffix: 'ちゃん', avatar: '🧒', buddy: 'usagi', buddyName: 'もこ', buddyFace: null, setup: false, created: Date.now() },
     settings: {
+      voice: 'zundamon',
       voiceURI: null,
       rate: 0.9,
       pitch: 1.1,
@@ -110,6 +134,7 @@ export function defaultData(): AppData {
     placed: {},
     outfits: [],
     wear: null,
+    faces: [],
     days: {},
     extra: {},
   };
@@ -137,6 +162,10 @@ function mergeDefaults<T>(def: T, input: unknown): T {
 export function normalizeData(input: unknown): AppData {
   const merged = mergeDefaults(defaultData(), input);
   merged.v = DATA_VERSION;
+  merged.faces = merged.faces.filter((f) => f && typeof f.id === 'string' && typeof f.img === 'string' && f.img.startsWith('data:image/')).slice(0, MAX_FACES);
+  const ids = new Set(merged.faces.map((f) => f.id));
+  if (merged.profile.buddyFace && !ids.has(merged.profile.buddyFace)) merged.profile.buddyFace = null;
+  if (merged.profile.avatar.startsWith('face:') && !ids.has(merged.profile.avatar.slice(5))) merged.profile.avatar = '🧒';
   return merged;
 }
 
@@ -227,6 +256,20 @@ export function todayKey(d = new Date()): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+export function faceImg(d: AppData, id: string | null | undefined): string | null {
+  return (id && d.faces.find((f) => f.id === id)?.img) || null;
+}
+
+/** あいぼうの かお (しゃしん) */
+export function useBuddyFace(): string | null {
+  return useApp((s) => faceImg(s, s.profile.buddyFace));
+}
+
+/** えほんに でてくる こどもの かお (しゃしんに したとき) */
+export function useChildFace(): string | null {
+  return useApp((s) => (s.profile.avatar.startsWith('face:') ? faceImg(s, s.profile.avatar.slice(5)) : null));
 }
 
 /** こどもの よびかた (なまえが なければ 「きみ」) */

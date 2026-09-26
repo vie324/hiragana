@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { Actor, Bg } from '../data/scene';
 import Mascot from './Mascot';
-import { useApp } from '../state/store';
+import FaceBadge from './FaceBadge';
+import { useApp, useBuddyFace, useChildFace } from '../state/store';
 import './scene.css';
 
 export function SceneBackground({ bg }: { bg: Bg }) {
@@ -353,16 +354,20 @@ function ActorView({ actor, sceneH }: { actor: Actor; sceneH: number }) {
   const buddy = useApp((s) => s.profile.buddy);
   const wear = useApp((s) => s.wear);
   const avatar = useApp((s) => s.profile.avatar);
+  const face = useBuddyFace();
+  const childFace = useChildFace();
   const size = ((actor.s ?? 20) / 100) * sceneH;
   let content: ReactNode;
   if (actor.e === 'buddy') {
-    content = <Mascot kind={buddy} outfit={wear} mood={actor.mood === 'wow' ? 'wow' : actor.mood ?? 'normal'} size={size * 1.15} talking={false} />;
+    content = <Mascot kind={buddy} outfit={wear} face={face} mood={actor.mood === 'wow' ? 'wow' : actor.mood ?? 'normal'} size={size * 1.15} talking={false} />;
   } else if (actor.e === 'kabu') {
     content = (
       <div style={{ width: size * 0.85, height: size }}>
         <Kabu />
       </div>
     );
+  } else if (actor.e === 'child' && childFace) {
+    content = <FaceBadge img={childFace} size={size * 0.92} />;
   } else {
     const e = actor.e === 'child' ? avatar : actor.e;
     content = (

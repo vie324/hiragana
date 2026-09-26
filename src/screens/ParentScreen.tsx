@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ParentGate from '../components/ParentGate';
 import ActivityChart from './parent/ActivityChart';
+import FaceSettings from './parent/FaceSettings';
 import { back, resetTo } from '../state/router';
 import {
   BUDDY_DEFAULT_NAMES,
+  callName,
   defaultData,
-  exportJson,
-  getData,
-  normalizeData,
-  replaceData,
   todayKey,
   update,
   useApp,
@@ -17,12 +15,32 @@ import {
   type FingerMode,
 } from '../state/store';
 import { grantExtraMinutes, remainingSeconds } from '../state/actions';
-import { clearGallery, exportGallery, galleryKanaList, getNameSamples, getSamples, importGallery } from '../state/gallery';
+import { clearGallery, galleryKanaList, getNameSamples, getSamples } from '../state/gallery';
+import {
+  applyUndo,
+  backupDue,
+  backupPayload,
+  currentSummary,
+  isStandalone,
+  lastBackupAt,
+  markBackedUp,
+  parseBackup,
+  resetKeepingProfile,
+  restoreBackup,
+  saveBackupFile,
+  shareImage,
+  storageStatus,
+  undoInfo,
+} from '../state/backup';
+import { hasGallery, renderGalleryImage } from '../state/galleryImage';
 import { ALL_NODES } from '../data/curriculum';
 import { BOOKS } from '../data/books';
 import { SEION, SEION_ROWS, DAKUON_ROWS } from '../lib/kana';
 import { masteryStars, isKnown } from '../lib/srs';
 import { jaVoices, speak } from '../lib/speech';
+import { greeting } from '../lib/session';
+import { VOICES, currentVoice, onVoiceChange, voiceProgress } from '../voice/bank';
+import { L } from '../voice/lines';
 import type { WriteLevel } from '../lib/stroke';
 import './parent.css';
 
@@ -190,6 +208,34 @@ function ProgressTab() {
   );
 }
 
+/** iPad の 声の よみかた (たかめに すると かわいく きこえる) */
+const IPAD_PRESETS = [
+  { label: 'ふつう', pitch: 1.1, rate: 0.9 },
+  { label: 'かわいく(高め)', pitch: 1.45, rate: 0.95 },
+  { label: 'ゆっくり', pitch: 1.2, rate: 0.75 },
+];
+
+function VoiceStatus() {
+  const [, force] = useState(0);
+  useEffect(() => onVoiceChange(() => force((n) => n + 1)), []);
+  useEffect(() => {
+    const t = setInterval(() => force((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const voice = useApp((s) => s.settings.voice);
+  if (voice === 'tts') return <small>iPadに入っている読み上げの声を使います。</small>;
+  const info = currentVoice();
+  const progress = voiceProgress();
+  if (!info) return <small>声のデータを読み込んでいます…(はじめはインターネットが必要です)</small>;
+  return (
+    <small>
+      {progress < 1 ? `声のデータを準備中… ${Math.round(progress * 100)}%(準備ができるまではiPadの声で読みます)` : '準備OK。オフラインでもこの声で読みます。'}
+      <br />
+      音声: {info.credit}(お子さまの名前など一部はiPadの声で読みます)
+    </small>
+  );
+}
+
 function SettingsTab() {
   const profile = useApp((s) => s.profile);
   const settings = useApp((s) => s.settings);
@@ -233,17 +279,9 @@ function SettingsTab() {
             ))}
           </div>
         </div>
-        <div className="field">
-          <span>絵本に出てくる お子さまの絵</span>
-          <div className="seg emoji-seg">
-            {['👧', '👦', '🧒'].map((a) => (
-              <button key={a} className={profile.avatar === a ? 'on' : ''} onClick={() => set((d) => void (d.profile.avatar = a))}>
-                <span className="emoji">{a}</span>
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
+
+      <FaceSettings />
 
       <div className="parent-card">
         <h2>あいぼう(キャラクター)</h2>
@@ -276,33 +314,69 @@ function SettingsTab() {
 
       <div className="parent-card">
         <h2>読み上げ</h2>
-        <label className="field">
+        <div className="field">
           <span>声</span>
-          <select
-            value={settings.voiceURI ?? ''}
-            onChange={(e) => set((d) => void (d.settings.voiceURI = e.target.value || null))}
-          >
-            <option value="">おまかせ(いちばん自然な声)</option>
-            {voices.map((v) => (
-              <option key={v.voiceURI} value={v.voiceURI}>
+          <div className="seg">
+            {VOICES.map((v) => (
+              <button key={v.slug} className={settings.voice === v.slug ? 'on' : ''} onClick={() => set((d) => void (d.settings.voice = v.slug))} data-testid={`voice-${v.slug}`}>
                 {v.name}
-              </option>
+              </button>
             ))}
-          </select>
-          {voices.length === 0 && <small>日本語の声が見つかりません。iPadの「設定 → アクセシビリティ → 読み上げコンテンツ → 声」で日本語の声を追加してください。</small>}
-          <small>「Kyoko(拡張)」などの高品質な声をダウンロードすると、より聞き取りやすくなります。</small>
-        </label>
-        <label className="field">
-          <span>話す速さ: {settings.rate.toFixed(2)}</span>
-          <input type="range" min="0.6" max="1.3" step="0.05" value={settings.rate} onChange={(e) => set((d) => void (d.settings.rate = Number(e.target.value)))} />
-        </label>
-        <label className="field">
-          <span>声の高さ: {settings.pitch.toFixed(2)}</span>
-          <input type="range" min="0.8" max="1.5" step="0.05" value={settings.pitch} onChange={(e) => set((d) => void (d.settings.pitch = Number(e.target.value)))} />
-        </label>
-        <button className="secondary" onClick={() => void speak('こんにちは。いっしょに ひらがなを おぼえようね。')}>
+            <button className={settings.voice === 'tts' ? 'on' : ''} onClick={() => set((d) => void (d.settings.voice = 'tts'))} data-testid="voice-tts">
+              iPadの声
+            </button>
+          </div>
+          <VoiceStatus />
+        </div>
+        <button className="secondary" onClick={() => void speak(`${L.hello(callName(profile), greeting())} いっしょに あそぼう!`)} data-testid="voice-try">
           ▶ 試しに聞く
         </button>
+        <details className="voice-ipad" open={settings.voice === 'tts'}>
+          <summary>iPadの声の設定(お子さまの名前もこの声で読みます)</summary>
+          <div className="field">
+            <span>声の感じ</span>
+            <div className="seg">
+              {IPAD_PRESETS.map((pr) => (
+                <button
+                  key={pr.label}
+                  className={Math.abs(settings.pitch - pr.pitch) < 0.01 && Math.abs(settings.rate - pr.rate) < 0.01 ? 'on' : ''}
+                  onClick={() =>
+                    set((d) => {
+                      d.settings.pitch = pr.pitch;
+                      d.settings.rate = pr.rate;
+                    })
+                  }
+                >
+                  {pr.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="field">
+            <span>iPadの声の種類</span>
+            <select
+              value={settings.voiceURI ?? ''}
+              onChange={(e) => set((d) => void (d.settings.voiceURI = e.target.value || null))}
+            >
+              <option value="">おまかせ(いちばん自然な声)</option>
+              {voices.map((v) => (
+                <option key={v.voiceURI} value={v.voiceURI}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+            {voices.length === 0 && <small>日本語の声が見つかりません。iPadの「設定 → アクセシビリティ → 読み上げコンテンツ → 声」で日本語の声を追加してください。</small>}
+            <small>「Kyoko(拡張)」などの高品質な声をダウンロードすると、より聞き取りやすくなります。</small>
+          </label>
+          <label className="field">
+            <span>話す速さ: {settings.rate.toFixed(2)}</span>
+            <input type="range" min="0.6" max="1.3" step="0.05" value={settings.rate} onChange={(e) => set((d) => void (d.settings.rate = Number(e.target.value)))} />
+          </label>
+          <label className="field">
+            <span>声の高さ: {settings.pitch.toFixed(2)}</span>
+            <input type="range" min="0.8" max="1.8" step="0.05" value={settings.pitch} onChange={(e) => set((d) => void (d.settings.pitch = Number(e.target.value)))} />
+          </label>
+        </details>
         <div className="field">
           <span>吹き出しに文字を表示</span>
           <div className="seg">
@@ -483,28 +557,43 @@ function GalleryTab() {
   );
 }
 
+function fmtDate(t: number | string | null): string {
+  if (!t) return '—';
+  const d = new Date(t);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 function DataTab() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState('');
+  const [pending, setPending] = useState<ReturnType<typeof parseBackup> | null>(null);
+  const [last, setLast] = useState(() => lastBackupAt());
+  const [undo, setUndo] = useState(() => undoInfo());
+  const [status, setStatus] = useState<{ persisted: boolean | null; usage: number | null }>({ persisted: null, usage: null });
+  const standalone = isStandalone();
+  const summary = currentSummary();
 
-  const payload = () => JSON.stringify({ app: 'hiragana-bouken', exportedAt: new Date().toISOString(), data: JSON.parse(exportJson()), gallery: exportGallery() });
+  useEffect(() => {
+    void storageStatus().then(setStatus);
+  }, []);
 
-  const download = () => {
-    const blob = new Blob([payload()], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `hiragana-backup-${todayKey()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    setMsg('バックアップを保存しました。');
+  const save = async () => {
+    const r = await saveBackupFile();
+    setLast(lastBackupAt());
+    setMsg(
+      r === 'shared'
+        ? 'バックアップを保存しました。'
+        : r === 'downloaded'
+          ? 'バックアップを「ファイル」App の「ダウンロード」に保存しました。'
+          : '保存をやめました。',
+    );
   };
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(payload());
+      await navigator.clipboard.writeText(backupPayload());
+      markBackedUp();
+      setLast(lastBackupAt());
       setMsg('クリップボードにコピーしました。メモなどに貼り付けて保存できます。');
     } catch {
       setMsg('コピーできませんでした。');
@@ -512,57 +601,144 @@ function DataTab() {
   };
 
   const onFile = async (f: File | undefined) => {
+    if (fileRef.current) fileRef.current.value = '';
     if (!f) return;
     try {
-      const obj = JSON.parse(await f.text());
-      const data = obj?.data ?? obj;
-      if (!data || typeof data !== 'object' || !('profile' in data)) throw new Error('bad');
-      if (!window.confirm('今の記録を、読み込んだバックアップで上書きします。よろしいですか?')) return;
-      replaceData(normalizeData(data));
-      if (obj.gallery) importGallery(obj.gallery);
-      setMsg('バックアップを読み込みました。');
+      setPending(parseBackup(await f.text()));
+      setMsg('');
     } catch {
+      setPending(null);
       setMsg('読み込めませんでした。このアプリのバックアップファイルか確認してください。');
     }
   };
 
+  const restore = () => {
+    if (!pending) return;
+    restoreBackup(pending);
+    setPending(null);
+    setUndo(undoInfo());
+    setMsg('バックアップを読み込みました。');
+  };
+
   const reset = () => {
     if (!window.confirm('学習の記録・シール・書いた文字をすべて消します。よろしいですか?')) return;
-    if (!window.confirm('本当に消しますか?(元に戻せません)')) return;
-    const fresh = defaultData();
-    const cur = getData();
-    // なまえ・キャラクター・せっていは のこす
-    fresh.settings = cur.settings;
-    fresh.profile = cur.profile;
-    replaceData(fresh);
+    if (!window.confirm('本当に消しますか?(1週間以内なら「元に戻す」で戻せます)')) return;
+    resetKeepingProfile(defaultData());
     clearGallery();
     resetTo({ name: 'start' });
   };
 
+  const galleryImage = async () => {
+    const blob = await renderGalleryImage();
+    if (!blob) return setMsg('画像を作れませんでした。');
+    const r = await shareImage(blob, `hiragana-moji-${todayKey()}.png`);
+    setMsg(r === 'cancelled' ? '' : r === 'shared' ? '画像を保存しました。' : '画像を「ファイル」App の「ダウンロード」に保存しました。');
+  };
+
   return (
     <>
+      <div className="parent-card" data-testid="save-status">
+        <h2>記録の保存</h2>
+        <p className="note">
+          学習の記録・シール・顔写真などは、遊ぶたびに<b>このiPadの中へ自動で保存</b>されます(インターネットには送信しません)。
+        </p>
+        <ul className="save-status">
+          <li>
+            <span>保存場所</span>
+            <b>{standalone ? 'ホーム画面のアプリ' : 'Safari'}</b>
+          </li>
+          <li>
+            <span>消えにくくする設定</span>
+            <b>{status.persisted === null ? '—' : status.persisted ? 'オン' : 'オフ(iPadの空きが少ないと消えることがあります)'}</b>
+          </li>
+          <li>
+            <span>使っている容量</span>
+            <b>{status.usage === null ? '—' : `${(status.usage / 1e6).toFixed(1)} MB`}</b>
+          </li>
+          <li>
+            <span>最後のバックアップ</span>
+            <b>{fmtDate(last)}</b>
+          </li>
+        </ul>
+        {!standalone && (
+          <p className="warn">
+            いまはSafariで開いています。Safariとホーム画面のアプリでは、記録が別々に保存されます。共有ボタン →「ホーム画面に追加」で追加し、そちらで遊ぶのがおすすめです。Safariで遊んだ記録を移すときは、ここで「ファイルに保存」→ ホーム画面のアプリで「バックアップを読み込む」を使ってください。
+          </p>
+        )}
+      </div>
+
       <div className="parent-card">
         <h2>バックアップ</h2>
         <p className="note">
-          記録はこのiPadの中だけに保存されます(インターネットには送信しません)。Safariのデータを消去すると記録も消えるため、ときどきバックアップをおすすめします。
+          Safariの履歴・Webサイトデータを消去したり、iPadを買い替えたりすると、iPadの中の記録は消えてしまいます。ときどき「ファイルに保存」→「"ファイル"に保存」で <b>iCloud Drive</b> などに保存しておくと安心です。
+        </p>
+        <p className="note">
+          いまの記録: {summary.name || '(名前なし)'} / 覚えた文字 {summary.kana} / シール {summary.stickers}まい / 顔写真 {summary.faces}まい / 遊んだ日 {summary.days}日
         </p>
         <div className="row gap">
-          <button className="secondary" onClick={download}>
+          <button className="primary" onClick={() => void save()} data-testid="backup-save">
             ファイルに保存
           </button>
           <button className="secondary" onClick={() => void copy()}>
             コピー
           </button>
-          <button className="secondary" onClick={() => fileRef.current?.click()}>
+          <button className="secondary" onClick={() => fileRef.current?.click()} data-testid="backup-load">
             バックアップを読み込む
           </button>
-          <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => void onFile(e.target.files?.[0])} />
+          <input ref={fileRef} type="file" accept="application/json,.json,text/plain" hidden onChange={(e) => void onFile(e.target.files?.[0])} data-testid="backup-input" />
         </div>
+        {pending && (
+          <div className="restore-confirm" data-testid="restore-confirm">
+            <p>
+              <b>{fmtDate(pending.summary.exportedAt)}</b> のバックアップ({pending.summary.name || '名前なし'} / 覚えた文字 {pending.summary.kana} / シール{' '}
+              {pending.summary.stickers}まい / 顔写真 {pending.summary.faces}まい)で、いまの記録を上書きします。
+            </p>
+            <div className="row gap">
+              <button className="primary" onClick={restore} data-testid="restore-ok">
+                読み込む
+              </button>
+              <button className="secondary" onClick={() => setPending(null)}>
+                やめる
+              </button>
+            </div>
+          </div>
+        )}
         {msg && <p className="msg">{msg}</p>}
       </div>
+
+      {undo && (
+        <div className="parent-card">
+          <h2>元に戻す</h2>
+          <p className="note">
+            {fmtDate(undo.at)} に{undo.why === 'reset' ? '記録を消す' : 'バックアップを読み込む'}前の状態に戻せます(1週間まで)。
+          </p>
+          <button
+            className="secondary"
+            onClick={() => {
+              if (!window.confirm('いまの記録を、その前の状態に戻します。よろしいですか?')) return;
+              setMsg(applyUndo() ? '元に戻しました。' : '戻せませんでした。');
+              setUndo(undoInfo());
+            }}
+            data-testid="undo"
+          >
+            元に戻す
+          </button>
+        </div>
+      )}
+
+      {hasGallery() && (
+        <div className="parent-card">
+          <h2>書いた文字を画像で保存</h2>
+          <p className="note">お子さまが書いた文字を1枚の画像にします。共有シートの「画像を保存」で写真Appに残せます。</p>
+          <button className="secondary" onClick={() => void galleryImage()} data-testid="gallery-image">
+            画像にして保存
+          </button>
+        </div>
+      )}
+
       <div className="parent-card">
         <h2>リセット</h2>
-        <p className="note">名前・キャラクター・設定は残したまま、学習の記録・シール・きせかえ・書いた文字を消して最初からやり直します。</p>
+        <p className="note">名前・キャラクター・顔写真・設定は残したまま、学習の記録・シール・きせかえ・書いた文字を消して最初からやり直します。</p>
         <button className="danger" onClick={reset}>
           記録をすべて消す
         </button>
@@ -571,6 +747,10 @@ function DataTab() {
         <h2>このアプリについて</h2>
         <ul className="about">
           <li>ひらがな ぼうけん v{__APP_VERSION__}</li>
+          <li>
+            音声: <a href="https://voicevox.hiroshiba.jp/" target="_blank" rel="noreferrer">VOICEVOX</a>
+            {VOICES.map((v) => ` / ${v.credit}`).join('')}(お子さまの名前などはiPadの読み上げ機能で読みます)
+          </li>
           <li>
             書き順データ: <a href="https://kanjivg.tagaini.net" target="_blank" rel="noreferrer">KanjiVG</a> © Ulrich Apel(CC BY-SA 3.0)
           </li>
@@ -588,6 +768,7 @@ export default function ParentScreen() {
   const [unlocked, setUnlocked] = useState(false);
   const [tab, setTab] = useState<Tab>('progress');
   const setupDone = useApp((s) => s.profile.setup);
+  const [remind, setRemind] = useState(() => backupDue());
   const tabs = useMemo(
     () =>
       [
@@ -622,6 +803,29 @@ export default function ParentScreen() {
         </button>
       </div>
       <div className="parent-scroll with-head">
+        {remind && (
+          <div className="parent-card remind" data-testid="backup-remind">
+            <p>
+              <b>バックアップのおすすめ:</b> {lastBackupAt() ? '前回のバックアップから2週間以上たちました。' : 'まだバックアップがありません。'}
+              記録を iCloud Drive などに保存しておくと、Safariのデータを消したときやiPadを買い替えたときも安心です。
+            </p>
+            <div className="row gap">
+              <button
+                className="primary"
+                onClick={() =>
+                  void saveBackupFile().then((r) => {
+                    if (r !== 'cancelled') setRemind(false);
+                  })
+                }
+              >
+                ファイルに保存
+              </button>
+              <button className="secondary" onClick={() => setRemind(false)}>
+                あとで
+              </button>
+            </div>
+          </div>
+        )}
         {tab === 'progress' && <ProgressTab />}
         {tab === 'settings' && <SettingsTab />}
         {tab === 'gallery' && <GalleryTab />}

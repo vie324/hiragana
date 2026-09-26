@@ -6,6 +6,7 @@ import { navigate } from '../state/router';
 import { useApp, callName } from '../state/store';
 import { speak } from '../lib/speech';
 import { sfx } from '../lib/sound';
+import { L } from '../voice/lines';
 import './menus.css';
 
 const SMALL_ROWS: KanaRow[] = [
@@ -47,7 +48,7 @@ export default function WriteMenu({ tab: initial }: { tab?: string }) {
         <Btn
           color="pink"
           onClick={() => {
-            void speak(profile.name ? `${callName(profile)}の なまえを かこう!` : 'なまえを かこう!');
+            void speak(profile.name ? L.writeName(callName(profile)) : 'なまえを かこう!');
             navigate({ name: 'name' });
           }}
           data-testid="write-name"
