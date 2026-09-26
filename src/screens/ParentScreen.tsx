@@ -531,7 +531,9 @@ function DataTab() {
     if (!window.confirm('本当に消しますか?(元に戻せません)')) return;
     const fresh = defaultData();
     const cur = getData();
+    // なまえ・キャラクター・せっていは のこす
     fresh.settings = cur.settings;
+    fresh.profile = cur.profile;
     replaceData(fresh);
     clearGallery();
     resetTo({ name: 'start' });
@@ -560,7 +562,7 @@ function DataTab() {
       </div>
       <div className="parent-card">
         <h2>リセット</h2>
-        <p className="note">設定は残したまま、学習の記録・シール・書いた文字を消して最初からやり直します。</p>
+        <p className="note">名前・キャラクター・設定は残したまま、学習の記録・シール・きせかえ・書いた文字を消して最初からやり直します。</p>
         <button className="danger" onClick={reset}>
           記録をすべて消す
         </button>
@@ -573,7 +575,7 @@ function DataTab() {
             書き順データ: <a href="https://kanjivg.tagaini.net" target="_blank" rel="noreferrer">KanjiVG</a> © Ulrich Apel(CC BY-SA 3.0)
           </li>
           <li>
-            フォント: <a href="https://fonts.google.com/specimen/Klee+One" target="_blank" rel="noreferrer">Klee One</a> © Fontworks Inc.(SIL Open Font License 1.1)
+            フォント: <a href="https://fonts.google.com/specimen/Klee+One" target="_blank" rel="noreferrer">Klee One</a> © The Klee Project Authors(SIL Open Font License 1.1)
           </li>
           <li>絵本のお話・キャラクターはこのアプリのオリジナルです(「おむすびころりん」「おおきなかぶ」は昔話をもとに書き下ろし)。</li>
         </ul>

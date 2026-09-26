@@ -16,7 +16,7 @@ file is distributed under the same CC BY-SA 3.0 license.
 
 - Files: `src/assets/fonts/KleeOne-SemiBold-kana.woff2` (subset: Latin, kana and a few symbols)
 - Source: https://github.com/google/fonts/tree/main/ofl/kleeone
-- Copyright 2020 The Klee Project Authors (https://github.com/fontworks-fonts/Klee), Fontworks Inc.
+- Copyright 2020 The Klee Project Authors (https://github.com/fontworks-fonts/Klee)
 - License: SIL Open Font License, Version 1.1 — see `src/assets/fonts/KleeOne-OFL.txt`
 
 ## npm packages

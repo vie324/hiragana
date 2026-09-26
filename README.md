@@ -100,7 +100,7 @@ npm run build      # 型チェック + 本番ビルド (dist/)
 ## クレジット・ライセンス
 
 - 書き順データ(`src/data/strokes.json`)は [KanjiVG](https://kanjivg.tagaini.net)(© Ulrich Apel)をもとに生成しています。ライセンスは [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) です。
-- フォントは [Klee One](https://fonts.google.com/specimen/Klee+One)(© Fontworks Inc.)をひらがな・カタカナ部分だけに縮小して同梱しています。ライセンスは [SIL Open Font License 1.1](src/assets/fonts/KleeOne-OFL.txt) です。
+- フォントは [Klee One](https://fonts.google.com/specimen/Klee+One)(© The Klee Project Authors / Fontworks)をひらがな・カタカナ部分だけに縮小して同梱しています。ライセンスは [SIL Open Font License 1.1](src/assets/fonts/KleeOne-OFL.txt) です。
 - 絵には各端末の絵文字(iPad では Apple の絵文字)を使っています。
 - 絵本のお話とキャラクターはこのアプリのオリジナルです(「おむすびころりん」「おおきなかぶ」は昔話をもとにした書き下ろしです)。
 

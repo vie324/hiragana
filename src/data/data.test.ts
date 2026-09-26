@@ -95,6 +95,9 @@ describe('books', () => {
     expect(lines[0][1].say).toBe('もこわ');
     expect(lines[1][0].say).toBe('こんにちわ!');
     expect(particleSay('よぞらへ')).toBe('よぞらえ');
+    const [line] = tokenize('「まて まて〜!」|まてー!」', { name: '', buddy: '' });
+    expect(line.map((t) => t.t)).toEqual(['「まて', 'まて〜!」']);
+    expect(line[1].say).toBe('まてー!」');
     expect(particleSay('はは')).toBe('はは');
     expect(particleSay('はな')).toBe('はな');
   });
