@@ -234,21 +234,6 @@ function LetterTree({ script, known, gold, fresh, mini, onTapKana, bounce = 0, c
           </g>
         </g>
       )}
-      {full && !mini && (
-        <g className="tree-sparkles" aria-hidden>
-          {[
-            [70, 60],
-            [330, 50],
-            [40, 200],
-            [360, 220],
-            [200, 20],
-          ].map(([x, y], i) => (
-            <text key={i} x={x} y={y} className="sparkle" style={{ animationDelay: `${i * 0.4}s` }}>
-              ✦
-            </text>
-          ))}
-        </g>
-      )}
     </svg>
   );
 }

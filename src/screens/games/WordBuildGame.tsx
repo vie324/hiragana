@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Buddy from '../../components/Buddy';
 import { Emoji, ProgressDots, SpeakerButton, TopBar } from '../../components/ui';
 import RewardModal from '../../components/RewardModal';
-import { sayKana, splitUnits, scriptOf as scriptOfKana } from '../../lib/kana';
+import { isOfScript, sayKana, splitUnits } from '../../lib/kana';
 import { speak, speakSequence, wait } from '../../lib/speech';
 import { sfx } from '../../lib/sound';
 import { burstAt, celebrate } from '../../lib/confetti';
@@ -35,7 +35,7 @@ export default function WordBuildGame({ nodeId, script: scriptProp }: { nodeId?:
   const alive = useAlive();
   const script = useMemo(() => gameScript(scriptProp, nodeId), [scriptProp, nodeId]);
   const words = useMemo(() => pickWords(nodeId, ROUNDS, { maxUnits: 4, minUnits: 2 }, script), [nodeId, script]);
-  const pool = useMemo(() => [...wordKanaSet(nodeId, script)].filter((k) => scriptOfKana(k) === script), [nodeId, script]);
+  const pool = useMemo(() => [...wordKanaSet(nodeId, script)].filter((k) => isOfScript(k, script)), [nodeId, script]);
   const [round, setRound] = useState(0);
   const word = words[round];
   const units = useMemo(() => (word ? splitUnits(word.w) : []), [word]);

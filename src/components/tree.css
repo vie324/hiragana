@@ -224,12 +224,15 @@
   display: none;
 }
 
-.tree-sparkles .sparkle {
-  fill: #ffe066;
-  font-size: 26px;
+/* ぜんぶ みが なった きの きらきら (svg の そとの html で うごかす) */
+.tree-sparkle {
+  position: absolute;
+  color: #ffe066;
+  font-size: 30px;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(255, 220, 90, 0.9);
+  pointer-events: none;
   animation: twinkle 2s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
 }
 
 @keyframes twinkle {

@@ -253,6 +253,11 @@ export function isKana(ch: string): boolean {
   return isHiragana(ch) || isKatakana(ch);
 }
 
+/** ぜんぶ その しゅるいの もじか (カタカナの 「ー」は カタカナに いれる) */
+export function isOfScript(text: string, script: Script): boolean {
+  return [...text].every(script === 'kata' ? isKatakana : isHiragana);
+}
+
 /** カタカナが ひとつでも あれば カタカナの ことば */
 export function scriptOf(text: string): Script {
   return [...text].some((c) => c !== CHOUON && isKatakana(c)) ? 'kata' : 'hira';

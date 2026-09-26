@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { KATA_WORDS, WORDS, wordsStartingWith, wordsWithin, lastSound } from './words';
-import { BASIC_KANA, K_BASIC_KANA, K_SEION, K_WRITABLE_KANA, SEION, isHiragana, isKana, isKatakana, splitUnits, toKata } from '../lib/kana';
+import { BASIC_KANA, K_BASIC_KANA, K_SEION, K_WRITABLE_KANA, SEION, isHiragana, isKana, isKatakana, isOfScript, splitUnits, toKata } from '../lib/kana';
+import { bookKana, readability } from './bookInfo';
 import { kanaExample } from './kanaInfo';
 import { ALL_NODES, KATA_NODES, KATA_STAGES, STAGES, kanaUpToStage, nextNodeIndex, scriptOfNode } from './curriculum';
 import { ALL_BOOKS as BOOKS, findBook, particleSay, tokenize } from './books';
@@ -94,6 +95,22 @@ describe('katakana', () => {
     expect(ALL_NODES.every((n) => scriptOfNode(n.id) === 'hira')).toBe(true);
     expect(nextNodeIndex(() => false, 'kata')).toBe(0);
     expect(KATA_STAGES.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it('only counts a katakana book as readable when its katakana is known', () => {
+    const omise = findBook('omise')!;
+    const hira = new Set(SEION);
+    expect(readability(omise, (k) => hira.has(k))).toBeLessThan(0.5);
+    const kata = new Set([...K_SEION, ...K_BASIC_KANA, ...SEION]);
+    expect(readability(omise, (k) => kata.has(k) || !isKatakana(k))).toBeGreaterThan(0.8);
+    expect(bookKana(omise)).not.toContain('ー');
+  });
+
+  it('tells which script a tile belongs to', () => {
+    expect(isOfScript('ー', 'hira')).toBe(false);
+    expect(isOfScript('ー', 'kata')).toBe(true);
+    expect(isOfScript('きゃ', 'hira')).toBe(true);
+    expect(isOfScript('キャ', 'hira')).toBe(false);
   });
 
   it('converts between hiragana and katakana', () => {

@@ -9,8 +9,11 @@ import { weightedPick } from '../lib/random';
 import { CHEST_XP, MISSION_XP, type MissionKind } from '../data/missions';
 import { chestReady, levelInfo, streakDays, unseenMissions } from './progress';
 
-/** なにを した あとの ごほうびか (ミッションの かぞえかたに つかう) */
-export type ActivityKind = 'lesson' | 'game' | 'write' | 'book' | 'treasure';
+/**
+ * なにを した あとの ごほうびか (ミッションの かぞえかたに つかう)。
+ * マップの ゲームは 「ぼうけん」と 「ゲーム」の りょうほうに かぞえる。'other' は どちらにも かぞえない
+ */
+export type ActivityKind = 'lesson' | 'game' | 'write' | 'book' | 'treasure' | 'other';
 
 export interface RewardResult {
   stars: number;
@@ -146,13 +149,22 @@ export function openMissionChest(): ChestResult | null {
   return out;
 }
 
-/** ホームで 「クリア!」を いった ミッションを おぼえておく */
-export function markMissionsSeen(kinds: MissionKind[]): void {
-  if (!kinds.length) return;
+/**
+ * ホームで 「クリア!」を いった ミッションを おぼえておく。
+ * かく ミッションは ごほうびの がめんを とおらずに おわることが あるので、けいけんちも ここで わたす
+ */
+export function markMissionsSeen(kinds: MissionKind[]): { xp: number; levelUp?: number } {
+  let out: { xp: number; levelUp?: number } = { xp: 0 };
+  const seen = new Set(getData().days[todayKey()]?.seen ?? []);
+  const fresh = [...new Set(kinds)].filter((k) => !seen.has(k));
+  if (!fresh.length) return out;
   update((d) => {
     const today = day(d);
-    today.seen = [...new Set([...(today.seen ?? []), ...kinds])];
+    today.seen = [...(today.seen ?? []), ...fresh];
+    const xp = fresh.length * MISSION_XP;
+    out = { xp, levelUp: gainXp(d, xp) };
   });
+  return out;
 }
 
 /** もじの きで みた みを おぼえておく */

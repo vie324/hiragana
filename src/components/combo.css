@@ -42,7 +42,7 @@
   background: linear-gradient(90deg, #ff6b6b, #ffb800, #4cc76f, #4db4ff, #a78bff);
   background-size: 200% 100%;
   box-shadow: 0 4px 0 #7c5fe0, 0 0 26px rgba(255, 200, 60, 0.8);
-  animation: combo-in 0.5s cubic-bezier(0.2, 1.7, 0.4, 1) both, combo-rainbow 2s linear infinite;
+  animation: combo-in 0.5s cubic-bezier(0.2, 1.7, 0.4, 1) both, combo-rainbow 2s linear 2;
 }
 
 @keyframes combo-in {

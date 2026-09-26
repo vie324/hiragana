@@ -13,6 +13,7 @@ import { chestReady, unseenMissions } from '../state/progress';
 import { speak } from '../lib/speech';
 import { speakAfterCurrent } from '../lib/session';
 import { sfx } from '../lib/sound';
+import { celebrate } from '../lib/confetti';
 import { DAKUON, HANDAKUON, K_DAKUON, K_HANDAKUON, seionOf } from '../lib/kana';
 import { nodesOf, nextNodeIndex, stageOfNode, type MapNode } from '../data/curriculum';
 import { findSpecialLesson } from '../data/specialLessons';
@@ -62,14 +63,14 @@ function nodeBadge(n: MapNode): { text: string; emoji: boolean } {
 }
 
 /** ホームで さいしょに いう こと (ミッション > たからばこ > あいさつ) */
-function homeLine(name: string): { text: string; sparkle: boolean } {
+function homeLine(name: string): { text: string; sparkle: boolean; levelUp?: number } {
   const d = getData();
   const unseen = unseenMissions(d.days);
   if (unseen.length) {
-    markMissionsSeen(unseen);
+    const { levelUp } = markMissionsSeen(unseen);
     return chestReady(getData().days)
-      ? { text: 'ミッション ぜんぶ クリア! たからばこを あけてね!', sparkle: true }
-      : { text: 'ミッション クリア! すごいね!', sparkle: true };
+      ? { text: 'ミッション ぜんぶ クリア! たからばこを あけてね!', sparkle: true, levelUp }
+      : { text: 'ミッション クリア! すごいね!', sparkle: true, levelUp };
   }
   if (chestReady(d.days)) return { text: 'たからばこを あけてね!', sparkle: false };
   if (!d.days[todayKey()]?.acts) return { text: 'きょうの ミッションは 3つ! いっしょに がんばろう!', sparkle: false };
@@ -103,7 +104,12 @@ export default function HomeScreen() {
     let here = true;
     const line = homeLine(callName(profile));
     if (line.sparkle) setTimeout(() => here && sfx.sparkle(), 300);
-    void speakAfterCurrent(line.text, undefined, 6000, () => here);
+    void speakAfterCurrent(line.text, undefined, 6000, () => here).then(() => {
+      if (!here || !line.levelUp) return;
+      sfx.levelUp();
+      celebrate();
+      void speak(L.levelUp(line.levelUp));
+    });
     return () => {
       here = false;
     };

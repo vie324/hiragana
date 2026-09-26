@@ -17,6 +17,15 @@ import { burstAt } from '../lib/confetti';
 import { useAlive } from '../lib/hooks';
 import './tree-screen.css';
 
+/** ぜんぶ みが なった ときの きらきらの ばしょ (%) */
+const SPARKLES: [number, number][] = [
+  [28, 12],
+  [70, 8],
+  [20, 40],
+  [78, 44],
+  [50, 2],
+];
+
 const flowersOf = (script: Script) => (script === 'kata' ? [...K_DAKUON, ...K_HANDAKUON] : [...DAKUON, ...HANDAKUON]);
 
 export function WateringCan() {
@@ -120,6 +129,12 @@ export default function TreeScreen() {
       <div className="tree-body">
         <div className={`tree-area ${pouring ? 'pouring' : ''}`} ref={treeRef}>
           <LetterTree script={script} known={known} gold={gold} fresh={fresh} onTapKana={onTapKana} bounce={bounce} key={script} />
+          {fruitCount >= TREE_TOTAL.fruits &&
+            SPARKLES.map(([x, y], i) => (
+              <span key={i} className="tree-sparkle" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.4}s` }} aria-hidden>
+                ✦
+              </span>
+            ))}
           {pouring && (
             <div className="pour" aria-hidden>
               <WateringCan />

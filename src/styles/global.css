@@ -178,6 +178,7 @@ svg {
 
 .spacer {
   flex: 1;
+  min-width: 0;
 }
 
 /* ---------- ボタン ---------- */
@@ -361,6 +362,13 @@ svg {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* まるい ボタン (おうち・もどる・スピーカー) は つぶさない */
+.topbar > .btn {
+  flex-shrink: 0;
 }
 
 .progress-dots {

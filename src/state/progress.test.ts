@@ -96,11 +96,15 @@ describe('rewards with missions and levels', () => {
       }
     }
     expect(missionStates(getData().days).every((m) => m.done)).toBe(true);
-    // write だけは completeActivity を とおらないので ホームで 「クリア!」 を いう
+    // write だけは completeActivity を とおらないので ホームで 「クリア!」 を いい、けいけんちも そこで もらう
     const unseen = unseenMissions(getData().days);
     expect(unseen.every((k) => k === 'write')).toBe(true);
-    markMissionsSeen(unseen);
+    const before = getData().xp;
+    expect(markMissionsSeen(unseen).xp).toBe(unseen.length * MISSION_XP);
+    expect(getData().xp).toBe(before + unseen.length * MISSION_XP);
     expect(unseenMissions(getData().days)).toEqual([]);
+    // 2かい いっても けいけんちは ふえない
+    expect(markMissionsSeen(unseen).xp).toBe(0);
     const xp = getData().xp;
     const chest = openMissionChest();
     expect(chest).not.toBeNull();
