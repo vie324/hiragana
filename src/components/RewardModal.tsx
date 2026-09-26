@@ -5,6 +5,7 @@ import { speak, wait } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { burstAt, celebrate } from '../lib/confetti';
 import { useApp } from '../state/store';
+import { useIdle } from '../lib/hooks';
 import Mascot from './Mascot';
 import './reward.css';
 
@@ -45,6 +46,9 @@ export default function RewardModal({ result, onClose, headline }: Props) {
       alive.current = false;
     };
   }, [result.stars, headline]);
+
+  useIdle(8000, () => void speak('プレゼントを タッチしてね'), [step], step === 'gift');
+  useIdle(9000, () => void speak('「つぎへ」を おしてね'), [step], step === 'done');
 
   const openGift = async () => {
     // すぐに タッチしても あけられる
