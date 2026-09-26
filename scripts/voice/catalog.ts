@@ -29,7 +29,9 @@ function staticTexts(): string[] {
     const src = readFileSync(f, 'utf8');
     for (const m of src.matchAll(re)) {
       const s = m[1] ?? m[2] ?? m[3] ?? '';
-      if (!/[\u3040-\u30ff]/.test(s) || s.length > 80 || s.includes('${')) continue;
+      // かなが 1もじも ない もの (「ー」だけ など) や、ちいさい もじの ならび (コードの なかの もじの リスト) は よみあげない
+      if (!/[\u3041-\u3096\u30a1-\u30fa]/.test(s) || s.length > 80 || s.includes('${')) continue;
+      if (!s.replace(/[ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮー\s]/g, '')) continue;
       // `...` は コードの きれはしを ひろわないように、ふつうの ぶんだけ
       if (m[3] !== undefined && /[{}<>();=]/.test(s)) continue;
       out.add(s);
