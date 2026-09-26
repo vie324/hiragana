@@ -13,7 +13,7 @@ interface Props {
 export default function KanaGrid({ rows, onTap, cellClass, cellExtra, testid = 'cell' }: Props) {
   const n = Math.max(...rows.map((r) => r.cells.length));
   return (
-    <div className="kana-grid" style={{ gridTemplateRows: `repeat(${n}, auto)` }}>
+    <div className="kana-grid" style={{ ['--n' as string]: n }}>
       {rows.flatMap((row) =>
         Array.from({ length: n }, (_, i) => {
           const k = row.cells[i];

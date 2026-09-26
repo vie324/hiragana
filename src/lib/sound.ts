@@ -57,6 +57,11 @@ export function unlockAudio(): void {
   }
 }
 
+/** iPad で バックグラウンドから もどったとき など、とまった 音を うごかす */
+export function resumeAudio(): void {
+  if (ctx && ctx.state !== 'running') void ctx.resume().catch(() => undefined);
+}
+
 export function setSoundPrefs(p: { sfx?: boolean; bgm?: boolean; volume?: number }): void {
   if (p.sfx !== undefined) sfxEnabled = p.sfx;
   if (p.volume !== undefined) {

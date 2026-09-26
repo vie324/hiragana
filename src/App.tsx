@@ -17,6 +17,7 @@ import FirstSoundGame from './screens/games/FirstSoundGame';
 import WordBuildGame from './screens/games/WordBuildGame';
 import ReadQuizGame from './screens/games/ReadQuizGame';
 import MemoryGame from './screens/games/MemoryGame';
+import ShiritoriGame from './screens/games/ShiritoriGame';
 import PlayMenu from './screens/PlayMenu';
 import WriteMenu from './screens/WriteMenu';
 import WriteKanaScreen from './screens/WriteKanaScreen';
@@ -59,6 +60,8 @@ function Screen({ route }: { route: Route }) {
       return <ReadQuizGame nodeId={route.nodeId} />;
     case 'memory':
       return <MemoryGame nodeId={route.nodeId} />;
+    case 'shiritori':
+      return <ShiritoriGame />;
     case 'play':
       return <PlayMenu />;
     case 'write':

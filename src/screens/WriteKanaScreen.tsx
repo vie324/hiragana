@@ -8,7 +8,7 @@ import { sayKana } from '../lib/kana';
 import { speak } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { celebrate } from '../lib/confetti';
-import { useAlive } from '../lib/hooks';
+import { useAlive, usePortrait } from '../lib/hooks';
 import { useApp } from '../state/store';
 import { replace } from '../state/router';
 import { completeActivity, recordWriting, type RewardResult } from '../state/actions';
@@ -77,7 +77,8 @@ export default function WriteKanaScreen({ kana, list, nodeId }: { kana: string; 
     replace({ name: 'writeKana', kana: k, list, nodeId });
   };
 
-  const padSize = 'min(72vh, 58vw)';
+  const portrait = usePortrait();
+  const padSize = portrait ? 'min(58vh, 90vw)' : 'min(72vh, 58vw)';
 
   return (
     <div className="screen write-screen">

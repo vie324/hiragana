@@ -90,7 +90,7 @@ export default function MapScreen({ focus }: { focus?: string }) {
   const scroller = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(800);
   const [wiggle, setWiggle] = useState<string | null>(null);
-  const [treasure, setTreasure] = useState<{ node: MapNode; result: RewardResult | null } | null>(null);
+  const [treasure, setTreasure] = useState<RewardResult | null>(null);
   const current = nextNodeIndex((id) => !!nodes[id]);
   const [buddyAt, setBuddyAt] = useState(lastCurrent >= 0 && lastCurrent < current ? lastCurrent : current);
   const vars = { name: callName(profile), buddy: profile.buddyName };
@@ -179,20 +179,13 @@ export default function MapScreen({ focus }: { focus?: string }) {
     }
     sfx.tap();
     if (n.kind === 'treasure') {
-      setTreasure({ node: n, result: null });
-      void speak('たからばこだ! タッチして あけてみよう!');
+      sfx.open();
+      setTreasure(completeActivity({ nodeId: n.id, stars: 3 }));
       return;
     }
     void speak(nodeSay(n, vars));
     const r = nodeRoute(n);
     if (r) navigate(r);
-  };
-
-  const openTreasure = () => {
-    if (!treasure || treasure.result) return;
-    sfx.open();
-    const result = completeActivity({ nodeId: treasure.node.id, stars: 3 });
-    setTreasure({ ...treasure, result });
   };
 
   const buddyPos = layout[Math.min(buddyAt, layout.length - 1)];
@@ -295,17 +288,7 @@ export default function MapScreen({ focus }: { focus?: string }) {
           )}
         </div>
       </div>
-      {treasure && (
-        treasure.result ? (
-          <RewardModal result={treasure.result} headline="たからばこ ゲット!" onClose={() => setTreasure(null)} />
-        ) : (
-          <div className="overlay" onClick={openTreasure}>
-            <button className="treasure-chest" onClick={openTreasure} data-testid="treasure">
-              <Emoji>🎁</Emoji>
-            </button>
-          </div>
-        )
-      )}
+      {treasure && <RewardModal result={treasure} headline="たからばこ ゲット!" onClose={() => setTreasure(null)} />}
     </div>
   );
 }

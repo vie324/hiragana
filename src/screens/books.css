@@ -268,18 +268,37 @@
   color: #4a2c00;
 }
 
-.reader-play {
+.reader-side-buttons {
   position: absolute;
-  right: 16px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  width: 68px;
-  height: 68px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reader-play {
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   border: none;
   background: #fff4d0;
-  font-size: 34px;
+  font-size: 32px;
   cursor: pointer;
+}
+
+.reader-play.mic {
+  background: #ffe3ec;
+}
+
+.reader-play.mic.recording {
+  background: #ff6b6b;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.reader-play.mic.playing {
+  background: #d8f5e0;
 }
 
 .page-btn {

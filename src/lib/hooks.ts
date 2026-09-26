@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /** アンマウント後に 非同期の つづきを しないための フラグ */
 export function useAlive(): React.MutableRefObject<boolean> {
@@ -36,4 +36,20 @@ export function useIdle(ms: number, fn: () => void, deps: unknown[], enabled = t
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ms, enabled, ...deps]);
+}
+
+/** たてむき(portrait) かどうか */
+export function usePortrait(): boolean {
+  const get = () => typeof window !== 'undefined' && window.innerHeight > window.innerWidth;
+  const [p, setP] = useState(get);
+  useEffect(() => {
+    const on = () => setP(get());
+    window.addEventListener('resize', on);
+    window.addEventListener('orientationchange', on);
+    return () => {
+      window.removeEventListener('resize', on);
+      window.removeEventListener('orientationchange', on);
+    };
+  }, []);
+  return p;
 }

@@ -11,11 +11,16 @@
 }
 
 .lesson-buddy {
-  flex: 0 0 22%;
+  flex: 0 0 24%;
   display: flex;
   justify-content: center;
   align-self: flex-end;
   padding-bottom: 2vh;
+}
+
+.lesson-buddy .bubble {
+  font-size: calc(var(--u) * 2.8);
+  padding: 12px 18px;
 }
 
 .lesson-stage {

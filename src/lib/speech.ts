@@ -164,16 +164,19 @@ export function speak(text: string, opts: SpeakOptions = {}): Promise<boolean> {
     setCaption(shown ?? null);
 
     const fast = typeof window !== 'undefined' && window.__HIRAGANA_FAST_SPEECH__;
+    if (synth && !voices.length) loadVoices();
     const voice = pickVoice();
-    if (fast || !synth || !voice) {
-      // こえが つかえない環境では じかんだけ まつ
+    // こえの リストが まだ よみこまれていない (iPad の きどうちょくご) ときは
+    // lang だけ しめして よむ。日本語の こえが ない 環境では じかんだけ まつ。
+    const noJapanese = voices.length > 0 && !voice;
+    if (fast || !synth || noJapanese) {
       timer = setTimeout(() => finish(true), fast ? 20 : estimateMs(text, rate));
       return;
     }
 
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'ja-JP';
-    u.voice = voice;
+    if (voice) u.voice = voice;
     u.rate = rate;
     u.pitch = pitch;
     u.volume = 1;

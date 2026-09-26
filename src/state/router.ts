@@ -14,6 +14,7 @@ export type Route =
   | { name: 'wordbuild'; nodeId?: string; pool?: string[] }
   | { name: 'readquiz'; nodeId?: string; pool?: string[] }
   | { name: 'memory'; nodeId?: string }
+  | { name: 'shiritori' }
   | { name: 'play' }
   | { name: 'write'; tab?: string }
   | { name: 'writeKana'; kana: string; list?: string[]; nodeId?: string }

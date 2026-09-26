@@ -12,6 +12,7 @@ const GAMES: { id: string; emoji: string; label: string; say: string; color: str
   { id: 'wordbuild', emoji: '🧩', label: 'ことばづくり', say: 'ことばづくり', color: 'blue', route: { name: 'wordbuild' } },
   { id: 'readquiz', emoji: '👀', label: 'よめるかな', say: 'よめるかな', color: 'green', route: { name: 'readquiz' } },
   { id: 'memory', emoji: '🃏', label: 'カードめくり', say: 'カードめくり', color: 'purple', route: { name: 'memory' } },
+  { id: 'shiritori', emoji: '🔗', label: 'しりとり', say: 'しりとり', color: 'yellow', route: { name: 'shiritori' } },
 ];
 
 export default function PlayMenu() {

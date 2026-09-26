@@ -6,7 +6,8 @@ import { useApp, todayKey, callName } from '../state/store';
 import { speak } from '../lib/speech';
 import { speakAfterCurrent } from '../lib/session';
 import { sfx } from '../lib/sound';
-import { ALL_NODES, nextNodeIndex } from '../data/curriculum';
+import { ALL_NODES, nextNodeIndex, type MapNode } from '../data/curriculum';
+import { findSpecialLesson } from '../data/specialLessons';
 import './home.css';
 
 interface MenuItem {
@@ -30,6 +31,23 @@ const MENU: MenuItem[] = [
 ];
 
 const WEEK = ['に', 'げ', 'か', 'す', 'も', 'き', 'ど'];
+
+const NODE_EMOJI: Record<string, string> = {
+  balloon: '🎈',
+  firstsound: '👂',
+  wordbuild: '🧩',
+  readquiz: '👀',
+  memory: '🃏',
+  treasure: '🎁',
+  book: '📖',
+};
+
+/** 「つぎは 〇」 に だす もの */
+function nodeBadge(n: MapNode): { text: string; emoji: boolean } {
+  if (n.kind === 'lesson' && n.kana) return { text: n.kana[0], emoji: false };
+  if (n.kind === 'special') return { text: findSpecialLesson(n.lessonId!)?.icon ?? '?', emoji: false };
+  return { text: NODE_EMOJI[n.kind] ?? '⭐', emoji: true };
+}
 
 function weekDays(): { key: string; label: string; today: boolean }[] {
   const now = new Date();
@@ -60,7 +78,7 @@ export default function HomeScreen() {
     navigate(m.route);
   };
 
-  const nextLabel = next?.kind === 'lesson' && next.kana ? next.kana[0] : null;
+  const nextLabel = next ? nodeBadge(next) : null;
 
   return (
     <div className="screen home-screen">
@@ -90,7 +108,7 @@ export default function HomeScreen() {
             <span className="menu-label">{m.label}</span>
             {m.wide && nextLabel && (
               <span className="menu-next">
-                つぎは <b>{nextLabel}</b>
+                つぎは {nextLabel.emoji ? <Emoji>{nextLabel.text}</Emoji> : <b>{nextLabel.text}</b>}
               </span>
             )}
           </button>

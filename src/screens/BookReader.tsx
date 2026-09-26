@@ -11,6 +11,7 @@ import { celebrate } from '../lib/confetti';
 import { useAlive } from '../lib/hooks';
 import { completeActivity, recordBookRead, type RewardResult } from '../state/actions';
 import Mascot from '../components/Mascot';
+import { VoiceRecorder, canRecord, playBlob } from '../lib/recorder';
 import './books.css';
 
 type Mode = 'auto' | 'self';
@@ -31,6 +32,10 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
   const readToken = useRef(0);
   const seen = useRef<Map<number, number>>(new Map());
   const pageStart = useRef(Date.now());
+  const recorder = useRef<VoiceRecorder | null>(null);
+  const recTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [rec, setRec] = useState<'idle' | 'recording' | 'playing'>('idle');
+  const [micOk, setMicOk] = useState(canRecord());
 
   const pages = book?.pages ?? [];
   const lines: Token[][] = useMemo(() => (page >= 0 && page < pages.length ? tokenize(pages[page].text, vars) : []), [page, pages, vars.name, vars.buddy]);
@@ -65,6 +70,54 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
     stopSpeaking();
   };
 
+  /** 🎤 じぶんの こえで よんで、きいてみる */
+  const toggleRecord = async () => {
+    if (rec === 'playing') return;
+    if (rec === 'idle') {
+      stopReading();
+      try {
+        const r = new VoiceRecorder();
+        await r.start();
+        recorder.current = r;
+        setRec('recording');
+        sfx.tap();
+        recTimer.current = setTimeout(() => void finishRecord(), 25_000);
+      } catch {
+        setMicOk(false);
+        void speak('マイクが つかえないみたい。おうちの ひとに きいてね。');
+      }
+      return;
+    }
+    await finishRecord();
+  };
+
+  const finishRecord = async () => {
+    clearTimeout(recTimer.current);
+    const r = recorder.current;
+    recorder.current = null;
+    if (!r) return;
+    const blob = await r.stop();
+    if (!alive.current) return;
+    if (!blob) {
+      setRec('idle');
+      return;
+    }
+    setRec('playing');
+    await playBlob(blob);
+    if (!alive.current) return;
+    setRec('idle');
+    sfx.sparkle();
+    await speak('じょうずに よめたね!');
+  };
+
+  useEffect(
+    () => () => {
+      clearTimeout(recTimer.current);
+      recorder.current?.cleanup();
+    },
+    [],
+  );
+
   // ページが かわったら
   useEffect(() => {
     pageStart.current = Date.now();
@@ -86,6 +139,12 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
   }, [page]);
 
   const turn = (delta: number) => {
+    if (recorder.current) {
+      clearTimeout(recTimer.current);
+      recorder.current.cleanup();
+      recorder.current = null;
+      setRec('idle');
+    }
     readToken.current++;
     setLit(null);
     setPlaying(false);
@@ -179,9 +238,21 @@ export default function BookReader({ id, nodeId }: { id: string; nodeId?: string
                 ))}
               </div>
             ))}
-            <button className="reader-play" onClick={() => (playing ? stopReading() : void readPage(false))} aria-label="よむ">
-              <Emoji>{playing ? '⏸️' : '🔊'}</Emoji>
-            </button>
+            <div className="reader-side-buttons">
+              <button className="reader-play" onClick={() => (playing ? stopReading() : void readPage(false))} aria-label="よむ">
+                <Emoji>{playing ? '⏸️' : '🔊'}</Emoji>
+              </button>
+              {micOk && mode === 'self' && (
+                <button
+                  className={`reader-play mic ${rec}`}
+                  onClick={() => void toggleRecord()}
+                  aria-label={rec === 'recording' ? 'ろくおんを とめる' : 'よんで ろくおん'}
+                  data-testid="record"
+                >
+                  <Emoji>{rec === 'recording' ? '⏹️' : rec === 'playing' ? '👂' : '🎤'}</Emoji>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -501,3 +501,121 @@
     padding: 1vh 3vw;
   }
 }
+
+/* ---------- しりとり ---------- */
+
+.shiritori-screen {
+  background: linear-gradient(180deg, #e3f7e8 0%, #fff7dc 100%);
+}
+
+.sh-chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 34px;
+  flex-wrap: wrap;
+}
+
+.sh-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sh-arrow {
+  color: var(--orange-d);
+  font-weight: 700;
+  font-size: 0.8em;
+}
+
+.sh-arrow.big {
+  font-size: min(8vh, 6vw);
+}
+
+.sh-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4vh;
+  padding-bottom: 3vh;
+}
+
+.sh-current {
+  display: flex;
+  align-items: center;
+  gap: 2vw;
+}
+
+.sh-word {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff;
+  border-radius: 30px;
+  padding: 1.6vh 2vw;
+  box-shadow: 0 7px 0 var(--line);
+}
+
+.sh-emoji {
+  font-size: min(15vh, 11vw);
+}
+
+.sh-text {
+  font-size: min(7vh, 5vw);
+  font-weight: 700;
+}
+
+.sh-text .hl {
+  color: #fff;
+  background: var(--pink);
+  border-radius: 12px;
+  padding: 0 0.1em;
+}
+
+.sh-sound {
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+}
+
+.sh-sound-kana {
+  font-size: min(15vh, 11vw);
+  font-weight: 700;
+  color: var(--pink-d);
+  background: #fff;
+  border-radius: 30px;
+  padding: 0 0.2em;
+  box-shadow: 0 7px 0 var(--line);
+}
+
+.sh-choice {
+  flex-direction: column;
+  font-size: calc(var(--card, 190px) * 0.48);
+  gap: 4px;
+}
+
+.sh-choice-word {
+  font-size: calc(var(--card, 190px) * 0.15);
+  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--kids);
+}
+
+.sh-done {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1vh 1vw;
+  justify-content: center;
+  align-items: center;
+  padding: 0 2vw;
+}
+
+.sh-done .sh-emoji {
+  font-size: min(9vh, 7vw);
+}
+
+.sh-done .sh-text {
+  font-size: min(4vh, 3vw);
+}

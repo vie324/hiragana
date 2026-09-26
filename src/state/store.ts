@@ -178,8 +178,10 @@ export function getData(): AppData {
 }
 
 /** データを かきかえる。fn の なかで draft を 直接 かえてよい */
+const clone = <T,>(v: T): T => (typeof structuredClone === 'function' ? structuredClone(v) : (JSON.parse(JSON.stringify(v)) as T));
+
 export function update(fn: (draft: AppData) => void): void {
-  const draft = structuredClone(state);
+  const draft = clone(state);
   fn(draft);
   state = draft;
   listeners.forEach((l) => l());

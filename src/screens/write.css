@@ -103,13 +103,34 @@
 @media (orientation: portrait) {
   .write-body {
     flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 2vh;
   }
   .write-side {
     flex-direction: row;
     flex: 0 0 auto;
+    align-self: center;
+  }
+  .write-side.right {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .write-nav {
+    margin-top: 0;
   }
   .write-side.left {
     order: 3;
+    flex: 1;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4vw;
+    padding: 0 0 1vh;
+  }
+  .write-side.left .buddy {
+    flex-direction: row;
+  }
+  .write-side.left .bubble {
+    max-width: 50vw !important;
   }
 }
 

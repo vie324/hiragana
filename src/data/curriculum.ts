@@ -90,7 +90,7 @@ export const STAGES: Stage[] = [
     'か',
     { name: 'もり', sky: ['#c7f0d8', '#e5f7c8'], ground: '#6cc36c', deco: ['🌲', '🍄', '🦊', '🌳', '🐿️'] },
     ['か', 'き', 'く', 'け', 'こ'],
-    { words: true, memory: true, outfit: 'crown' },
+    { words: true, memory: true, outfit: 'crown', book: 'norimono' },
   ),
   rowStage(
     'sa',
@@ -104,7 +104,7 @@ export const STAGES: Stage[] = [
     'た',
     { name: 'やま', sky: ['#cfe3ff', '#f1f7ff'], ground: '#a6c98f', deco: ['⛰️', '🦅', '🌲', '🏕️', '🐻'] },
     ['た', 'ち', 'つ', 'て', 'と'],
-    { words: true, read: true, memory: true, outfit: 'glasses' },
+    { words: true, read: true, memory: true, outfit: 'glasses', book: 'oyasumi' },
   ),
   rowStage(
     'na',
@@ -118,7 +118,7 @@ export const STAGES: Stage[] = [
     'は',
     { name: 'おはなばたけ', sky: ['#ffe0ef', '#fff6d6'], ground: '#b6e388', deco: ['🌻', '🌸', '🐝', '🌷', '🌺'] },
     ['は', 'ひ', 'ふ', 'へ', 'ほ'],
-    { words: true, read: true, memory: true, outfit: 'star' },
+    { words: true, read: true, memory: true, outfit: 'star', book: 'kakurenbo' },
   ),
   rowStage(
     'ma',
@@ -141,6 +141,7 @@ export const STAGES: Stage[] = [
       G('ya', 'wordbuild', 1),
       G('ya', 'readquiz', 1),
       T('ya', 'straw'),
+      B('ya', 'ookii'),
     ],
   },
   rowStage(

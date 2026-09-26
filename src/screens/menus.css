@@ -64,9 +64,31 @@
 .kana-grid {
   display: grid;
   grid-auto-flow: column;
+  grid-template-rows: repeat(var(--n), auto);
   direction: rtl;
   gap: 1vh 0.8vw;
   align-content: start;
+}
+
+@media (orientation: portrait) {
+  /* たてむき では 「あいうえお」 を よこに ならべる */
+  .kana-grid {
+    grid-auto-flow: row;
+    grid-template-rows: none;
+    grid-template-columns: repeat(var(--n), auto);
+    direction: ltr;
+    gap: 0.8vh 1.6vw;
+  }
+  .kana-cell {
+    width: min(15vw, 7.2vh);
+    height: min(15vw, 7.2vh);
+  }
+  .kana-cell .k {
+    font-size: min(9.5vw, 4.8vh);
+  }
+  .kana-cell .stars {
+    font-size: min(2.4vw, 1.2vh) !important;
+  }
 }
 
 .kana-grid > * {

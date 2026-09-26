@@ -8,7 +8,7 @@ import { sayKana } from '../lib/kana';
 import { speak } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { celebrate } from '../lib/confetti';
-import { useAlive } from '../lib/hooks';
+import { useAlive, usePortrait } from '../lib/hooks';
 import { useApp, callName } from '../state/store';
 import { navigate } from '../state/router';
 import { completeActivity, recordWriting, type RewardResult } from '../state/actions';
@@ -37,6 +37,7 @@ export default function NameWriteScreen() {
   const [reward, setReward] = useState<RewardResult | null>(null);
   const [mood, setMood] = useState<'normal' | 'happy'>('normal');
   const done = written.length >= chars.length && chars.length > 0;
+  const portrait = usePortrait();
 
   useEffect(() => {
     if (!chars.length) {
@@ -81,7 +82,7 @@ export default function NameWriteScreen() {
     );
   }
 
-  const padSize = 'min(64vh, 50vw)';
+  const padSize = portrait ? 'min(56vh, 88vw)' : 'min(64vh, 50vw)';
 
   return (
     <div className="screen write-screen name-screen">

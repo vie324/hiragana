@@ -1,6 +1,22 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import pkg from './package.json' with { type: 'json' };
+import { readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
+
+/** public/ の ファイル一覧 (Service Worker で キャッシュする) */
+function publicFiles(dir = 'public'): string[] {
+  const out: string[] = [];
+  const walk = (d: string) => {
+    for (const name of readdirSync(d)) {
+      const p = join(d, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else out.push(relative('public', p).split('\\').join('/'));
+    }
+  };
+  walk(dir);
+  return out;
+}
 
 /**
  * ビルド結果の全ファイルをプリキャッシュする Service Worker (sw.js) を生成する。
@@ -11,7 +27,7 @@ function serviceWorker(): Plugin {
     name: 'hiragana-sw',
     apply: 'build',
     generateBundle(_options, bundle) {
-      const files = Object.keys(bundle).filter((f) => !f.endsWith('.map'));
+      const files = [...Object.keys(bundle), ...publicFiles()].filter((f) => !f.endsWith('.map'));
       const version = Date.now().toString(36);
       const source = `// 自動生成: vite.config.ts
 const CACHE = 'hiragana-${version}';

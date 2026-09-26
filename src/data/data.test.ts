@@ -106,3 +106,27 @@ describe('stickers', () => {
     expect(new Set(s).size).toBe(s.length);
   });
 });
+
+import { makeChain, shiritoriDistractors } from './shiritori';
+import { mulberry32 } from '../lib/random';
+
+describe('shiritori', () => {
+  it('builds valid chains without ん endings', () => {
+    const rng = mulberry32(3);
+    for (let i = 0; i < 30; i++) {
+      const chain = makeChain(5, rng);
+      expect(chain).toHaveLength(6);
+      for (let j = 1; j < chain.length; j++) {
+        expect(chain[j].w[0]).toBe(lastSound(chain[j - 1].w));
+        expect(chain[j].w.endsWith('ん')).toBe(false);
+      }
+      expect(new Set(chain.map((w) => w.w)).size).toBe(6);
+    }
+  });
+
+  it('picks distractors that do not start with the sound', () => {
+    const d = shiritoriDistractors('か', new Set(), 5, mulberry32(1));
+    expect(d).toHaveLength(5);
+    for (const w of d) expect(w.w[0]).not.toBe('か');
+  });
+});

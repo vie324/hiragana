@@ -153,6 +153,12 @@
   .menu-tile.wide {
     grid-column: span 2;
   }
+  .menu-emoji {
+    font-size: calc(var(--u) * 10);
+  }
+  .menu-label {
+    font-size: calc(var(--u) * 4.6);
+  }
   .week {
     flex-direction: column;
     gap: 2px;

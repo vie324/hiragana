@@ -134,7 +134,7 @@ export default function SpecialLessonScreen({ lessonId, nodeId }: { lessonId: st
       </TopBar>
       <div className="lesson-body">
         <div className="lesson-buddy">
-          <Buddy size="min(26vh, 20vw)" bubble="top" mood={mood} bubbleMax="min(30vw, 360px)" />
+          <Buddy size="min(26vh, 20vw)" bubble="top" mood={mood} bubbleMax="min(24vw, 290px)" />
         </div>
         <div className="lesson-stage">
           {pos < 0 && (

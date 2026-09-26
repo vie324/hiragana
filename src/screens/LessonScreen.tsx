@@ -10,7 +10,7 @@ import { sayKana, similarTo, BASIC_KANA } from '../lib/kana';
 import { speak, wait } from '../lib/speech';
 import { sfx } from '../lib/sound';
 import { celebrate } from '../lib/confetti';
-import { useAlive } from '../lib/hooks';
+import { useAlive, usePortrait } from '../lib/hooks';
 import { shuffle, sample } from '../lib/random';
 import { useApp, getData } from '../state/store';
 import { back } from '../state/router';
@@ -155,7 +155,8 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
     }
   };
 
-  const padSize = 'min(64vh, 52vw)';
+  const portrait = usePortrait();
+  const padSize = portrait ? 'min(54vh, 86vw)' : 'min(64vh, 52vw)';
 
   return (
     <div className="screen lesson-screen">
@@ -166,7 +167,7 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
       </TopBar>
       <div className="lesson-body">
         <div className="lesson-buddy">
-          <Buddy size="min(26vh, 20vw)" bubble="top" mood={mood} bubbleMax="min(30vw, 360px)" />
+          <Buddy size="min(26vh, 20vw)" bubble="top" mood={mood} bubbleMax="min(24vw, 290px)" />
         </div>
         <div className="lesson-stage">
           {step === 'intro' && (

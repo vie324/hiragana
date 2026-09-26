@@ -189,3 +189,29 @@ test('シールを ドラッグして はる', async ({ page }) => {
   const placed = await page.evaluate(() => window.__hiragana!.getData().placed['meadow']?.length);
   expect(placed).toBe(1);
 });
+
+test('しりとり', async ({ page }) => {
+  await prepare(page, seedProfile());
+  await start(page);
+  await page.getByTestId('menu-play').click({ force: true });
+  await page.getByTestId('game-shiritori').click({ force: true });
+  for (let i = 0; i < 5; i++) {
+    await page.locator('.sh-choice[data-answer="yes"]').first().click({ force: true, timeout: 20_000 });
+    await page.waitForTimeout(500);
+  }
+  await collectReward(page);
+});
+
+test('たからばこで きせかえが もらえる', async ({ page }) => {
+  const done = ['a:lesson:あ', 'a:lesson:い', 'a:balloon:1', 'a:lesson:う', 'a:lesson:え', 'a:lesson:お', 'a:firstsound:1', 'a:balloon:2'];
+  const nodes = Object.fromEntries(done.map((id) => [id, { stars: 3, at: 1, plays: 1 }]));
+  await prepare(page, seedProfile({ nodes }));
+  await start(page);
+  await page.getByTestId('menu-map').click({ force: true });
+  await page.getByTestId('node-a:treasure').click({ force: true });
+  await collectReward(page);
+  const d = await page.evaluate(() => window.__hiragana!.getData());
+  expect(d.outfits).toContain('ribbon');
+  expect(d.wear).toBe('ribbon');
+  await expect(page.getByTestId('node-a:treasure')).toHaveClass(/done/);
+});
