@@ -60,6 +60,8 @@ test('もじの きに みが なって、みずを あげられる', async ({ p
   await expect(page.getByTestId('fruit-あ')).toBeVisible();
   await expect(page.getByTestId('flower-が')).toBeVisible();
   await expect(page.getByTestId('bud-う')).toBeVisible();
+  // あたらしい みは ポンと でてくる とちゅう (おおきさ 0) なので、みえてから タッチする
+  await expect(page.getByTestId('fruit-い')).toBeVisible();
   await page.getByTestId('fruit-い').click({ force: true });
 
   await page.getByTestId('water').click({ force: true });

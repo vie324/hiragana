@@ -34,6 +34,14 @@ export async function settled(page: Page): Promise<void> {
   });
 }
 
+/**
+ * 「つぎへ」を おす。ボタンは ポンと でてくる (ちいさい ところから おおきくなる) ので、
+ * force で おすと まだ ちいさい うちに はずれることが ある。おちついて から ふつうに おす
+ */
+export async function tapNext(page: Page): Promise<void> {
+  await page.getByTestId('next').click({ timeout: 20_000 });
+}
+
 export async function start(page: Page): Promise<void> {
   await page.goto('./');
   await page.getByTestId('start-button').click({ force: true });

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { collectReward, drawKana, prepare, seedProfile, settled, start } from './helpers';
+import { collectReward, drawKana, prepare, seedProfile, settled, start, tapNext } from './helpers';
 
 test('はじめての セットアップから ホームまで', async ({ page }) => {
   await prepare(page);
@@ -34,9 +34,9 @@ test('「あ」の レッスンを さいごまで すすめる', async ({ page 
   await page.getByTestId('menu-map').click({ force: true });
   await page.getByTestId('node-a:lesson:あ').click({ force: true });
 
-  await page.getByTestId('next').click({ force: true }); // もじ
-  await page.getByTestId('next').click({ force: true }); // ことば
-  await page.getByTestId('next').click({ force: true, timeout: 20_000 }); // かきじゅん
+  await tapNext(page); // もじ
+  await tapNext(page); // ことば
+  await tapNext(page); // かきじゅん
 
   await expect(page.getByTestId('writing-pad')).toBeVisible();
   await drawKana(page, 'あ');

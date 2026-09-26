@@ -41,7 +41,9 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
   const canWrite = hasStrokes(kana);
   const steps = canWrite ? STEPS : STEPS.filter((s) => s !== 'order' && s !== 'write');
   const [step, setStep] = useState<Step>('intro');
-  const [ready, setReady] = useState(false);
+  // 「つぎへ」を だして よい ステップ (ステップが かわった その ばで ボタンが きえるように、ステップごとに もつ)
+  const [readyStep, setReadyStep] = useState<Step | null>(null);
+  const ready = readyStep === step;
   const [bump, setBump] = useState(0);
   const [playKey, setPlayKey] = useState(0);
   const [writeStars, setWriteStars] = useState(3);
@@ -57,7 +59,6 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
 
   // ステップごとの せつめい
   useEffect(() => {
-    setReady(false);
     setMood('normal');
     let t: ReturnType<typeof setTimeout> | undefined;
     // つぎの ステップに すすんだら (または 画面を とじたら) この ながれは とめる
@@ -90,7 +91,7 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
           await say(L.whichIs(kana));
           return;
       }
-      if (live()) setReady(true);
+      if (live()) setReadyStep(step);
     })();
     return () => {
       stale = true;
@@ -222,7 +223,7 @@ export default function LessonScreen({ kana, nodeId }: { kana: string; nodeId?: 
           )}
           {step === 'order' && (
             <div className="order-step" style={{ width: padSize, height: padSize }}>
-              <StrokeOrder kana={kana} playKey={playKey} onDone={() => alive.current && setReady(true)} />
+              <StrokeOrder kana={kana} playKey={playKey} onDone={() => alive.current && setReadyStep('order')} />
             </div>
           )}
           {step === 'write' && (

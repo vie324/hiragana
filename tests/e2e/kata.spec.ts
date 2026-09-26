@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { collectReward, drawKana, prepare, seedProfile, start } from './helpers';
+import { collectReward, drawKana, prepare, seedProfile, start, tapNext } from './helpers';
 
 const isKata = (s: string) => [...s].every((c) => /[ァ-ヺー]/.test(c));
 
@@ -11,9 +11,9 @@ test('カタカナに きりかえて 「ア」の レッスンを すすめる'
   await page.getByTestId('menu-map').click({ force: true });
   await page.getByTestId('node-k-a:lesson:ア').click({ force: true });
 
-  await page.getByTestId('next').click({ force: true }); // もじ
-  await page.getByTestId('next').click({ force: true }); // ことば
-  await page.getByTestId('next').click({ force: true, timeout: 20_000 }); // かきじゅん
+  await tapNext(page); // もじ
+  await tapNext(page); // ことば
+  await tapNext(page); // かきじゅん
   await expect(page.getByTestId('writing-pad')).toBeVisible();
   await drawKana(page, 'ア');
   for (let i = 0; i < 2; i++) {
@@ -66,7 +66,7 @@ test('カタカナの とくべつ レッスン (のばす ぼう)', async ({ pa
   await prepare(page, seedProfile({ settings: { script: 'kata' } }));
   await start(page);
   await page.evaluate(() => window.__hiragana!.navigate({ name: 'special', lessonId: 'k-long', nodeId: 'k-long:special:k-long' }));
-  for (let i = 0; i < 5; i++) await page.getByTestId('next').click({ force: true, timeout: 20_000 });
+  for (let i = 0; i < 5; i++) await tapNext(page);
   for (let i = 0; i < 8; i++) {
     const right = page.locator('[data-testid^="choice-"][data-answer="yes"]:not([disabled])');
     const gift = page.getByTestId('gift');

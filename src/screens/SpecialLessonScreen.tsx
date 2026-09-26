@@ -72,7 +72,9 @@ export default function SpecialLessonScreen({ lessonId, nodeId }: { lessonId: st
   const alive = useAlive();
   // -1 = はじめの せつめい, 0..cards-1 = カード, cards.. = クイズ
   const [pos, setPos] = useState(-1);
-  const [ready, setReady] = useState(false);
+  // 「つぎへ」を だして よい カード (pos が かわった その ばで ボタンが きえるように、pos ごとに もつ)
+  const [readyPos, setReadyPos] = useState<number | null>(null);
+  const ready = readyPos === pos;
   const [mistakes, setMistakes] = useState(0);
   const [mood, setMood] = useState<'normal' | 'happy' | 'think'>('normal');
   const [reward, setReward] = useState<RewardResult | null>(null);
@@ -92,9 +94,8 @@ export default function SpecialLessonScreen({ lessonId, nodeId }: { lessonId: st
 
   useEffect(() => {
     let stale = false;
-    setReady(false);
     setMood('normal');
-    void sayCurrent().then(() => !stale && alive.current && setReady(true));
+    void sayCurrent().then(() => !stale && alive.current && setReadyPos(pos));
     return () => {
       stale = true;
     };
