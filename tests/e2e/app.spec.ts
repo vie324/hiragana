@@ -101,14 +101,16 @@ test('ことばづくり と よめるかな', async ({ page }) => {
       await page.locator(`.wb-tile:not(.used)[data-testid="tile-${u}"]`).first().click({ force: true });
       await page.waitForTimeout(80);
     }
-    await page.waitForTimeout(600);
+    // つぎの ことばに かわるまで まつ (まえの ことばの タイルを おさないように)
+    if (round < 3) await expect(page.locator('.wb-body')).not.toHaveAttribute('data-word', word!, { timeout: 20_000 });
   }
   await collectReward(page);
 
   await page.evaluate(() => window.__hiragana!.navigate({ name: 'readquiz', nodeId: 'sa:readquiz:1' }));
   for (let i = 0; i < 5; i++) {
+    const word = await page.getByTestId('read-word').getAttribute('data-word', { timeout: 20_000 });
     await page.locator('.pic-card[data-answer="yes"]').first().click({ force: true, timeout: 20_000 });
-    await page.waitForTimeout(500);
+    if (i < 4) await expect(page.getByTestId('read-word')).not.toHaveAttribute('data-word', word!, { timeout: 20_000 });
   }
   await collectReward(page);
 });
