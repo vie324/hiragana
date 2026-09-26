@@ -26,6 +26,14 @@ export function seedProfile(extra: Record<string, unknown> = {}) {
   };
 }
 
+/** 画面が すべりこむ アニメーションが おわるまで まつ (マウスで ざひょうを つかう まえに) */
+export async function settled(page: Page): Promise<void> {
+  await page.waitForFunction(() => {
+    const s = document.querySelector('.app > .screen');
+    return !!s && s.getAnimations().every((a) => a.playState === 'finished');
+  });
+}
+
 export async function start(page: Page): Promise<void> {
   await page.goto('./');
   await page.getByTestId('start-button').click({ force: true });
@@ -33,6 +41,7 @@ export async function start(page: Page): Promise<void> {
 
 /** お手本の 線を マウスで なぞる */
 export async function drawKana(page: Page, kana: string, opts: { offset?: number } = {}): Promise<void> {
+  await settled(page);
   const pad = page.getByTestId('writing-pad');
   const box = await pad.boundingBox();
   if (!box) throw new Error('pad not found');

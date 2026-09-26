@@ -110,20 +110,20 @@ svg {
 /* すすむ ときは みぎから、もどる ときは ひだりから すべりこむ */
 .app[data-nav='fwd'] > .screen {
   animation-name: screen-in-fwd;
-  animation-duration: 0.42s;
+  animation-duration: 0.36s;
   animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .app[data-nav='back'] > .screen {
   animation-name: screen-in-back;
-  animation-duration: 0.42s;
+  animation-duration: 0.36s;
   animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 @keyframes screen-in-fwd {
   from {
     opacity: 0;
-    transform: translateX(7%) scale(0.97);
+    transform: translateX(5%) scale(0.98);
   }
   to {
     opacity: 1;
@@ -134,7 +134,7 @@ svg {
 @keyframes screen-in-back {
   from {
     opacity: 0;
-    transform: translateX(-7%) scale(0.97);
+    transform: translateX(-5%) scale(0.98);
   }
   to {
     opacity: 1;

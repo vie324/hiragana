@@ -18,7 +18,7 @@ function CardShow({ card }: { card: LessonCard }) {
   return (
     <div className="sp-card pop-in">
       {isFormula ? (
-        <div className="sp-formula">
+        <div className={`sp-formula ${parts.some((p) => [...p].length > 1) ? 'long' : ''}`}>
           {parts.map((p, i) =>
             p === '＋' ? (
               <span key={i} className="sp-op">

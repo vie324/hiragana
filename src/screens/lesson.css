@@ -215,6 +215,16 @@
   box-shadow: 0 5px 0 var(--line);
 }
 
+.sp-formula .sp-part {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 「キ＋ャ＝キャ」 のように こたえが 2もじの ときは すこし ちいさく */
+.sp-formula.long .sp-part {
+  font-size: min(13vh, 8.4vw);
+}
+
 .sp-part.mark {
   color: var(--pink-d);
   display: inline-flex;
