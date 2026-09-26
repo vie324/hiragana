@@ -57,6 +57,31 @@ export function unlockAudio(): void {
   }
 }
 
+/**
+ * ろくおんした こえを ならす。Web Audio で ならすので、iPad の じどうさいせい せいげん を うけにくい。
+ * @returns ならせたら true
+ */
+export async function playAudioData(data: ArrayBuffer): Promise<boolean> {
+  const c = ensure();
+  if (!c) return false;
+  try {
+    if (c.state !== 'running') await c.resume();
+    const buf = await c.decodeAudioData(data.slice(0));
+    return await new Promise<boolean>((resolve) => {
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      const g = c.createGain();
+      g.gain.value = Math.max(0.4, volume) * 1.6;
+      src.connect(g);
+      g.connect(c.destination);
+      src.onended = () => resolve(true);
+      src.start();
+    });
+  } catch {
+    return false;
+  }
+}
+
 /** iPad で バックグラウンドから もどったとき など、とまった 音を うごかす */
 export function resumeAudio(): void {
   if (ctx && ctx.state !== 'running') void ctx.resume().catch(() => undefined);

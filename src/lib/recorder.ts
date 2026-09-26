@@ -1,3 +1,5 @@
+import { playAudioData } from './sound';
+
 /** こえを ろくおんして きく (えほんの 「よんでみよう」) */
 
 export function canRecord(): boolean {
@@ -78,10 +80,15 @@ export class VoiceRecorder {
   }
 }
 
-export function playBlob(blob: Blob): Promise<void> {
+export async function playBlob(blob: Blob): Promise<void> {
+  try {
+    if (await playAudioData(await blob.arrayBuffer())) return;
+  } catch {
+    /* audio 要素で ためす */
+  }
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
-  return new Promise((resolve) => {
+  await new Promise<void>((resolve) => {
     const done = () => {
       URL.revokeObjectURL(url);
       resolve();
