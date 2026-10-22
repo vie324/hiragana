@@ -19,6 +19,22 @@ test('どの 画面の セリフも ずんだもんの 声が ある (なまえ 
   const kana = Object.fromEntries(known.map((k) => [k, { box: 3, ok: 4, ng: 1, last: 1, due: 1, intro: true, write: 1 }]));
   await prepare(page, seedProfile({ kana, stickers: { '🐶': 1 }, outfits: ['crown'], days: { '2026-09-01': { sec: 60, acts: 1, stamp: true } } }));
   await trackMisses(page);
+  // てがみ (かきかけ と おくった てがみ)
+  await page.addInitScript(() => {
+    if (localStorage.getItem('hiragana-bouken:letters')) return;
+    const ink = { ch: 'お', ink: [[[20, 30], [80, 30]]] };
+    const base = { created: 1, updated: 1, from: 'ゆい', paper: 'sakura', color: 'pink', pen: 'crayon', tate: false, stickers: [], seal: '❤️' };
+    localStorage.setItem(
+      'hiragana-bouken:letters',
+      JSON.stringify({
+        letters: [
+          { ...base, id: 'V1', to: 'おばあちゃん', toId: 'baba', lines: ['いつも ありがとう', 'メリー クリスマス'], ink: { t0: ink } },
+          { ...base, id: 'V2', to: 'ぱぱ', toId: 'papa', lines: ['だいすき'], ink: {}, posted: 2 },
+        ],
+        recent: [],
+      }),
+    );
+  });
   await startWithVoice(page);
 
   const routes = [
@@ -44,6 +60,12 @@ test('どの 画面の セリフも ずんだもんの 声が ある (なまえ 
     { name: 'name' },
     { name: 'writeKana', kana: 'き' },
     { name: 'buddy' },
+    { name: 'letters' },
+    { name: 'letterTo' },
+    { name: 'letter', id: 'V1', step: 'msg' },
+    { name: 'letter', id: 'V1', step: 'write' },
+    { name: 'letter', id: 'V1', step: 'deco' },
+    { name: 'letterView', id: 'V2' },
     { name: 'sleep' },
   ];
   for (const r of routes) {

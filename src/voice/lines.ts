@@ -8,6 +8,7 @@
 import { sayKana } from '../lib/kana';
 import { sayWord, type Word } from '../data/words';
 import { daysReading } from '../state/progress';
+import { sayLetterChar } from '../data/letters';
 
 /** かく れんしゅうの モード (WriteKanaScreen) */
 export const WRITE_MODE_SAY = {
@@ -54,6 +55,11 @@ export const L = {
   nameStart: (name: string, k: string) => `${name}の なまえを かこう! はじめは「${sayKana(k)}」。`,
   nameNext: (k: string) => `じょうず! つぎは「${sayKana(k)}」。`,
   nameDone: (name: string) => `やったあ! ${name}の なまえが かけたね! すごい!`,
+
+  // てがみ (もじの ところは かく れんしゅう・ことばづくりと おなじ ぶんに して、声を つかいまわす)
+  letterTo: (to: string) => `${to}への てがみを かこう!`,
+  letterNext: (k: string) => `じょうず! つぎは「${sayLetterChar(k)}」だよ。`,
+  letterWrite: (k: string) => `「${sayLetterChar(k)}」を かこう。`,
 
   // ゲーム
   balloonAsk: (k: string) => `「${sayKana(k)}」の ふうせんを わってね。`,

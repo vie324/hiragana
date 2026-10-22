@@ -8,8 +8,9 @@ import { duckBgm, resumeAudio } from './lib/sound';
 import { requestPersist, getData, update, subscribe, callName } from './state/store';
 import { navigate, resetTo } from './state/router';
 import { currentVoice } from './voice/bank';
+import { getLetters } from './state/letters';
 
-if (window.__HIRAGANA_TEST__) window.__hiragana = { navigate, resetTo, getData, update, voice: currentVoice };
+if (window.__HIRAGANA_TEST__) window.__hiragana = { navigate, resetTo, getData, update, voice: currentVoice, letters: getLetters };
 
 initSpeech();
 onSpeakingChange(duckBgm);

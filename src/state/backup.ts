@@ -5,6 +5,7 @@
  */
 import { getData, normalizeData, replaceData, todayKey, type AppData } from './store';
 import { exportGallery, importGallery } from './gallery';
+import { exportLetters, importLetters } from './letters';
 
 export const APP_ID = 'hiragana-bouken';
 const UNDO_KEY = 'hiragana-bouken:undo';
@@ -19,6 +20,8 @@ export interface BackupSummary {
   stickers: number;
   faces: number;
   days: number;
+  /** てがみの かず (ファイルに なければ null) */
+  letters: number | null;
 }
 
 interface Meta {
@@ -55,14 +58,15 @@ export function backupDue(now = Date.now(), d: AppData = getData()): boolean {
 }
 
 export function backupPayload(): string {
-  return JSON.stringify({ app: APP_ID, exportedAt: new Date().toISOString(), data: getData(), gallery: exportGallery() });
+  return JSON.stringify({ app: APP_ID, exportedAt: new Date().toISOString(), data: getData(), gallery: exportGallery(), letters: exportLetters() });
 }
 
 export function backupFileName(): string {
   return `hiragana-backup-${todayKey()}.json`;
 }
 
-function summarize(data: AppData, exportedAt: string | null): BackupSummary {
+function summarize(data: AppData, exportedAt: string | null, letters: unknown): BackupSummary {
+  const list = letters && typeof letters === 'object' && Array.isArray((letters as { letters?: unknown }).letters) ? (letters as { letters: unknown[] }).letters : null;
   return {
     exportedAt,
     name: data.profile.name,
@@ -70,27 +74,37 @@ function summarize(data: AppData, exportedAt: string | null): BackupSummary {
     stickers: Object.values(data.stickers).reduce((a, b) => a + b, 0),
     faces: data.faces.length,
     days: Object.keys(data.days).length,
+    letters: list ? list.length : null,
   };
 }
 
 export function currentSummary(): BackupSummary {
-  return summarize(getData(), null);
+  return summarize(getData(), null, exportLetters());
 }
 
 /** ファイルの なかみを しらべる。このアプリの ものでなければ エラー */
-export function parseBackup(text: string): { data: AppData; gallery: unknown; summary: BackupSummary } {
-  const obj = JSON.parse(text) as { app?: string; exportedAt?: string; data?: unknown; gallery?: unknown } | null;
+export function parseBackup(text: string): { data: AppData; gallery: unknown; letters: unknown; summary: BackupSummary } {
+  const obj = JSON.parse(text) as { app?: string; exportedAt?: string; data?: unknown; gallery?: unknown; letters?: unknown } | null;
   const raw = obj && typeof obj === 'object' && 'data' in obj ? obj.data : obj;
   if (!raw || typeof raw !== 'object' || !('profile' in raw)) throw new Error('not a backup');
   const data = normalizeData(raw);
-  return { data, gallery: obj?.gallery, summary: summarize(data, typeof obj?.exportedAt === 'string' ? obj.exportedAt : null) };
+  return {
+    data,
+    gallery: obj?.gallery,
+    letters: obj?.letters,
+    summary: summarize(data, typeof obj?.exportedAt === 'string' ? obj.exportedAt : null, obj?.letters),
+  };
 }
 
-/** いまの きろくを のこしてから (もとに もどせるように)、バックアップで うわがき する */
-export function restoreBackup(parsed: { data: AppData; gallery: unknown }): void {
+/**
+ * いまの きろくを のこしてから (もとに もどせるように)、バックアップで うわがき する。
+ * てがみが ない ふるい ファイルの ときは、いまの てがみを そのまま のこす
+ */
+export function restoreBackup(parsed: { data: AppData; gallery: unknown; letters?: unknown }): void {
   saveUndo('restore');
   replaceData(parsed.data);
   if (parsed.gallery) importGallery(parsed.gallery);
+  if (parsed.letters) importLetters(parsed.letters);
 }
 
 /* ---------- もとに もどす ---------- */
@@ -102,14 +116,20 @@ interface UndoSnapshot {
   why: UndoReason;
   data: AppData;
   gallery: unknown;
+  letters?: unknown;
 }
 
 export function saveUndo(why: UndoReason): void {
+  const snap: UndoSnapshot = { at: Date.now(), why, data: getData(), gallery: exportGallery(), letters: exportLetters() };
   try {
-    const snap: UndoSnapshot = { at: Date.now(), why, data: getData(), gallery: exportGallery() };
     localStorage.setItem(UNDO_KEY, JSON.stringify(snap));
   } catch {
-    /* ようりょうが たりない ときは あきらめる */
+    // ようりょうが たりない ときは てがみ ぬきで (それでも だめなら あきらめる)
+    try {
+      localStorage.setItem(UNDO_KEY, JSON.stringify({ ...snap, letters: undefined }));
+    } catch {
+      /* noop */
+    }
   }
 }
 
@@ -136,6 +156,7 @@ export function applyUndo(): boolean {
     const s = JSON.parse(raw) as UndoSnapshot;
     replaceData(normalizeData(s.data));
     if (s.gallery) importGallery(s.gallery);
+    if (s.letters) importLetters(s.letters);
     localStorage.removeItem(UNDO_KEY);
     return true;
   } catch {

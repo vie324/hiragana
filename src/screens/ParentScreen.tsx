@@ -34,6 +34,9 @@ import {
   undoInfo,
 } from '../state/backup';
 import { hasGallery, renderGalleryImage } from '../state/galleryImage';
+import { clearLetters, lettersSaveFailed, useLetters, type Letter } from '../state/letters';
+import LetterPaper, { dateLabel } from '../components/letter/LetterPaper';
+import { confirmDeleteLetter, shareLetter } from './parent/letterTools';
 import { ALL_NODES, KATA_NODES } from '../data/curriculum';
 import { ALL_BOOKS as BOOKS } from '../data/books';
 import { K_SEION, ROWS, SEION, type Script } from '../lib/kana';
@@ -539,11 +542,58 @@ function SettingsTab() {
   );
 }
 
+/** お子さまが かいた てがみ (画像に して おくる・けす) */
+function LettersCard() {
+  const letters = useLetters().filter((l) => l.posted || Object.keys(l.ink).length > 0);
+  const [msg, setMsg] = useState('');
+  const save = async (l: Letter) => {
+    setMsg('画像を作っています…');
+    setMsg(await shareLetter(l));
+  };
+  return (
+    <div className="parent-card" data-testid="parent-letters">
+      <h2>手紙</h2>
+      <p className="note">
+        お子さまが大きく書いた文字が、そのまま手紙になります(「かく」→「てがみを かく」)。画像にして、LINE やメールで送ったり、写真 App に保存したり、印刷したりできます。
+      </p>
+      {letters.length === 0 && <p className="note">まだありません。</p>}
+      <div className="letter-list">
+        {letters.map((l) => (
+          <div key={l.id} className="letter-item">
+            <div className="letter-thumb">
+              <LetterPaper letter={l} mode={l.posted ? 'view' : 'write'} />
+            </div>
+            <div className="letter-info">
+              <b>{l.to ? `${l.to}へ` : '(あて名なし)'}</b>
+              <span className="note">
+                {dateLabel(l.posted ?? l.created)}
+                {l.posted ? '' : '(書きかけ)'}
+              </span>
+              <div className="row gap">
+                {l.posted && (
+                  <button className="secondary" onClick={() => void save(l)} data-testid="parent-letter-save">
+                    画像で保存
+                  </button>
+                )}
+                <button className="secondary" onClick={() => confirmDeleteLetter(l)} data-testid="parent-letter-delete">
+                  消す
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {msg && <p className="msg">{msg}</p>}
+    </div>
+  );
+}
+
 function GalleryTab() {
   const list = galleryKanaList();
   const names = getNameSamples();
   return (
     <>
+      <LettersCard />
       <div className="parent-card">
         <h2>名前の練習</h2>
         {names.length === 0 ? (
@@ -656,10 +706,11 @@ function DataTab() {
   };
 
   const reset = () => {
-    if (!window.confirm('学習の記録・シール・書いた文字をすべて消します。よろしいですか?')) return;
+    if (!window.confirm('学習の記録・シール・書いた文字・手紙をすべて消します。よろしいですか?')) return;
     if (!window.confirm('本当に消しますか?(1週間以内なら「元に戻す」で戻せます)')) return;
     resetKeepingProfile(defaultData());
     clearGallery();
+    clearLetters();
     resetTo({ name: 'start' });
   };
 
@@ -708,8 +759,14 @@ function DataTab() {
           Safariの履歴・Webサイトデータを消去したり、iPadを買い替えたりすると、iPadの中の記録は消えてしまいます。ときどき「ファイルに保存」→「"ファイル"に保存」で <b>iCloud Drive</b> などに保存しておくと安心です。
         </p>
         <p className="note">
-          いまの記録: {summary.name || '(名前なし)'} / 覚えた文字 {summary.kana} / シール {summary.stickers}まい / 顔写真 {summary.faces}まい / 遊んだ日 {summary.days}日
+          いまの記録: {summary.name || '(名前なし)'} / 覚えた文字 {summary.kana} / シール {summary.stickers}まい / 顔写真 {summary.faces}まい / 遊んだ日 {summary.days}日 / 手紙{' '}
+          {summary.letters ?? 0}通
         </p>
+        {lettersSaveFailed() && (
+          <p className="warn" data-testid="letters-full">
+            iPadの中の保存容量が足りず、手紙を保存できませんでした。不要な手紙や顔写真を消すか、「ファイルに保存」でバックアップしてください。
+          </p>
+        )}
         <div className="row gap">
           <button className="primary" onClick={() => void save()} data-testid="backup-save">
             ファイルに保存
@@ -726,7 +783,8 @@ function DataTab() {
           <div className="restore-confirm" data-testid="restore-confirm">
             <p>
               <b>{fmtDate(pending.summary.exportedAt)}</b> のバックアップ({pending.summary.name || '名前なし'} / 覚えた文字 {pending.summary.kana} / シール{' '}
-              {pending.summary.stickers}まい / 顔写真 {pending.summary.faces}まい)で、いまの記録を上書きします。
+              {pending.summary.stickers}まい / 顔写真 {pending.summary.faces}まい{pending.summary.letters !== null ? ` / 手紙 ${pending.summary.letters}通` : ''}
+              )で、いまの記録を上書きします。
             </p>
             <div className="row gap">
               <button className="primary" onClick={restore} data-testid="restore-ok">
@@ -773,7 +831,7 @@ function DataTab() {
 
       <div className="parent-card">
         <h2>リセット</h2>
-        <p className="note">名前・キャラクター・顔写真・設定は残したまま、学習の記録・シール・きせかえ・書いた文字を消して最初からやり直します。</p>
+        <p className="note">名前・キャラクター・顔写真・設定は残したまま、学習の記録・シール・きせかえ・書いた文字・手紙を消して最初からやり直します。</p>
         <button className="danger" onClick={reset}>
           記録をすべて消す
         </button>

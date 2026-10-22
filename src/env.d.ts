@@ -17,5 +17,6 @@ interface Window {
     getData: typeof import('./state/store').getData;
     update: typeof import('./state/store').update;
     voice: typeof import('./voice/bank').currentVoice;
+    letters: typeof import('./state/letters').getLetters;
   };
 }

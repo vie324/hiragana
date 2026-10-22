@@ -1,0 +1,45 @@
+.letter-paper {
+  display: block;
+  width: 100%;
+  height: auto;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lp-current {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: lp-current 1.3s ease-in-out infinite;
+}
+
+@keyframes lp-current {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.75;
+  }
+}
+
+.lp-cells rect {
+  pointer-events: none;
+}
+
+.lp-cells.tappable rect {
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.lp-stickers.movable g[data-sticker] {
+  cursor: grab;
+  touch-action: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-current {
+    animation: none;
+  }
+}

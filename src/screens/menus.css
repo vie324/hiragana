@@ -182,11 +182,42 @@
 .write-name-row {
   display: flex;
   justify-content: center;
+  gap: 2vw;
   padding: 1.4vh 0 1vh;
 }
 
 .write-name-row .btn {
   font-size: calc(var(--u) * 3.2);
+}
+
+/* てがみ: エアメールの ふうとうの もようの ボタン */
+.btn.write-letter-btn {
+  --cd: #f2b8c8;
+  color: #d9466f;
+  border: 6px solid transparent;
+  background:
+    linear-gradient(#fff9fb, #fff9fb) padding-box,
+    repeating-linear-gradient(135deg, #ff8fb1 0 10px, #fff 10px 18px, #6cb8ff 18px 28px, #fff 28px 36px) border-box;
+  text-shadow: none;
+}
+
+.write-letter-btn .wl-env {
+  display: inline-block;
+  animation: wl-env 2.6s ease-in-out infinite;
+}
+
+@keyframes wl-env {
+  0%,
+  70%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  78% {
+    transform: rotate(-12deg) scale(1.15);
+  }
+  88% {
+    transform: rotate(10deg) scale(1.15);
+  }
 }
 
 /* ---------- 50音表の くわしく ---------- */
