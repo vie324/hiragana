@@ -8,6 +8,8 @@ VOICEVOX で アプリの 声を つくる (ローカルで 1かい だけ う�
        → public/voice/<slug>/index.json と パック (.bin)
 
 できた 声は キャッシュ (--cache) に のこるので、ぶんを ふやしたときは ふえた ぶんだけ つくる。
+キャッシュが ない ときは --reuse で、いまの public/voice/<slug> に ある 声を そのまま つかい、
+ふえた ぶんだけ つくる (かわらない パックは おなじ ファイルの まま)。
 mp3 に するため ffmpeg (libmp3lame) が いる (--ffmpeg で ばしょを しめせる)。
 """
 import argparse
@@ -135,7 +137,17 @@ def main():
     ap.add_argument('--jobs', type=int, default=3)
     ap.add_argument('--bitrate', default='32k', help='mp3 の ビットレート')
     ap.add_argument('--limit', type=int, default=0, help='ためしに すこしだけ つくる')
+    ap.add_argument('--reuse', action='store_true', help='いまの public/voice/<slug> の 声を つかい、ない ぶんだけ つくる')
     args = ap.parse_args()
+
+    out_dir = os.path.join(ROOT, 'public', 'voice', args.slug)
+    old = {}
+    if args.reuse:
+        idx = json.load(open(os.path.join(out_dir, 'index.json'), encoding='utf-8'))
+        bufs = [open(os.path.join(out_dir, p['file']), 'rb').read() for p in idx['packs']]
+        for key, (pi, start, length, ms) in idx['clips'].items():
+            old[key] = (bufs[pi][start:start + length], ms)
+        print(f'reuse {len(old)} clips', flush=True)
 
     phrases = json.load(open(os.path.join(ROOT, 'scripts/voice/phrases.json'), encoding='utf-8'))
     if args.limit:
@@ -148,6 +160,9 @@ def main():
     params_sig = json.dumps(PARAMS, sort_keys=True) + f'q{QUOTE_PAUSE}'
 
     def job(entry):
+        if entry['key'] in old:
+            data, ms = old[entry['key']]
+            return entry, data, ms
         # 声は wav で キャッシュして、mp3 は ビットレートごとに つくる
         text = prep(entry['text'])
         h = hashlib.sha1((text + '|' + params_sig).encode()).hexdigest()[:16]
@@ -163,7 +178,7 @@ def main():
         if not os.path.exists(mp3_path):
             open(mp3_path + '.tmp', 'wb').write(encode_mp3(args.ffmpeg, wav_path, args.bitrate))
             os.replace(mp3_path + '.tmp', mp3_path)
-        return entry, mp3_path, ms
+        return entry, open(mp3_path, 'rb').read(), ms
 
     results = []
     with cf.ThreadPoolExecutor(args.jobs) as ex:
@@ -172,17 +187,15 @@ def main():
             if i % 200 == 0 or i == len(phrases):
                 print(f'{i}/{len(phrases)}', flush=True)
 
-    out_dir = os.path.join(ROOT, 'public', 'voice', args.slug)
     os.makedirs(out_dir, exist_ok=True)
     for f in os.listdir(out_dir):
         os.remove(os.path.join(out_dir, f))
     packs, clips = [], {}
     for pi, pack in enumerate(PACK_ORDER):
         buf = bytearray()
-        for entry, path, ms in results:
-            if entry['pack'] != pack or not path:
+        for entry, data, ms in results:
+            if entry['pack'] != pack or not data:
                 continue
-            data = open(path, 'rb').read()
             clips[entry['key']] = [pi, len(buf), len(data), ms]
             buf += data
         name = f'{pack}.{hashlib.sha1(buf).hexdigest()[:10]}.bin'

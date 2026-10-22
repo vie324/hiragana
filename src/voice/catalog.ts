@@ -22,6 +22,8 @@ import { BUDDY_DEFAULT_NAMES, BUDDY_KIND_SAY, type BuddyKind } from '../state/st
 import { greeting } from '../lib/session';
 import { MISSIONS } from '../data/missions';
 import { MAX_LEVEL, streakWorthPraising } from '../state/progress';
+import { INKS, LETTER_SYMBOLS, PAPERS, PENS, PHRASES, RECIPIENTS, sayLetterChar } from '../data/letters';
+import { toLine } from '../lib/letterLayout';
 
 export type Pack = 'kana' | 'word' | 'book' | 'ui';
 
@@ -196,6 +198,30 @@ export function buildCatalog(staticTexts: readonly string[] = []): CatalogEntry[
 
   // ソースに かいてある セリフ
   for (const t of staticTexts) add(t, 'ui');
+
+  // てがみ。もじの はいる セリフは かく れんしゅうと おなじ 声を つかうので、ない ぶんだけ ui に たす
+  // (いまある 声の いれものを うごかさない)
+  const addMissing = (text: string) => {
+    for (const s of splitSentences(text)) {
+      const pieces = s.includes(NAME_MARK) ? splitNames(s, [NAME_MARK]) : [{ text: s }];
+      if (pieces.every((p) => !('text' in p) || map.has(voiceKey(p.text)) || (s.includes(NAME_MARK) && isTinyFragment(p.text)))) continue;
+      addSentence(s, 'ui');
+    }
+  };
+  for (const k of uniq([...WRITABLE_KANA, ...K_WRITABLE_KANA, ...LETTER_SYMBOLS])) {
+    addMissing(L.letterNext(k));
+    addMissing(L.letterWrite(k));
+    addMissing(sayLetterChar(k));
+  }
+  for (const r of RECIPIENTS) {
+    for (const label of uniq([r.label, r.kata ?? r.label])) {
+      addMissing(L.letterTo(label));
+      addMissing(toLine(label));
+    }
+  }
+  for (const n of [...BUDDY_NAMES, NAME_MARK]) addMissing(L.letterTo(n));
+  for (const p of PHRASES) addMissing(p.text);
+  for (const x of [...PAPERS, ...INKS, ...PENS]) addMissing(x.name);
 
   return [...map.values()].sort((a, b) => PACK_ORDER.indexOf(a.pack) - PACK_ORDER.indexOf(b.pack) || a.key.localeCompare(b.key, 'ja'));
 }

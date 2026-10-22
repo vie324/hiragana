@@ -144,7 +144,13 @@ export default function WritingPad({ kana, mode, level, finger, resetKey = 0, hi
     (pts: Pt[]) => {
       if (!data || finished) return;
       const ref = data.points[index];
-      const result = evaluateStroke(pts, ref, { level, noGuide: mode === 'blank' });
+      let result = evaluateStroke(pts, ref, { level, noGuide: mode === 'blank' });
+      // まる などは はんたいまわりでも よい
+      const alt = data.alts?.[index];
+      if (!result.ok && alt) {
+        const other = evaluateStroke(pts, alt, { level, noGuide: mode === 'blank' });
+        if (other.ok) result = other;
+      }
       if (result.reason === 'short' && pts.length < 3) {
         // タップだけ: なにも しない
         return;

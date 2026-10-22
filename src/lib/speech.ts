@@ -79,9 +79,18 @@ export function unlockSpeech(): void {
 
 /** まえもって つくれない なまえ (こどもの よびかた・あいぼうの なまえ) */
 let dynamicNames: string[] = [];
+let profileNames: string[] = [];
+let extraNames: string[] = [];
 
 export function setSpeechNames(names: readonly string[]): void {
-  dynamicNames = names.filter(Boolean);
+  profileNames = names.filter(Boolean);
+  dynamicNames = [...new Set([...profileNames, ...extraNames])];
+}
+
+/** その 画面だけで つかう なまえ (てがみの あて名 など) */
+export function setExtraSpeechNames(names: readonly string[]): void {
+  extraNames = names.filter(Boolean);
+  dynamicNames = [...new Set([...profileNames, ...extraNames])];
 }
 
 function setSpeaking(v: boolean) {

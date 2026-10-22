@@ -64,6 +64,20 @@ export default function WriteMenu({ tab: initial }: { tab?: string }) {
         >
           <Emoji>📛</Emoji> {profile.name ? `「${profile.name}」を かく` : 'なまえを かく'}
         </Btn>
+        <Btn
+          color="white"
+          className="write-letter-btn"
+          onClick={() => {
+            void speak('てがみを かこう!');
+            navigate({ name: 'letters' });
+          }}
+          data-testid="write-letter"
+        >
+          <span className="wl-env" aria-hidden>
+            <Emoji>💌</Emoji>
+          </span>
+          てがみを かく
+        </Btn>
       </div>
       <div className="kana-grid-wrap">
         <KanaGrid

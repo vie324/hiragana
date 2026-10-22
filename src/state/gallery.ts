@@ -79,6 +79,13 @@ export function getSamples(kana: string): Sample[] {
   return get().kana[kana] ?? [];
 }
 
+/** いちばん よく かけた もじ (ほしが おなじなら あたらしい ほう)。てがみに つかう */
+export function bestSample(kana: string): Sample | null {
+  let best: Sample | null = null;
+  for (const s of getSamples(kana)) if (!best || s.stars > best.stars || (s.stars === best.stars && s.at > best.at)) best = s;
+  return best;
+}
+
 export function getNameSamples(): NameSample[] {
   return get().names;
 }

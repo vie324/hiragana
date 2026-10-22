@@ -6,6 +6,9 @@ import { WORDS, lastSound } from '../data/words';
 import { BASIC_KANA, WRITABLE_KANA, splitUnits } from '../lib/kana';
 import { ALL_BOOKS as BOOKS, tokenize } from '../data/books';
 import { MISSIONS } from '../data/missions';
+import { LETTER_SYMBOLS, PHRASES, RECIPIENTS, recipientLabel, sayLetterChar } from '../data/letters';
+import { K_WRITABLE_KANA } from '../lib/kana';
+import { toLine } from '../lib/letterLayout';
 
 describe('split', () => {
   it('ぶんに わける', () => {
@@ -106,6 +109,24 @@ describe('catalog', () => {
         }
       }
     }
+  });
+
+  it('てがみの セリフ (もじ・きごう・あて名・ぶん) が ある', () => {
+    for (const k of [...WRITABLE_KANA, ...K_WRITABLE_KANA, ...LETTER_SYMBOLS]) {
+      expect(covered(L.letterNext(k)), k).toBe(true);
+      expect(covered(L.letterWrite(k)), k).toBe(true);
+      expect(covered(sayLetterChar(k)), k).toBe(true);
+    }
+    for (const r of RECIPIENTS) {
+      for (const label of [recipientLabel(r, 'hira'), recipientLabel(r, 'kata')]) {
+        expect(covered(L.letterTo(label)), label).toBe(true);
+        expect(covered(toLine(label)), label).toBe(true);
+      }
+    }
+    for (const p of PHRASES) expect(covered(p.text), p.text).toBe(true);
+    // じぶんで いれた あて名・あいぼうの なまえは iPad の 声で よむ
+    expect(covered(L.letterTo('けんた'), ['けんた'])).toBe(true);
+    expect(covered(L.letterTo('ぴょん'), ['ぴょん'])).toBe(true);
   });
 
   it('えほんの ことばが ぜんぶ ある (なまえ いがい)', () => {

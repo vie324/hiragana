@@ -27,8 +27,15 @@ export type Route =
   | { name: 'dressup' }
   | { name: 'stamps' }
   | { name: 'tree' }
+  | { name: 'letters'; focus?: string }
+  | { name: 'letterTo' }
+  | { name: 'letter'; id: string; step: LetterStep }
+  | { name: 'letterView'; id: string }
   | { name: 'parent' }
   | { name: 'sleep' };
+
+/** てがみを つくる じゅんばん: ぶん → かく → かざる → ポスト */
+export type LetterStep = 'msg' | 'write' | 'deco' | 'post';
 
 export type RouteName = Route['name'];
 
@@ -59,6 +66,13 @@ export function back(): void {
 
 export function resetTo(r: Route): void {
   stack = [r];
+  emit();
+}
+
+/** まえに ひらいた おなじ 画面まで もどって r に する (なければ ホームの つぎに r) */
+export function backTo(r: Route): void {
+  const i = stack.map((x) => x.name).lastIndexOf(r.name);
+  stack = i >= 0 ? [...stack.slice(0, i), r] : [{ name: 'home' }, r];
   emit();
 }
 

@@ -588,6 +588,41 @@
   flex: 1;
 }
 
+.letter-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.letter-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 14px;
+  background: #fbf8f4;
+}
+
+.letter-thumb {
+  width: 84px;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.letter-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.letter-info b {
+  font-family: var(--kids);
+  font-size: 20px;
+}
+
 .gallery-row {
   display: flex;
   gap: 14px;

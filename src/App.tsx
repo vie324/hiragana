@@ -32,10 +32,17 @@ import StickerBook from './screens/StickerBook';
 import DressUpScreen from './screens/DressUpScreen';
 import StampScreen from './screens/StampScreen';
 import TreeScreen from './screens/TreeScreen';
+import LetterBox from './screens/letter/LetterBox';
+import LetterToScreen from './screens/letter/LetterToScreen';
+import LetterScreen from './screens/letter/LetterScreen';
+import LetterViewScreen from './screens/letter/LetterViewScreen';
 import ParentScreen from './screens/ParentScreen';
 import SleepScreen from './screens/SleepScreen';
 
-const BGM_SCREENS = new Set<Route['name']>(['home', 'map', 'stickers', 'dressup', 'stamps', 'play', 'books', 'chart', 'write', 'buddy', 'tree']);
+const BGM_SCREENS = new Set<Route['name']>(['home', 'map', 'stickers', 'dressup', 'stamps', 'play', 'books', 'chart', 'write', 'buddy', 'tree', 'letters', 'letterTo']);
+
+/** BGM を ながす 画面 (てがみは かざる ときだけ) */
+const wantsBgm = (r: Route) => BGM_SCREENS.has(r.name) || (r.name === 'letter' && r.step === 'deco');
 const UNTIMED = new Set<Route['name']>(['start', 'setup', 'parent', 'sleep']);
 
 function Screen({ route }: { route: Route }) {
@@ -88,6 +95,14 @@ function Screen({ route }: { route: Route }) {
       return <StampScreen />;
     case 'tree':
       return <TreeScreen />;
+    case 'letters':
+      return <LetterBox focus={route.focus} />;
+    case 'letterTo':
+      return <LetterToScreen />;
+    case 'letter':
+      return <LetterScreen id={route.id} step={route.step} />;
+    case 'letterView':
+      return <LetterViewScreen id={route.id} />;
     case 'parent':
       return <ParentScreen />;
     case 'sleep':
@@ -158,9 +173,10 @@ export default function App() {
   }, [settings.voice]);
 
 
+  const bgm = wantsBgm(route);
   useEffect(() => {
-    wantBgm(BGM_SCREENS.has(route.name));
-  }, [route.name]);
+    wantBgm(bgm);
+  }, [bgm]);
 
   // コンボは その 画面の なかだけ
   useEffect(() => comboReset(), [version]);
